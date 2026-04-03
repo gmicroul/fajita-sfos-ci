@@ -124,6 +124,7 @@ sed -i '/qpnp-smb2/d' drivers/power/supply/qcom/Makefile || true
 sed -i '/smb-lib/d' drivers/power/supply/qcom/Makefile || true
 
 echo "  - 清理 drivers/platform/msm/Makefile"
+sed -i '/ipa/d' drivers/platform/msm/Makefile || true
 sed -i '/sps/d' drivers/platform/msm/Makefile || true
 sed -i '/usb_bam/d' drivers/platform/msm/Makefile || true
 
