@@ -39,7 +39,7 @@
 
 1. **触发编译**
    ```bash
-   cd /home/user/.openclaw/workspace/dumpling-sfos-ci
+   cd /home/user/.openclaw/workspace/fajita-sfos-ci
    git add .
    git commit -m "Update Docker kernel support v2"
    git push
@@ -79,7 +79,7 @@
 2. **应用 Docker 补丁**
    ```bash
    cd ~/android/kernel/oneplus/sdm845/
-   bash /home/user/.openclaw/workspace/dumpling-sfos-ci/scripts/apply-docker-kernel-patch-v2.sh
+   bash /home/user/.openclaw/workspace/fajita-sfos-ci/scripts/apply-docker-kernel-patch-v2.sh
    ```
 
 3. **编译内核**
@@ -121,7 +121,7 @@
 
 ```bash
 # 启用网络转发
-sudo bash /home/user/.openclaw/workspace/dumpling-sfos-ci/scripts/enable-docker-networking.sh
+sudo bash /home/user/.openclaw/workspace/fajita-sfos-ci/scripts/enable-docker-networking.sh
 
 # 或者手动启用
 sudo sysctl -w net.ipv4.ip_forward=1

@@ -1,8 +1,8 @@
-# Docker 内核支持分析 - dumpling-sfos-ci
+# Docker 内核支持分析 - fajita-sfos-ci
 
 ## 项目概述
 
-dumpling-sfos-ci 是一个用于构建一加6T (fajita) 旗鱼系统的 CI 项目。
+fajita-sfos-ci 是一个用于构建一加6T (fajita) 旗鱼系统的 CI 项目。
 
 ## 当前架构
 
