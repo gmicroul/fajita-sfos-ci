@@ -81,12 +81,21 @@ jobs:
           # List copied files
           ls -lh /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
 
+      - name: Debug artifact directory
+        run: |
+          echo "Checking artifact directory:"
+          ls -la /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
+          echo "File count:"
+          find /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/ -type f | wc -l
+          echo "Artifact name will be: sailfishos-${{ env.DEVICE }}-${{ env.RELEASE }}"
+
       - name: Upload SailfishOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: sailfishos-${{ env.DEVICE }}-${{ env.RELEASE }}
           path: /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
           retention-days: 30
+          if-no-files-found: error
 
       - name: Cleanup
         run: |
