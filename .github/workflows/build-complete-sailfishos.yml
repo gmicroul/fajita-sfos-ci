@@ -448,6 +448,12 @@ jobs:
       run: |
         echo "All artifacts:"
         ls -lhR ./artifacts
+        echo ""
+        echo "SailfishOS artifacts:"
+        find ./artifacts/sailfishos -type f -exec ls -lh {} \;
+        echo ""
+        echo "Kernel artifacts:"
+        find ./artifacts/kernel -type f -exec ls -lh {} \;
 
     - name: Generate build summary
       run: |
@@ -514,7 +520,7 @@ jobs:
 
           Built by GitHub Actions
         files: |
-          ./artifacts/sailfishos/*
+          ./artifacts/sailfishos/**/*
           ./artifacts/kernel/*
         draft: false
         prerelease: true
