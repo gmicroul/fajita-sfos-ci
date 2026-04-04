@@ -368,3 +368,50 @@ jobs:
         echo "4. Repacking into hybris-boot.img" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "You can flash hybris-boot.img directly to your device." >> $GITHUB_STEP_SUMMARY
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: hybris-boot-${{ env.DEVICE }}-${{ env.RELEASE }}-${{ github.run_number }}
+        name: Hybris Boot Image - ${{ env.DEVICE }} - ${{ env.RELEASE }} - Build ${{ github.run_number }}
+        body: |
+          ## Hybris Boot Image for ${{ env.DEVICE }}
+
+          ### Build Information
+          - **Device**: ${{ env.DEVICE }}
+          - **SailfishOS Release**: ${{ env.RELEASE }}
+          - **Kernel**: sdm845
+          - **Build Number**: ${{ github.run_number }}
+          - **Commit**: ${{ github.sha }}
+          - **Docker Support**: Enabled
+
+          ### Files
+          - `hybris-boot.img` - Complete boot image with new kernel (flash this to your device)
+          - `Image.gz` - Kernel image only
+          - `kernel.config` - Kernel configuration
+
+          ### How to Flash
+          1. Download `hybris-boot.img`
+          2. Flash to your device using fastboot:
+             ```
+             fastboot flash boot hybris-boot.img
+             fastboot reboot
+             ```
+
+          ### Docker Support
+          This kernel includes full Docker support with the following features:
+          - Namespaces and Cgroups
+          - Overlay filesystem
+          - Network filtering and masquerading
+          - Bridge and VXLAN support
+          - AppArmor security
+
+          Built by GitHub Actions
+        files: |
+          ${{ env.ANDROID_ROOT }}/hybris-boot.img
+          ${{ env.ANDROID_ROOT }}/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz
+          ${{ env.ANDROID_ROOT }}/output/kernel.config
+        draft: false
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
