@@ -420,12 +420,16 @@ jobs:
         ZIP_FILE=$(find ./sailfishos-artifacts -name "sailfishos-*.zip" | head -1)
         echo "Found ZIP file: $ZIP_FILE"
 
+        # Get absolute path
+        ZIP_ABS_PATH=$(realpath "$ZIP_FILE")
+        echo "Absolute path: $ZIP_ABS_PATH"
+
         # Create working directory
         mkdir -p final-zip
         cd final-zip
 
         # Unzip the original ZIP
-        unzip "$ZIP_FILE"
+        unzip "$ZIP_ABS_PATH"
 
         # List original hybris-boot.img
         echo "Original hybris-boot.img:"
@@ -506,8 +510,8 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: sailfishos-complete-${{ env.DEVICE }}-${{ env.RELEASE }}-${{ github.run_number }}
-        name: Complete SailfishOS - ${{ env.DEVICE }} - ${{ env.RELEASE }} - Build ${{ github.run_number }}
+        tag_name: sailfishos-docker-${{ env.DEVICE }}-${{ env.RELEASE }}-${{ github.run_number }}
+        name: SailfishOS Docker - ${{ env.DEVICE }} - ${{ env.RELEASE }} - Build ${{ github.run_number }}
         body: |
           ## Complete SailfishOS Build for ${{ env.DEVICE }}
 
