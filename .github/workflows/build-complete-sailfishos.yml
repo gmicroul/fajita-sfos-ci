@@ -33,6 +33,10 @@ jobs:
     runs-on: ubuntu-22.04
     if: github.event.repository.owner.id == github.event.sender.id
 
+    env:
+      DEVICE: ${{ github.event.inputs.device || 'fajita' }}
+      RELEASE: ${{ github.event.inputs.release || '5.0.0.73' }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -93,6 +97,11 @@ jobs:
   build-hybris-boot:
     runs-on: ubuntu-latest
     needs: build-sailfishos
+
+    env:
+      DEVICE: ${{ github.event.inputs.device || 'fajita' }}
+      RELEASE: ${{ github.event.inputs.release || '5.0.0.73' }}
+      ANDROID_ROOT: /home/runner/work/android
 
     steps:
     - name: Free disk space
@@ -404,6 +413,10 @@ jobs:
     needs: [build-sailfishos, build-hybris-boot]
     permissions:
       contents: write
+
+    env:
+      DEVICE: ${{ github.event.inputs.device || 'fajita' }}
+      RELEASE: ${{ github.event.inputs.release || '5.0.0.73' }}
 
     steps:
     - name: Download SailfishOS artifact
