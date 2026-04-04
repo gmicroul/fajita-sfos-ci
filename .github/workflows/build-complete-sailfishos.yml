@@ -453,8 +453,11 @@ jobs:
         # List final ZIP
         ls -lh "../$FINAL_ZIP_NAME"
 
+        # Move final ZIP to current directory
+        mv "../$FINAL_ZIP_NAME" .
+
         # Save final ZIP path for next step
-        echo "FINAL_ZIP_PATH=../$FINAL_ZIP_NAME" >> $GITHUB_ENV
+        echo "FINAL_ZIP_PATH=$FINAL_ZIP_NAME" >> $GITHUB_ENV
         echo "FINAL_ZIP_NAME=$FINAL_ZIP_NAME" >> $GITHUB_ENV
 
     - name: Upload final ZIP artifact
