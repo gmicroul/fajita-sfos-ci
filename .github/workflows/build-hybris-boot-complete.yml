@@ -71,15 +71,15 @@ jobs:
 
     - name: Install mkbootimg and unpack tools
       run: |
-        # Install mkbootimg
+        # Install abootimg for boot.img unpacking
         sudo apt-get install -y abootimg
 
-        # Install magiskboot for boot.img unpacking
-        wget -q https://github.com/topjohnwu/Magisk/releases/download/v27.0/Magisk-v27.0.apk
-        unzip -q Magisk-v27.0.apk -d magisk
-        chmod +x magisk/lib/arm64-v8a/libbootimg.so
-        sudo cp magisk/lib/arm64-v8a/libbootimg.so /usr/local/bin/magiskboot
-        sudo chmod +x /usr/local/bin/magiskboot
+        # Install mkbootimg from source
+        git clone https://github.com/osm0sis/mkbootimg.git
+        cd mkbootimg
+        make
+        sudo make install
+        cd ..
 
     - name: Download droid-boot.img
       run: |
@@ -253,16 +253,16 @@ jobs:
         mkdir -p boot-unpack
         cd boot-unpack
 
-        # Unpack boot.img using magiskboot
-        magiskboot unpack ../droid-boot.img
+        # Unpack boot.img using abootimg
+        abootimg -x ../droid-boot.img
 
         # List unpacked files
         ls -lh
 
         # Show kernel info
-        if [ -f kernel ]; then
-          file kernel
-          ls -lh kernel
+        if [ -f zImage ]; then
+          file zImage
+          ls -lh zImage
         fi
 
     - name: Replace kernel in boot.img
@@ -270,23 +270,23 @@ jobs:
         cd $ANDROID_ROOT/boot-unpack
 
         # Backup original kernel
-        if [ -f kernel ]; then
-          cp kernel kernel.orig
+        if [ -f zImage ]; then
+          cp zImage zImage.orig
         fi
 
         # Copy new kernel
-        cp ../kernel/oneplus/sdm845/arch/arm64/boot/Image.gz kernel
+        cp ../kernel/oneplus/sdm845/arch/arm64/boot/Image.gz zImage
 
         # Show new kernel info
-        file kernel
-        ls -lh kernel
+        file zImage
+        ls -lh zImage
 
     - name: Repack hybris-boot.img
       run: |
         cd $ANDROID_ROOT/boot-unpack
 
-        # Repack boot.img
-        magiskboot repack ../droid-boot.img ../hybris-boot.img
+        # Repack boot.img using abootimg
+        abootimg --create ../hybris-boot.img -f bootimg.cfg -k zImage -r initramfs.cpio.gz -s second
 
         # Show result
         ls -lh ../hybris-boot.img
