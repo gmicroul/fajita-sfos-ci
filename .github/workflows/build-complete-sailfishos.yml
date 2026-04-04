@@ -440,7 +440,7 @@ jobs:
 
         # Get the original ZIP filename
         ORIGINAL_ZIP_NAME=$(basename "$ZIP_FILE")
-        FINAL_ZIP_NAME="${ORIGINAL_ZIP_NAME%.zip}-docker.zip"
+        FINAL_ZIP_NAME="${ORIGINAL_ZIP_NAME/sailfishos-/sailfishos-docker-}"
 
         # Create new ZIP
         echo "Creating final ZIP: $FINAL_ZIP_NAME"
