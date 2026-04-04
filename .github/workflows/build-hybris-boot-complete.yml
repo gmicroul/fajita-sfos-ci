@@ -79,7 +79,7 @@ jobs:
         mkdir -p $ANDROID_ROOT
         cd $ANDROID_ROOT
         wget -O droid-boot.img \
-          "https://github.com/gmicroul/fajita-sfos-ci/releases/download/untagged-e1a944946961b0decc28/droid-boot.img"
+          "https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img"
         ls -lh droid-boot.img
 
     - name: Cache kernel build
