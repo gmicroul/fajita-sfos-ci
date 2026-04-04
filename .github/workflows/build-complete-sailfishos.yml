@@ -66,17 +66,9 @@ jobs:
           # List output directory
           sudo docker exec sailfish-sdk ls -ltrh /workspace/sfe-fajita-5.0.0.73/
 
-          # Copy all relevant files from Docker using docker cp
-          # Copy ZIP files
-          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/*.zip /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/ || true
-          # Copy IMG files
-          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/*.img /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/ || true
-          # Copy TAR.BZ2 files
-          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/*.tar.bz2 /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/ || true
-          # Copy checksum files
-          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/*.md5sum /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/ || true
-          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/*.sha1sum /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/ || true
-          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/*.sha256sum /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/ || true
+          # Copy all files from Docker using docker cp
+          # docker cp doesn't support wildcards, so copy the entire directory
+          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/ /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
 
           # List copied files
           ls -lh /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
