@@ -92,7 +92,7 @@ jobs:
       - name: Upload SailfishOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sailfishos-${{ env.DEVICE }}-${{ env.RELEASE }}
+          name: sailfishos-artifacts
           path: /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
           retention-days: 30
           if-no-files-found: error
@@ -378,14 +378,14 @@ jobs:
     - name: Upload hybris-boot.img
       uses: actions/upload-artifact@v4
       with:
-        name: hybris-boot-${{ env.DEVICE }}-${{ env.RELEASE }}
+        name: hybris-boot-artifact
         path: ${{ env.ANDROID_ROOT }}/hybris-boot.img
         retention-days: 30
 
     - name: Upload kernel image
       uses: actions/upload-artifact@v4
       with:
-        name: kernel-${{ env.DEVICE }}-${{ env.RELEASE }}
+        name: kernel-image-artifact
         path: ${{ env.ANDROID_ROOT }}/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz
         retention-days: 30
 
@@ -412,7 +412,7 @@ jobs:
     - name: Upload kernel config artifact
       uses: actions/upload-artifact@v4
       with:
-        name: kernel-config-${{ env.DEVICE }}
+        name: kernel-config-artifact
         path: ${{ env.ANDROID_ROOT }}/output/kernel.config
         retention-days: 30
 
@@ -431,25 +431,25 @@ jobs:
     - name: Download SailfishOS artifact
       uses: actions/download-artifact@v4
       with:
-        name: sailfishos-${{ env.DEVICE }}-${{ env.RELEASE }}
+        name: sailfishos-artifacts
         path: ./artifacts/sailfishos
 
     - name: Download hybris-boot artifact
       uses: actions/download-artifact@v4
       with:
-        name: hybris-boot-${{ env.DEVICE }}-${{ env.RELEASE }}
+        name: hybris-boot-artifact
         path: ./artifacts/kernel
 
     - name: Download kernel image artifact
       uses: actions/download-artifact@v4
       with:
-        name: kernel-${{ env.DEVICE }}-${{ env.RELEASE }}
+        name: kernel-image-artifact
         path: ./artifacts/kernel
 
     - name: Download kernel config artifact
       uses: actions/download-artifact@v4
       with:
-        name: kernel-config-${{ env.DEVICE }}
+        name: kernel-config-artifact
         path: ./artifacts/kernel
 
     - name: List all artifacts
