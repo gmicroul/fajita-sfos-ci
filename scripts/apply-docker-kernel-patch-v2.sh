@@ -158,6 +158,9 @@ CONFIG_BTRFS_FS_POSIX_ACL=y
 # 禁用 EFI stub 避免链接错误
 CONFIG_EFI=n
 CONFIG_EFI_STUB=n
+
+# 禁用 WERROR 避免编译错误
+CONFIG_WERROR=n
 EOF
 
 echo "  已添加 Docker 内核选项"
