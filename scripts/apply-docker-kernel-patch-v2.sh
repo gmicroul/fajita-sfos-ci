@@ -22,14 +22,30 @@ else
     exit 1
 fi
 
-CONFIG_FILE="$KERNEL_DIR/arch/arm64/configs/fajita_defconfig"
-BACKUP_FILE="$KERNEL_DIR/arch/arm64/configs/fajita_defconfig.bak"
+# 查找正确的配置文件
+CONFIG_FILE=""
+for config in "fajita_defconfig" "lineage_fajita_defconfig" "sdm845_defconfig"; do
+    if [ -f "$KERNEL_DIR/arch/arm64/configs/$config" ]; then
+        CONFIG_FILE="$KERNEL_DIR/arch/arm64/configs/$config"
+        BACKUP_FILE="$KERNEL_DIR/arch/arm64/configs/$config.bak"
+        echo "找到配置文件: $config"
+        break
+    fi
+done
+
+if [ -z "$CONFIG_FILE" ]; then
+    echo "错误：未找到配置文件"
+    echo "可用的配置文件："
+    ls -1 "$KERNEL_DIR/arch/arm64/configs/" | grep "_defconfig" | head -10
+    exit 1
+fi
 
 echo "=========================================="
 echo "Docker 内核补丁脚本 v2"
 echo "=========================================="
 echo ""
 echo "内核目录: $KERNEL_DIR"
+echo "配置文件: $CONFIG_FILE"
 echo ""
 
 cd "$KERNEL_DIR"
