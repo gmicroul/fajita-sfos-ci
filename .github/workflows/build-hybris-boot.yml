@@ -121,55 +121,8 @@ jobs:
 
         echo "Using defconfig: $DEFCONFIG"
 
-        # Backup original config
-        cp arch/arm64/configs/$DEFCONFIG arch/arm64/configs/$DEFCONFIG.bak
-
-        # Add Docker kernel options v2 - 基于一加6T实际检查结果
-        cat >> arch/arm64/configs/$DEFCONFIG << 'EOF'
-
-        # Docker support v2 - 基于一加6T实际检查结果
-
-        # Generally Necessary - 网络过滤
-        CONFIG_BRIDGE_NETFILTER=y
-        CONFIG_IP6_NF_TARGET_MASQUERADE=y
-        CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y
-        CONFIG_NETFILTER_XT_MATCH_IPVS=y
-
-        # Generally Necessary - 其他
-        CONFIG_POSIX_MQUEUE=y
-        CONFIG_IP6_NF_NAT=y
-
-        # Optional Features - 存储和IO
-        CONFIG_CFQ_GROUP_IOSCHED=y
-        CONFIG_BLK_CGROUP=y
-        CONFIG_BLK_DEV_THROTTLING=y
-
-        # Optional Features - Cgroups
-        CONFIG_CGROUP_PERF=y
-        CONFIG_CGROUP_HUGETLB=y
-        CONFIG_CGROUP_NET_PRIO=y
-        CONFIG_CFS_BANDWIDTH=y
-
-        # Optional Features - 安全
-        CONFIG_SECURITY_APPARMOR=y
-
-        # Optional Features - 文件系统
-        CONFIG_EXT4_FS_POSIX_ACL=y
-
-        # Optional Features - 网络驱动
-        CONFIG_VXLAN=y
-        CONFIG_BRIDGE_VLAN_FILTERING=y
-        CONFIG_IPVLAN=y
-        CONFIG_DUMMY=y
-
-        # Optional Features - 存储驱动
-        CONFIG_BTRFS_FS=y
-        CONFIG_BTRFS_FS_POSIX_ACL=y
-
-        # 禁用 EFI stub 避免链接错误
-        CONFIG_EFI=n
-        CONFIG_EFI_STUB=n
-        EOF
+        # Apply Docker kernel patch using the script
+        bash $GITHUB_WORKSPACE/scripts/apply-docker-kernel-patch-v2.sh
 
         # Show added config
         tail -50 arch/arm64/configs/$DEFCONFIG
