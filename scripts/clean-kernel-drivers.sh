@@ -33,45 +33,10 @@ cd "$KERNEL_DIR"
 
 echo "1. 修复编译错误（修复 include 路径）..."
 
-# 修复 btfm_slim.c 的 include 路径
-if [ -f "drivers/bluetooth/btfm_slim.c" ]; then
-  echo "  - 修复 btfm_slim.c 的 include 路径"
-  sed -i 's/#include <btfm_slim\.h>/#include "btfm_slim.h"/g' drivers/bluetooth/btfm_slim.c || true
-  sed -i 's/#include <btfm_slim_wcn3990\.h>/#include "btfm_slim_wcn3990.h"/g' drivers/bluetooth/btfm_slim.c || true
-  sed -i 's/#include <btfm_slim_wcn3998\.h>/#include "btfm_slim_wcn3998.h"/g' drivers/bluetooth/btfm_slim.c || true
-  # 修复所有 btfm_*.h 的 include 路径
-  sed -i 's/#include <btfm_/#include "btfm_/g' drivers/bluetooth/btfm_slim.c || true
-  sed -i 's/btfm_\.h>/btfm_.h"/g' drivers/bluetooth/btfm_slim.c || true
-fi
-
-# 修复 btfm_slim_wcn3990.h 的 include 路径
-if [ -f "drivers/bluetooth/btfm_slim_wcn3990.h" ]; then
-  echo "  - 修复 btfm_slim_wcn3990.h 的 include 路径"
-  sed -i 's/#include <btfm_slim\.h>/#include "btfm_slim.h"/g' drivers/bluetooth/btfm_slim_wcn3990.h || true
-  # 修复所有 btfm_*.h 的 include 路径
-  sed -i 's/#include <btfm_/#include "btfm_/g' drivers/bluetooth/btfm_slim_wcn3990.h || true
-  sed -i 's/btfm_\.h>/btfm_.h"/g' drivers/bluetooth/btfm_slim_wcn3990.h || true
-fi
-
-# 修复 btfm_slim_wcn3998.h 的 include 路径
-if [ -f "drivers/bluetooth/btfm_slim_wcn3998.h" ]; then
-  echo "  - 修复 btfm_slim_wcn3998.h 的 include 路径"
-  sed -i 's/#include <btfm_slim\.h>/#include "btfm_slim.h"/g' drivers/bluetooth/btfm_slim_wcn3998.h || true
-  # 修复所有 btfm_*.h 的 include 路径
-  sed -i 's/#include <btfm_/#include "btfm_/g' drivers/bluetooth/btfm_slim_wcn3998.h || true
-  sed -i 's/btfm_\.h>/btfm_.h"/g' drivers/bluetooth/btfm_slim_wcn3998.h || true
-fi
-
-# 修复其他可能的 include 路径问题
-if [ -f "drivers/bluetooth/bluetooth-power.c" ]; then
-  echo "  - 修复 bluetooth-power.c 的 include 路径"
-  sed -i 's/#include <btfm_slim\.h>/#include "btfm_slim.h"/g' drivers/bluetooth/bluetooth-power.c || true
-  sed -i 's/#include <btfm_slim_wcn3990\.h>/#include "btfm_slim_wcn3990.h"/g' drivers/bluetooth/bluetooth-power.c || true
-  sed -i 's/#include <btfm_slim_wcn3998\.h>/#include "btfm_slim_wcn3998.h"/g' drivers/bluetooth/bluetooth-power.c || true
-  # 修复所有 btfm_*.h 的 include 路径
-  sed -i 's/#include <btfm_/#include "btfm_/g' drivers/bluetooth/bluetooth-power.c || true
-  sed -i 's/btfm_\.h>/btfm_.h"/g' drivers/bluetooth/bluetooth-power.c || true
-fi
+# 修复所有蓝牙驱动文件中的 include 路径
+echo "  - 修复 drivers/bluetooth/ 目录下所有文件的 include 路径"
+find drivers/bluetooth/ -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/#include <btfm_/#include "btfm_/g' {} \; || true
+find drivers/bluetooth/ -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/btfm_\.h>/btfm_.h"/g' {} \; || true
 
 echo ""
 echo "=========================================="
