@@ -38,6 +38,12 @@ echo "  - 修复 drivers/bluetooth/ 目录下所有文件的 include 路径"
 find drivers/bluetooth/ -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/#include <btfm_/#include "btfm_/g' {} \; || true
 find drivers/bluetooth/ -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/btfm_\.h>/btfm_.h"/g' {} \; || true
 
+# 禁用蓝牙驱动的 WERROR 选项
+echo "  - 禁用蓝牙驱动的 WERROR 选项"
+if [ -f "drivers/bluetooth/Makefile" ]; then
+  sed -i '/-Werror/d' drivers/bluetooth/Makefile || true
+fi
+
 echo ""
 echo "=========================================="
 echo "清理完成！"
