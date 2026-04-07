@@ -168,8 +168,11 @@ jobs:
         # Temporarily disable driver cleaning to test boot
         # bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
-        # Build kernel only (skip device tree to avoid interposer errors)
+        # Build kernel
         make -j$(nproc) Image.gz
+
+        # Build device tree
+        make -j$(nproc) dtbs
 
         # Check if kernel image was built
         if [ ! -f arch/arm64/boot/Image.gz ]; then
@@ -178,6 +181,20 @@ jobs:
         fi
 
         ls -lh arch/arm64/boot/Image.gz
+
+        # Find device tree file
+        DTB_FILE=$(find arch/arm64/boot/dts -name "*fajita*.dtb" | head -1)
+        if [ -z "$DTB_FILE" ]; then
+          DTB_FILE=$(find arch/arm64/boot/dts -name "*sdm845*.dtb" | head -1)
+        fi
+
+        if [ -z "$DTB_FILE" ]; then
+          echo "Error: Device tree file not found"
+          exit 1
+        fi
+
+        echo "Device tree file: $DTB_FILE"
+        ls -lh "$DTB_FILE"
 
     - name: Download original boot.img
       run: |
@@ -215,7 +232,7 @@ jobs:
         echo "Boot configuration:"
         cat bootimg.cfg
 
-    - name: Replace kernel
+    - name: Replace kernel and device tree
       run: |
         cd $ANDROID_ROOT/boot-repack
 
@@ -223,8 +240,24 @@ jobs:
         echo "Replacing kernel..."
         cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz kernel
 
+        # Find device tree file
+        DTB_FILE=$(find $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/dts -name "*fajita*.dtb" | head -1)
+        if [ -z "$DTB_FILE" ]; then
+          DTB_FILE=$(find $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/dts -name "*sdm845*.dtb" | head -1)
+        fi
+
+        if [ -z "$DTB_FILE" ]; then
+          echo "Error: Device tree file not found"
+          exit 1
+        fi
+
+        echo "Replacing device tree..."
+        echo "Device tree file: $DTB_FILE"
+        cp "$DTB_FILE" dtb
+
         # Verify
         ls -lh kernel
+        ls -lh dtb
 
     - name: Repack boot.img
       run: |
