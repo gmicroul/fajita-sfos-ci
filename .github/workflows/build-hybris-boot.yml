@@ -165,9 +165,6 @@ jobs:
         # Build kernel
         make $DEFCONFIG
 
-        # Temporarily disable driver cleaning to test boot
-        # bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
-
         # Build kernel
         make -j$(nproc) Image.gz
 
@@ -190,11 +187,17 @@ jobs:
 
         if [ -z "$DTB_FILE" ]; then
           echo "Error: Device tree file not found"
+          echo "Available DTB files:"
+          find arch/arm64/boot/dts -name "*.dtb" | head -20
           exit 1
         fi
 
         echo "Device tree file: $DTB_FILE"
         ls -lh "$DTB_FILE"
+
+        # Show device tree model
+        echo "Device tree model:"
+        dtc -I dtb -O dts "$DTB_FILE" | grep -E "model|compatible" | head -10
 
     - name: Download original boot.img
       run: |
