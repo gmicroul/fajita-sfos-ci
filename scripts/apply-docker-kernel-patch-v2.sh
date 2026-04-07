@@ -5,21 +5,32 @@
 
 set -e
 
-KERNEL_DIR="kernel/oneplus/sdm845"
-CONFIG_FILE="arch/arm64/configs/fajita_defconfig"
-BACKUP_FILE="arch/arm64/configs/fajita_defconfig.bak"
+# 检查是否在内核目录中（检查是否有 arch/arm64/configs 目录）
+if [ -d "arch/arm64/configs" ]; then
+    # 已经在内核目录中
+    KERNEL_DIR="."
+    echo "检测到当前目录是内核目录"
+elif [ -d "kernel/oneplus/sdm845" ]; then
+    # 在 Android 源码根目录中
+    KERNEL_DIR="kernel/oneplus/sdm845"
+    echo "检测到当前目录是 Android 源码根目录"
+else
+    echo "错误：未找到内核目录"
+    echo "请确保在以下目录之一中运行此脚本："
+    echo "  1. 内核目录（包含 arch/arm64/configs）"
+    echo "  2. Android 源码根目录（包含 kernel/oneplus/sdm845）"
+    exit 1
+fi
+
+CONFIG_FILE="$KERNEL_DIR/arch/arm64/configs/fajita_defconfig"
+BACKUP_FILE="$KERNEL_DIR/arch/arm64/configs/fajita_defconfig.bak"
 
 echo "=========================================="
 echo "Docker 内核补丁脚本 v2"
 echo "=========================================="
 echo ""
-
-# 检查是否在 Android 源码目录中
-if [ ! -d "$KERNEL_DIR" ]; then
-    echo "错误：未找到内核目录 $KERNEL_DIR"
-    echo "请确保在 Android 源码根目录中运行此脚本"
-    exit 1
-fi
+echo "内核目录: $KERNEL_DIR"
+echo ""
 
 cd "$KERNEL_DIR"
 
