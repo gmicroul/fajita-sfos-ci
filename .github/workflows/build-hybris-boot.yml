@@ -165,6 +165,9 @@ jobs:
         # Build kernel
         make $DEFCONFIG
 
+        # Clean problematic drivers to avoid compilation errors
+        bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+
         # Build kernel
         make -j$(nproc) Image.gz
 
