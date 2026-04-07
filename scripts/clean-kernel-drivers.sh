@@ -42,6 +42,11 @@ find drivers/bluetooth/ -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
   sed -i '/-Werror/d' drivers/bluetooth/Makefile || true
+  sed -i '/WERROR/d' drivers/bluetooth/Makefile || true
+  # 添加 -Wno-error 到编译选项
+  if ! grep -q "EXTRA_CFLAGS" drivers/bluetooth/Makefile; then
+    echo "EXTRA_CFLAGS += -Wno-error" >> drivers/bluetooth/Makefile
+  fi
 fi
 
 echo ""
