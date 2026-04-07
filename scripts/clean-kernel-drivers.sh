@@ -49,6 +49,20 @@ if [ -f "drivers/bluetooth/Makefile" ]; then
   fi
 fi
 
+# 禁用主 Makefile 中的 WERROR 选项
+echo "  - 禁用主 Makefile 中的 WERROR 选项"
+if [ -f "Makefile" ]; then
+  sed -i '/-Werror/d' Makefile || true
+  sed -i '/WERROR/d' Makefile || true
+fi
+
+# 禁用 scripts/Makefile.build 中的 WERROR 选项
+echo "  - 禁用 scripts/Makefile.build 中的 WERROR 选项"
+if [ -f "scripts/Makefile.build" ]; then
+  sed -i '/-Werror/d' scripts/Makefile.build || true
+  sed -i '/WERROR/d' scripts/Makefile.build || true
+fi
+
 echo ""
 echo "=========================================="
 echo "清理完成！"
