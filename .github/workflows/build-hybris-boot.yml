@@ -159,8 +159,8 @@ jobs:
         # Build kernel
         make $DEFCONFIG
 
-        # Clean problematic drivers
-        bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+        # Temporarily disable driver cleaning to test boot
+        # bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
         # Build kernel only (skip device tree to avoid interposer errors)
         make -j$(nproc) Image.gz
@@ -224,9 +224,50 @@ jobs:
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Repack boot.img
+        # Read bootimg.cfg and extract parameters
+        echo "Reading boot configuration..."
+        BASE=$(grep "^base" bootimg.cfg | awk '{print $2}')
+        PAGESIZE=$(grep "^pagesize" bootimg.cfg | awk '{print $2}')
+        KERNEL_OFFSET=$(grep "^kernel_offset" bootimg.cfg | awk '{print $2}')
+        RAMDISK_OFFSET=$(grep "^ramdisk_offset" bootimg.cfg | awk '{print $2}')
+        SECOND_OFFSET=$(grep "^second_offset" bootimg.cfg | awk '{print $2}')
+        TAGS_OFFSET=$(grep "^tags_offset" bootimg.cfg | awk '{print $2}')
+        DTB_OFFSET=$(grep "^dtb_offset" bootimg.cfg | awk '{print $2}')
+        CMDLINE=$(grep "^cmdline" bootimg.cfg | sed 's/cmdline //')
+
+        echo "Boot parameters:"
+        echo "  BASE=$BASE"
+        echo "  PAGESIZE=$PAGESIZE"
+        echo "  KERNEL_OFFSET=$KERNEL_OFFSET"
+        echo "  RAMDISK_OFFSET=$RAMDISK_OFFSET"
+        echo "  SECOND_OFFSET=$SECOND_OFFSET"
+        echo "  TAGS_OFFSET=$TAGS_OFFSET"
+        echo "  DTB_OFFSET=$DTB_OFFSET"
+        echo "  CMDLINE=$CMDLINE"
+
+        # Check if DTB exists
+        if [ -f "dtb" ]; then
+          DTB_PARAM="--dtb dtb"
+          echo "Using DTB from unpacked boot.img"
+        else
+          DTB_PARAM=""
+          echo "No DTB found, skipping"
+        fi
+
+        # Repack boot.img using command line parameters
         echo "Repacking boot.img..."
-        mkbootimg --config bootimg.cfg --output hybris-boot.img
+        mkbootimg \
+          --kernel kernel \
+          --ramdisk ramdisk \
+          --cmdline "$CMDLINE" \
+          --base "$BASE" \
+          --pagesize "$PAGESIZE" \
+          --kernel_offset "$KERNEL_OFFSET" \
+          --ramdisk_offset "$RAMDISK_OFFSET" \
+          --second_offset "$SECOND_OFFSET" \
+          --tags_offset "$TAGS_OFFSET" \
+          $DTB_PARAM \
+          --output hybris-boot.img
 
         # Verify
         ls -lh hybris-boot.img
