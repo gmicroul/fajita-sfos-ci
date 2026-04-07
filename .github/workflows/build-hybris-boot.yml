@@ -173,56 +173,70 @@ jobs:
 
         ls -lh arch/arm64/boot/Image.gz
 
-    - name: Create boot image
+    - name: Download original boot.img
       run: |
         cd $ANDROID_ROOT
+        mkdir -p boot-repack
+        cd boot-repack
 
-        # Create output directory
-        mkdir -p output
+        # Download original boot.img from GitHub Releases
+        echo "Downloading original boot.img..."
+        wget -O droid-boot.img \
+          https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot-new.img
 
-        # Copy kernel image
-        cp kernel/oneplus/sdm845/arch/arm64/boot/Image.gz output/
+        # Verify download
+        ls -lh droid-boot.img
+        file droid-boot.img
 
-        # Note: For a complete boot image, you would need:
-        # - Original boot.img from device
-        # - mkbootimg tool to repack
-        # This is a simplified version that just builds the kernel
-
-        echo "Kernel image extracted to output/Image.gz-dtb"
-        ls -lh output/
-
-    - name: Upload kernel image
-      uses: actions/upload-artifact@v4
-      with:
-        name: kernel-${{ env.DEVICE }}-${{ env.RELEASE }}
-        path: output/Image.gz
-        retention-days: 30
-
-    - name: Upload kernel config
+    - name: Install mkbootimg
       run: |
-        cd $ANDROID_ROOT/kernel/oneplus/sdm845/
+        sudo apt-get update
+        sudo apt-get install -y mkbootimg
 
-        # Find the correct defconfig
-        if [ -f arch/arm64/configs/fajita_defconfig ]; then
-          DEFCONFIG=fajita_defconfig
-        elif [ -f arch/arm64/configs/lineage_fajita_defconfig ]; then
-          DEFCONFIG=lineage_fajita_defconfig
-        elif [ -f arch/arm64/configs/sdm845_defconfig ]; then
-          DEFCONFIG=sdm845_defconfig
-        else
-          echo "Error: No suitable defconfig found for fajita"
-          exit 1
-        fi
+    - name: Unpack original boot.img
+      run: |
+        cd $ANDROID_ROOT/boot-repack
 
-        # Copy config to output
-        mkdir -p $ANDROID_ROOT/output
-        cp arch/arm64/configs/$DEFCONFIG $ANDROID_ROOT/output/kernel.config
+        # Unpack boot.img
+        echo "Unpacking boot.img..."
+        mkbootimg --unpack droid-boot.img
 
-    - name: Upload kernel config artifact
+        # Show unpacked files
+        echo "Unpacked files:"
+        ls -lh
+
+        # Show bootimg.cfg
+        echo "Boot configuration:"
+        cat bootimg.cfg
+
+    - name: Replace kernel
+      run: |
+        cd $ANDROID_ROOT/boot-repack
+
+        # Copy new kernel
+        echo "Replacing kernel..."
+        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz kernel
+
+        # Verify
+        ls -lh kernel
+
+    - name: Repack boot.img
+      run: |
+        cd $ANDROID_ROOT/boot-repack
+
+        # Repack boot.img
+        echo "Repacking boot.img..."
+        mkbootimg --config bootimg.cfg --output hybris-boot.img
+
+        # Verify
+        ls -lh hybris-boot.img
+        file hybris-boot.img
+
+    - name: Upload boot image
       uses: actions/upload-artifact@v4
       with:
-        name: kernel-config-${{ env.DEVICE }}
-        path: ${{ env.ANDROID_ROOT }}/output/kernel.config
+        name: boot-${{ env.DEVICE }}-${{ env.RELEASE }}
+        path: ${{ env.ANDROID_ROOT }}/boot-repack/hybris-boot.img
         retention-days: 30
 
     - name: Generate build summary
@@ -249,18 +263,30 @@ jobs:
         echo "- **Docker Support**: Enabled" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
-        echo "- Image.gz-dtb (kernel image)" >> $GITHUB_STEP_SUMMARY
+        echo "- hybris-boot.img (complete boot image with Docker support)" >> $GITHUB_STEP_SUMMARY
+        echo "- Image.gz (kernel image)" >> $GITHUB_STEP_SUMMARY
         echo "- kernel config" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Note" >> $GITHUB_STEP_SUMMARY
-        echo "This workflow builds only the kernel. To create a complete boot.img," >> $GITHUB_STEP_SUMMARY
-        echo "you need to repack it with mkbootimg using the original boot image from your device." >> $GITHUB_STEP_SUMMARY
-
-        # Remove Kconfig reference to deleted vidc directory
-        sed -i '/source "drivers\/media\/platform\/msm\/vidc\/Kconfig"/d' drivers/media/platform/msm/Kconfig || true
-
-        # Remove Kconfig reference to deleted esoc directory
-        sed -i '/source "drivers\/esoc\/Kconfig"/d' drivers/Kconfig || true
-
-        # Remove Kconfig reference to deleted ipc_router directory
-        sed -i '/source "net\/ipc_router\/Kconfig"/d' net/Kconfig || true
+        echo "### Flash Instructions" >> $GITHUB_STEP_SUMMARY
+        echo "1. Download hybris-boot.img from artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "2. Reboot to bootloader:" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "   adb reboot bootloader" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "3. Flash boot image:" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "   fastboot flash boot hybris-boot.img" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "4. Reboot:" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "   fastboot reboot" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "5. Enable network forwarding:" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "   sudo sysctl -w net.ipv4.ip_forward=1" >> $GITHUB_STEP_SUMMARY
+        echo "   sudo sysctl -w net.ipv6.conf.all.forwarding=1" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "6. Verify Docker:" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "   docker run --rm hello-world" >> $GITHUB_STEP_SUMMARY
+        echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
