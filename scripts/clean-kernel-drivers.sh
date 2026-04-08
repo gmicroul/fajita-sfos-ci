@@ -55,33 +55,31 @@ sed -i '/mdss-dsi-pll-10nm/d' drivers/clk/qcom/mdss/Makefile || true
 echo ""
 echo "3. 删除有问题的 kgsl GPU 驱动..."
 
-# 删除 kgsl_trace.c（依赖于不存在的 kgsl_trace.h）
-echo "  - 删除 kgsl_trace.c"
+# 删除所有 kgsl 相关文件（依赖于不存在的头文件和函数）
+echo "  - 删除所有 kgsl 相关文件"
 rm -rf drivers/gpu/msm/kgsl_trace.c || true
-sed -i '/kgsl_trace/d' drivers/gpu/msm/Makefile || true
-
-# 删除 kgsl_events.c（依赖于不存在的 kgsl_device.h）
-echo "  - 删除 kgsl_events.c"
 rm -rf drivers/gpu/msm/kgsl_events.c || true
-sed -i '/kgsl_events/d' drivers/gpu/msm/Makefile || true
-
-# 删除 kgsl.c（依赖于不存在的头文件）
-echo "  - 删除 kgsl.c"
 rm -rf drivers/gpu/msm/kgsl.c || true
-sed -i '/kgsl\.o/d' drivers/gpu/msm/Makefile || true
+rm -rf drivers/gpu/msm/kgsl_gmu.c || true
+rm -rf drivers/gpu/msm/kgsl_iommu.c || true
+rm -rf drivers/gpu/msm/kgsl_debugfs.c || true
+rm -rf drivers/gpu/msm/kgsl_sync.c || true
+rm -rf drivers/gpu/msm/kgsl_compat.c || true
+sed -i '/kgsl/d' drivers/gpu/msm/Makefile || true
 
 echo ""
 echo "4. 删除有问题的 adreno GPU 驱动..."
 
-# 删除 adreno_trace.c（依赖于不存在的 adreno_trace.h）
-echo "  - 删除 adreno_trace.c"
+# 删除所有 adreno 相关文件（依赖于不存在的头文件和函数）
+echo "  - 删除所有 adreno 相关文件"
 rm -rf drivers/gpu/msm/adreno_trace.c || true
-sed -i '/adreno_trace/d' drivers/gpu/msm/Makefile || true
-
-# 删除 adreno.c（依赖于不存在的头文件）
-echo "  - 删除 adreno.c"
 rm -rf drivers/gpu/msm/adreno.c || true
-sed -i '/adreno\.o/d' drivers/gpu/msm/Makefile || true
+sed -i '/adreno/d' drivers/gpu/msm/Makefile || true
+
+# 删除整个 msm GPU 驱动目录（如果为空）
+echo "  - 删除 msm GPU 驱动目录"
+rm -rf drivers/gpu/msm || true
+sed -i '/msm/d' drivers/gpu/Makefile || true
 
 echo ""
 echo "5. 删除有问题的摄像头驱动..."
@@ -170,6 +168,20 @@ echo "  - 删除 smb-lib 驱动"
 rm -rf drivers/power/supply/qcom/smb-lib.c || true
 sed -i '/smb-lib/d' drivers/power/supply/qcom/Makefile || true
 
+echo ""
+echo "10. 删除有问题的 coresight 驱动..."
+
+# 删除 coresight-tmc 驱动（依赖于 usb_qdss 函数）
+echo "  - 删除 coresight-tmc 驱动"
+rm -rf drivers/hwtracing/coresight/coresight-tmc.c || true
+rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
+sed -i '/coresight-tmc/d' drivers/hwtracing/coresight/Makefile || true
+
+# 删除整个 coresight 目录（如果为空）
+echo "  - 删除 coresight 目录"
+rm -rf drivers/hwtracing/coresight || true
+sed -i '/coresight/d' drivers/hwtracing/Makefile || true
+
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
@@ -206,11 +218,9 @@ echo "已删除的驱动："
 echo "  - btfm_slim.c (蓝牙 SLIM 总线驱动)"
 echo "  - bluetooth-power.c (蓝牙电源管理)"
 echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
-echo "  - kgsl_trace.c (KGSL GPU trace)"
-echo "  - kgsl_events.c (KGSL GPU 事件)"
-echo "  - kgsl.c (KGSL GPU 核心)"
-echo "  - adreno_trace.c (Adreno GPU trace)"
-echo "  - adreno.c (Adreno GPU 核心)"
+echo "  - 所有 kgsl 相关文件 (KGSL GPU 驱动)"
+echo "  - 所有 adreno 相关文件 (Adreno GPU 驱动)"
+echo "  - drivers/gpu/msm (MSM GPU 驱动目录)"
 echo "  - drivers/media/platform/msm/camera (摄像头驱动)"
 echo "  - drivers/platform/msm/ipa (IPA 网络加速器)"
 echo "  - tracer_pkt.c (数据包追踪驱动)"
@@ -220,6 +230,9 @@ echo "  - usb_bam.c (USB BAM 驱动)"
 echo "  - qpnp-fg-gen3.c (电源管理驱动)"
 echo "  - qpnp-smb2.c (电源管理驱动)"
 echo "  - smb-lib.c (电源管理驱动)"
+echo "  - coresight-tmc.c (coresight 调试驱动)"
+echo "  - coresight-tmc-etr.c (coresight 调试驱动)"
+echo "  - drivers/hwtracing/coresight (coresight 目录)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
