@@ -175,7 +175,7 @@ jobs:
         bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
         # Build kernel with stack protector disabled
-        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector" WERROR=0
+        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -Wno-error=implicit-function-declaration" WERROR=0 HOSTCFLAGS="-Wno-error"
 
         # Build device tree
         make -j$(nproc) dtbs
