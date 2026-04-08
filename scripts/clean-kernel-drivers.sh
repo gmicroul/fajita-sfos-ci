@@ -52,6 +52,24 @@ echo "  - 删除 mdss-dsi-pll-10nm 驱动"
 rm -rf drivers/clk/qcom/mdss/mdss-dsi-pll-10nm.c || true
 sed -i '/mdss-dsi-pll-10nm/d' drivers/clk/qcom/mdss/Makefile || true
 
+echo ""
+echo "3. 删除有问题的 kgsl GPU 驱动..."
+
+# 删除 kgsl_trace.c（依赖于不存在的 kgsl_trace.h）
+echo "  - 删除 kgsl_trace.c"
+rm -rf drivers/gpu/msm/kgsl_trace.c || true
+sed -i '/kgsl_trace/d' drivers/gpu/msm/Makefile || true
+
+# 删除 kgsl_events.c（依赖于不存在的 kgsl_device.h）
+echo "  - 删除 kgsl_events.c"
+rm -rf drivers/gpu/msm/kgsl_events.c || true
+sed -i '/kgsl_events/d' drivers/gpu/msm/Makefile || true
+
+# 删除 kgsl.c（依赖于不存在的头文件）
+echo "  - 删除 kgsl.c"
+rm -rf drivers/gpu/msm/kgsl.c || true
+sed -i '/kgsl\.o/d' drivers/gpu/msm/Makefile || true
+
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
@@ -88,6 +106,9 @@ echo "已删除的驱动："
 echo "  - btfm_slim.c (蓝牙 SLIM 总线驱动)"
 echo "  - bluetooth-power.c (蓝牙电源管理)"
 echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
+echo "  - kgsl_trace.c (KGSL GPU trace)"
+echo "  - kgsl_events.c (KGSL GPU 事件)"
+echo "  - kgsl.c (KGSL GPU 核心)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
