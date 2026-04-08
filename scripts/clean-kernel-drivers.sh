@@ -70,6 +70,19 @@ echo "  - 删除 kgsl.c"
 rm -rf drivers/gpu/msm/kgsl.c || true
 sed -i '/kgsl\.o/d' drivers/gpu/msm/Makefile || true
 
+echo ""
+echo "4. 删除有问题的 adreno GPU 驱动..."
+
+# 删除 adreno_trace.c（依赖于不存在的 adreno_trace.h）
+echo "  - 删除 adreno_trace.c"
+rm -rf drivers/gpu/msm/adreno_trace.c || true
+sed -i '/adreno_trace/d' drivers/gpu/msm/Makefile || true
+
+# 删除 adreno.c（依赖于不存在的头文件）
+echo "  - 删除 adreno.c"
+rm -rf drivers/gpu/msm/adreno.c || true
+sed -i '/adreno\.o/d' drivers/gpu/msm/Makefile || true
+
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
@@ -109,6 +122,8 @@ echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
 echo "  - kgsl_trace.c (KGSL GPU trace)"
 echo "  - kgsl_events.c (KGSL GPU 事件)"
 echo "  - kgsl.c (KGSL GPU 核心)"
+echo "  - adreno_trace.c (Adreno GPU trace)"
+echo "  - adreno.c (Adreno GPU 核心)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
