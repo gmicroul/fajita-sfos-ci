@@ -54,6 +54,7 @@ echo "  - 禁用主 Makefile 中的 WERROR 选项"
 if [ -f "Makefile" ]; then
   sed -i 's/-Werror//g' Makefile || true
   sed -i 's/WERROR=y/WERROR=n/g' Makefile || true
+  sed -i 's/-implicit-function-declaration//g' Makefile || true
 fi
 
 # 禁用 scripts/Makefile.build 中的 WERROR 选项
@@ -61,6 +62,7 @@ echo "  - 禁用 scripts/Makefile.build 中的 WERROR 选项"
 if [ -f "scripts/Makefile.build" ]; then
   sed -i 's/-Werror//g' scripts/Makefile.build || true
   sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build || true
+  sed -i 's/-implicit-function-declaration//g' scripts/Makefile.build || true
 fi
 
 echo ""
