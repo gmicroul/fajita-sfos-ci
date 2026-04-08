@@ -11,13 +11,6 @@ on:
         description: 'SailfishOS release version'
         required: true
         default: '5.0.0.73'
-  push:
-    branches: [ main, master ]
-    paths:
-      - 'fajita-sfos-ci/**'
-      - '.github/workflows/build-hybris-boot.yml'
-      - '.github/workflows/main.yml'
-      - 'scripts/clean-kernel-drivers.sh'
 
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}
