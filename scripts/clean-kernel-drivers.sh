@@ -91,6 +91,14 @@ echo "  - 删除摄像头驱动目录"
 rm -rf drivers/media/platform/msm/camera || true
 sed -i '/camera/d' drivers/media/platform/msm/Makefile || true
 
+echo ""
+echo "6. 删除有问题的 IPA 驱动..."
+
+# 删除整个 IPA 驱动目录（依赖于不存在的头文件）
+echo "  - 删除 IPA 驱动目录"
+rm -rf drivers/platform/msm/ipa || true
+sed -i '/ipa/d' drivers/platform/msm/Makefile || true
+
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
@@ -133,6 +141,7 @@ echo "  - kgsl.c (KGSL GPU 核心)"
 echo "  - adreno_trace.c (Adreno GPU trace)"
 echo "  - adreno.c (Adreno GPU 核心)"
 echo "  - drivers/media/platform/msm/camera (摄像头驱动)"
+echo "  - drivers/platform/msm/ipa (IPA 网络加速器)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
