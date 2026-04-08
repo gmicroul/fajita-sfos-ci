@@ -116,6 +116,60 @@ echo "  - 删除 configfs 驱动"
 rm -rf drivers/usb/gadget/configfs.c || true
 sed -i '/configfs/d' drivers/usb/gadget/Makefile || true
 
+# 删除所有 USB gadget function 驱动（依赖于不存在的函数）
+echo "  - 删除 USB gadget function 驱动"
+rm -rf drivers/usb/gadget/function/f_mtp.c || true
+rm -rf drivers/usb/gadget/function/f_ptp.c || true
+rm -rf drivers/usb/gadget/function/f_ncm.c || true
+rm -rf drivers/usb/gadget/function/f_mass_storage.c || true
+rm -rf drivers/usb/gadget/function/f_fs.c || true
+rm -rf drivers/usb/gadget/function/f_midi.c || true
+rm -rf drivers/usb/gadget/function/f_hid.c || true
+rm -rf drivers/usb/gadget/function/f_audio_source.c || true
+rm -rf drivers/usb/gadget/function/f_accessory.c || true
+rm -rf drivers/usb/gadget/function/f_diag.c || true
+rm -rf drivers/usb/gadget/function/f_cdev.c || true
+rm -rf drivers/usb/gadget/function/f_ccid.c || true
+rm -rf drivers/usb/gadget/function/f_gsi.c || true
+rm -rf drivers/usb/gadget/function/f_qdss.c || true
+sed -i '/f_mtp/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_ptp/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_ncm/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_mass_storage/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_fs/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_midi/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_hid/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_audio_source/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_accessory/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_diag/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_cdev/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_ccid/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_gsi/d' drivers/usb/gadget/function/Makefile || true
+sed -i '/f_qdss/d' drivers/usb/gadget/function/Makefile || true
+
+# 删除 USB BAM 驱动（依赖于 IPA）
+echo "  - 删除 USB BAM 驱动"
+rm -rf drivers/platform/msm/usb_bam.c || true
+sed -i '/usb_bam/d' drivers/platform/msm/Makefile || true
+
+echo ""
+echo "9. 删除有问题的电源管理驱动..."
+
+# 删除 qpnp-fg-gen3 驱动（依赖于外部函数）
+echo "  - 删除 qpnp-fg-gen3 驱动"
+rm -rf drivers/power/supply/qcom/qpnp-fg-gen3.c || true
+sed -i '/qpnp-fg-gen3/d' drivers/power/supply/qcom/Makefile || true
+
+# 删除 qpnp-smb2 驱动（依赖于外部函数）
+echo "  - 删除 qpnp-smb2 驱动"
+rm -rf drivers/power/supply/qcom/qpnp-smb2.c || true
+sed -i '/qpnp-smb2/d' drivers/power/supply/qcom/Makefile || true
+
+# 删除 smb-lib 驱动（依赖于外部函数）
+echo "  - 删除 smb-lib 驱动"
+rm -rf drivers/power/supply/qcom/smb-lib.c || true
+sed -i '/smb-lib/d' drivers/power/supply/qcom/Makefile || true
+
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
@@ -161,6 +215,11 @@ echo "  - drivers/media/platform/msm/camera (摄像头驱动)"
 echo "  - drivers/platform/msm/ipa (IPA 网络加速器)"
 echo "  - tracer_pkt.c (数据包追踪驱动)"
 echo "  - configfs.c (USB gadget configfs)"
+echo "  - USB gadget function 驱动 (f_mtp, f_ptp, f_ncm, f_mass_storage, f_fs, f_midi, f_hid, f_audio_source, f_accessory, f_diag, f_cdev, f_ccid, f_gsi, f_qdss)"
+echo "  - usb_bam.c (USB BAM 驱动)"
+echo "  - qpnp-fg-gen3.c (电源管理驱动)"
+echo "  - qpnp-smb2.c (电源管理驱动)"
+echo "  - smb-lib.c (电源管理驱动)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
