@@ -81,6 +81,10 @@ echo "  - 删除 msm GPU 驱动目录"
 rm -rf drivers/gpu/msm || true
 sed -i '/msm/d' drivers/gpu/Makefile || true
 
+# 清理 drivers/video/Kconfig 中的引用
+echo "  - 清理 drivers/video/Kconfig 中的引用"
+sed -i '/source "drivers\/gpu\/msm\/Kconfig"/d' drivers/video/Kconfig || true
+
 echo ""
 echo "5. 删除有问题的摄像头驱动..."
 
@@ -181,6 +185,10 @@ sed -i '/coresight-tmc/d' drivers/hwtracing/coresight/Makefile || true
 echo "  - 删除 coresight 目录"
 rm -rf drivers/hwtracing/coresight || true
 sed -i '/coresight/d' drivers/hwtracing/Makefile || true
+
+# 清理 arch/arm64/Kconfig.debug 中的引用
+echo "  - 清理 arch/arm64/Kconfig.debug 中的引用"
+sed -i '/source "drivers\/hwtracing\/coresight\/Kconfig"/d' arch/arm64/Kconfig.debug || true
 
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
