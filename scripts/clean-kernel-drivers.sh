@@ -108,6 +108,14 @@ rm -rf drivers/soc/qcom/tracer_pkt.c || true
 rm -rf drivers/soc/qcom/tracer_pkt_private.h || true
 sed -i '/tracer_pkt/d' drivers/soc/qcom/Makefile || true
 
+echo ""
+echo "8. 删除有问题的 USB gadget 驱动..."
+
+# 删除 configfs 驱动（依赖于不存在的 function/u_ncm.h）
+echo "  - 删除 configfs 驱动"
+rm -rf drivers/usb/gadget/configfs.c || true
+sed -i '/configfs/d' drivers/usb/gadget/Makefile || true
+
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
@@ -152,6 +160,7 @@ echo "  - adreno.c (Adreno GPU 核心)"
 echo "  - drivers/media/platform/msm/camera (摄像头驱动)"
 echo "  - drivers/platform/msm/ipa (IPA 网络加速器)"
 echo "  - tracer_pkt.c (数据包追踪驱动)"
+echo "  - configfs.c (USB gadget configfs)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
