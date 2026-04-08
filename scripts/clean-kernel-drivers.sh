@@ -52,6 +52,11 @@ echo "  - 删除 mdss-dsi-pll-10nm 驱动"
 rm -rf drivers/clk/qcom/mdss/mdss-dsi-pll-10nm.c || true
 sed -i '/mdss-dsi-pll-10nm/d' drivers/clk/qcom/mdss/Makefile || true
 
+# 删除 mdss-pll 驱动（依赖于 dsi_pll_clock_register_10nm）
+echo "  - 删除 mdss-pll 驱动"
+rm -rf drivers/clk/qcom/mdss/mdss-pll.c || true
+sed -i '/mdss-pll/d' drivers/clk/qcom/mdss/Makefile || true
+
 echo ""
 echo "3. 删除有问题的 kgsl GPU 驱动..."
 
@@ -109,6 +114,17 @@ echo "  - 删除 tracer_pkt 驱动"
 rm -rf drivers/soc/qcom/tracer_pkt.c || true
 rm -rf drivers/soc/qcom/tracer_pkt_private.h || true
 sed -i '/tracer_pkt/d' drivers/soc/qcom/Makefile || true
+
+# 删除 glink 驱动（依赖于 tracer_pkt）
+echo "  - 删除 glink 驱动"
+rm -rf drivers/soc/qcom/glink.c || true
+rm -rf drivers/soc/qcom/glink_loopback_server.c || true
+sed -i '/glink/d' drivers/soc/qcom/Makefile || true
+
+# 删除 diag_usb 驱动（依赖于 usb_diag 函数）
+echo "  - 删除 diag_usb 驱动"
+rm -rf drivers/char/diag/diag_usb.c || true
+sed -i '/diag_usb/d' drivers/char/diag/Makefile || true
 
 echo ""
 echo "8. 删除有问题的 USB gadget 驱动..."
@@ -226,12 +242,16 @@ echo "已删除的驱动："
 echo "  - btfm_slim.c (蓝牙 SLIM 总线驱动)"
 echo "  - bluetooth-power.c (蓝牙电源管理)"
 echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
+echo "  - mdss-pll.c (MDSS PLL 驱动)"
 echo "  - 所有 kgsl 相关文件 (KGSL GPU 驱动)"
 echo "  - 所有 adreno 相关文件 (Adreno GPU 驱动)"
 echo "  - drivers/gpu/msm (MSM GPU 驱动目录)"
 echo "  - drivers/media/platform/msm/camera (摄像头驱动)"
 echo "  - drivers/platform/msm/ipa (IPA 网络加速器)"
 echo "  - tracer_pkt.c (数据包追踪驱动)"
+echo "  - glink.c (glink 驱动)"
+echo "  - glink_loopback_server.c (glink 回环服务器)"
+echo "  - diag_usb.c (diag USB 驱动)"
 echo "  - configfs.c (USB gadget configfs)"
 echo "  - USB gadget function 驱动 (f_mtp, f_ptp, f_ncm, f_mass_storage, f_fs, f_midi, f_hid, f_audio_source, f_accessory, f_diag, f_cdev, f_ccid, f_gsi, f_qdss)"
 echo "  - usb_bam.c (USB BAM 驱动)"
