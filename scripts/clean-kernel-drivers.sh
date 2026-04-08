@@ -44,6 +44,14 @@ echo "  - 删除 bluetooth-power 驱动"
 rm -rf drivers/bluetooth/bluetooth-power.c || true
 sed -i '/bluetooth-power/d' drivers/bluetooth/Makefile || true
 
+echo ""
+echo "2. 删除有问题的 mdss-dsi-pll-10nm 驱动..."
+
+# 删除 mdss-dsi-pll-10nm 驱动（依赖于不存在的 trace 头文件）
+echo "  - 删除 mdss-dsi-pll-10nm 驱动"
+rm -rf drivers/clk/qcom/mdss/mdss-dsi-pll-10nm.c || true
+sed -i '/mdss-dsi-pll-10nm/d' drivers/clk/qcom/mdss/Makefile || true
+
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
 if [ -f "drivers/bluetooth/Makefile" ]; then
@@ -79,6 +87,7 @@ echo ""
 echo "已删除的驱动："
 echo "  - btfm_slim.c (蓝牙 SLIM 总线驱动)"
 echo "  - bluetooth-power.c (蓝牙电源管理)"
+echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
