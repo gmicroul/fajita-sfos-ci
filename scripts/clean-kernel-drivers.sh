@@ -31,12 +31,18 @@ echo ""
 
 cd "$KERNEL_DIR"
 
-echo "1. 修复编译错误（修复 include 路径）..."
+echo "1. 删除有问题的蓝牙驱动..."
 
-# 修复所有蓝牙驱动文件中的 include 路径
-echo "  - 修复 drivers/bluetooth/ 目录下所有文件的 include 路径"
-find drivers/bluetooth/ -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/#include <btfm_/#include "btfm_/g' {} \; || true
-find drivers/bluetooth/ -type f \( -name "*.c" -o -name "*.h" \) -exec sed -i 's/btfm_\.h>/btfm_.h"/g' {} \; || true
+# 删除 btfm_slim 驱动（依赖于已删除的组件）
+echo "  - 删除 btfm_slim 驱动"
+rm -rf drivers/bluetooth/btfm_slim.c || true
+rm -rf drivers/bluetooth/btfm_slim.h || true
+sed -i '/btfm_slim/d' drivers/bluetooth/Makefile || true
+
+# 删除 bluetooth-power 驱动（依赖于 btfm_slim）
+echo "  - 删除 bluetooth-power 驱动"
+rm -rf drivers/bluetooth/bluetooth-power.c || true
+sed -i '/bluetooth-power/d' drivers/bluetooth/Makefile || true
 
 # 禁用蓝牙驱动的 WERROR 选项
 echo "  - 禁用蓝牙驱动的 WERROR 选项"
@@ -70,9 +76,9 @@ echo "=========================================="
 echo "清理完成！"
 echo "=========================================="
 echo ""
-echo "已修复的文件："
-echo "  - btfm_slim.c (修复 include 路径)"
-echo "  - bluetooth-power.c (修复 include 路径)"
+echo "已删除的驱动："
+echo "  - btfm_slim.c (蓝牙 SLIM 总线驱动)"
+echo "  - bluetooth-power.c (蓝牙电源管理)"
 echo ""
 echo "下一步："
 echo "  make $DEFCONFIG"
