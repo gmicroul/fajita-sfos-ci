@@ -126,6 +126,11 @@ echo "  - 删除 diag_usb 驱动"
 rm -rf drivers/char/diag/diag_usb.c || true
 sed -i '/diag_usb/d' drivers/char/diag/Makefile || true
 
+# 删除 diagchar 驱动（依赖于不存在的文件）
+echo "  - 删除 diagchar 驱动"
+rm -rf drivers/char/diag/diagchar.c || true
+sed -i '/diagchar/d' drivers/char/diag/Makefile || true
+
 echo ""
 echo "8. 删除有问题的 USB gadget 驱动..."
 
@@ -252,6 +257,7 @@ echo "  - tracer_pkt.c (数据包追踪驱动)"
 echo "  - glink.c (glink 驱动)"
 echo "  - glink_loopback_server.c (glink 回环服务器)"
 echo "  - diag_usb.c (diag USB 驱动)"
+echo "  - diagchar.c (diag 字符驱动)"
 echo "  - configfs.c (USB gadget configfs)"
 echo "  - USB gadget function 驱动 (f_mtp, f_ptp, f_ncm, f_mass_storage, f_fs, f_midi, f_hid, f_audio_source, f_accessory, f_diag, f_cdev, f_ccid, f_gsi, f_qdss)"
 echo "  - usb_bam.c (USB BAM 驱动)"
