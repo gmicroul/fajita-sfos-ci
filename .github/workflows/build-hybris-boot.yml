@@ -160,11 +160,16 @@ jobs:
         # Build kernel
         make $DEFCONFIG
 
+        # Disable stack protector to avoid compiler not supporting -fstack-protector-strong
+        sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_STRONG=n/g' .config || true
+        sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
+        sed -i 's/CONFIG_CC_STACKPROTECTOR_REGULAR=y/CONFIG_CC_STACKPROTECTOR_REGULAR=n/g' .config || true
+
         # Clean problematic drivers to avoid compilation errors
         bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
-        # Build kernel
-        make -j$(nproc) Image.gz KCFLAGS="-Wno-error" WERROR=0
+        # Build kernel with stack protector disabled
+        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector" WERROR=0
 
         # Build device tree
         make -j$(nproc) dtbs
