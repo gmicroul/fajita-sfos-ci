@@ -67,6 +67,11 @@ echo "  - 删除 mdss-dp-pll-10nm 驱动"
 rm -rf drivers/clk/qcom/mdss/mdss-dp-pll-10nm.c || true
 sed -i '/mdss-dp-pll-10nm/d' drivers/clk/qcom/mdss/Makefile || true
 
+# 删除整个 mdss 目录（如果为空）
+echo "  - 删除 mdss 目录"
+rm -rf drivers/clk/qcom/mdss || true
+sed -i '/mdss/d' drivers/clk/qcom/Makefile || true
+
 echo ""
 echo "3. 删除有问题的 kgsl GPU 驱动..."
 
@@ -318,6 +323,7 @@ echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
 echo "  - mdss-pll.c (MDSS PLL 驱动)"
 echo "  - mdss-dp-pll-10nm-util.c (MDSS DP PLL 10nm 工具)"
 echo "  - mdss-dp-pll-10nm.c (MDSS DP PLL 10nm 驱动)"
+echo "  - drivers/clk/qcom/mdss (MDSS 目录)"
 echo "  - 所有 kgsl 相关文件 (KGSL GPU 驱动)"
 echo "  - 所有 adreno 相关文件 (Adreno GPU 驱动)"
 echo "  - drivers/gpu/msm (MSM GPU 驱动目录)"
