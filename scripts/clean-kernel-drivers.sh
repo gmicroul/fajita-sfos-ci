@@ -196,6 +196,11 @@ echo "  - 删除 sensors_ssc 驱动"
 rm -rf drivers/sensors/sensors_ssc.c || true
 sed -i '/sensors_ssc/d' drivers/sensors/Makefile || true
 
+# 删除整个 sensors 目录（如果为空）
+echo "  - 删除 sensors 目录"
+rm -rf drivers/sensors || true
+sed -i '/sensors/d' drivers/Makefile || true
+
 echo "  - 删除 ipc_router 驱动"
 rm -rf net/ipc_router/ipc_router_core.c || true
 sed -i '/ipc_router_core/d' net/ipc_router/Makefile || true
@@ -351,6 +356,7 @@ echo "  - adsprpc.c (adsprpc 驱动)"
 echo "  - esoc-mdm-4x.c (esoc MDM 4x 驱动)"
 echo "  - esoc_bus.c (esoc 总线驱动)"
 echo "  - sensors_ssc.c (传感器 SSC 驱动)"
+echo "  - drivers/sensors (传感器目录)"
 echo "  - ipc_router_core.c (IPC 路由器核心)"
 echo "  - diag_usb.c (diag USB 驱动)"
 echo "  - diagchar.c (diag 字符驱动)"
