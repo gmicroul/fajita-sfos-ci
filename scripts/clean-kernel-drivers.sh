@@ -71,6 +71,7 @@ sed -i '/mdss-dp-pll-10nm/d' drivers/clk/qcom/mdss/Makefile || true
 echo "  - 删除 mdss 目录"
 rm -rf drivers/clk/qcom/mdss || true
 sed -i '/mdss/d' drivers/clk/qcom/Makefile || true
+sed -i '/mdss/d' drivers/clk/qcom/Kconfig || true
 
 echo ""
 echo "3. 删除有问题的 kgsl GPU 驱动..."
