@@ -57,6 +57,11 @@ echo "  - 删除 mdss-pll 驱动"
 rm -rf drivers/clk/qcom/mdss/mdss-pll.c || true
 sed -i '/mdss-pll/d' drivers/clk/qcom/mdss/Makefile || true
 
+# 删除 mdss-dp-pll-10nm-util 驱动（依赖于 mdss_pll_resource_enable）
+echo "  - 删除 mdss-dp-pll-10nm-util 驱动"
+rm -rf drivers/clk/qcom/mdss/mdss-dp-pll-10nm-util.c || true
+sed -i '/mdss-dp-pll-10nm-util/d' drivers/clk/qcom/mdss/Makefile || true
+
 echo ""
 echo "3. 删除有问题的 kgsl GPU 驱动..."
 
@@ -120,6 +125,26 @@ echo "  - 删除 glink 驱动"
 rm -rf drivers/soc/qcom/glink.c || true
 rm -rf drivers/soc/qcom/glink_loopback_server.c || true
 sed -i '/glink/d' drivers/soc/qcom/Makefile || true
+
+# 删除 spcom 驱动（依赖于 glink）
+echo "  - 删除 spcom 驱动"
+rm -rf drivers/soc/qcom/spcom.c || true
+sed -i '/spcom/d' drivers/soc/qcom/Makefile || true
+
+# 删除 subsystem_restart 驱动（依赖于 glink 和 sysmon）
+echo "  - 删除 subsystem_restart 驱动"
+rm -rf drivers/soc/qcom/subsystem_restart.c || true
+sed -i '/subsystem_restart/d' drivers/soc/qcom/Makefile || true
+
+# 删除 adsprpc 驱动（依赖于 glink）
+echo "  - 删除 adsprpc 驱动"
+rm -rf drivers/char/adsprpc.c || true
+sed -i '/adsprpc/d' drivers/char/Makefile || true
+
+# 删除 esoc-mdm-4x 驱动（依赖于 sysmon）
+echo "  - 删除 esoc-mdm-4x 驱动"
+rm -rf drivers/esoc/esoc-mdm-4x.c || true
+sed -i '/esoc-mdm-4x/d' drivers/esoc/Makefile || true
 
 # 删除 diag_usb 驱动（依赖于 usb_diag 函数）
 echo "  - 删除 diag_usb 驱动"
@@ -248,6 +273,7 @@ echo "  - btfm_slim.c (蓝牙 SLIM 总线驱动)"
 echo "  - bluetooth-power.c (蓝牙电源管理)"
 echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
 echo "  - mdss-pll.c (MDSS PLL 驱动)"
+echo "  - mdss-dp-pll-10nm-util.c (MDSS DP PLL 10nm 工具)"
 echo "  - 所有 kgsl 相关文件 (KGSL GPU 驱动)"
 echo "  - 所有 adreno 相关文件 (Adreno GPU 驱动)"
 echo "  - drivers/gpu/msm (MSM GPU 驱动目录)"
@@ -256,6 +282,10 @@ echo "  - drivers/platform/msm/ipa (IPA 网络加速器)"
 echo "  - tracer_pkt.c (数据包追踪驱动)"
 echo "  - glink.c (glink 驱动)"
 echo "  - glink_loopback_server.c (glink 回环服务器)"
+echo "  - spcom.c (spcom 驱动)"
+echo "  - subsystem_restart.c (子系统重启驱动)"
+echo "  - adsprpc.c (adsprpc 驱动)"
+echo "  - esoc-mdm-4x.c (esoc MDM 4x 驱动)"
 echo "  - diag_usb.c (diag USB 驱动)"
 echo "  - diagchar.c (diag 字符驱动)"
 echo "  - configfs.c (USB gadget configfs)"
