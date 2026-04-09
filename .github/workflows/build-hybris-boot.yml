@@ -178,7 +178,7 @@ jobs:
         make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -Wno-implicit-function-declaration" WERROR=0 HOSTCFLAGS="-Wno-error"
 
         # Build device tree
-        make -j$(nproc) dtbs
+# Skip device tree compilation (use dtb from original boot.img)
 
         # Check if kernel image was built
         if [ ! -f arch/arm64/boot/Image.gz ]; then
@@ -249,17 +249,6 @@ jobs:
         cd $ANDROID_ROOT/boot-repack
 
         # Copy new kernel
-        echo "Replacing kernel..."
-        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz kernel
-
-        # Find device tree file
-        DTB_FILE=$(find $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/dts -name "*fajita*.dtb" | head -1)
-        if [ -z "$DTB_FILE" ]; then
-          DTB_FILE=$(find $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/dts -name "*sdm845*.dtb" | head -1)
-        fi
-
-        if [ -z "$DTB_FILE" ]; then
-          echo "Error: Device tree file not found"
           exit 1
         fi
 
