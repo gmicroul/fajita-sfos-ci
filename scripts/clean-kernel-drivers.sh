@@ -175,6 +175,7 @@ sed -i '/pil-q6v5-mss/d' drivers/soc/qcom/Makefile || true
 echo "  - 删除 msm_vidc 驱动"
 rm -rf drivers/media/platform/msm/vidc || true
 sed -i '/vidc/d' drivers/media/platform/msm/Makefile || true
+sed -i '/vidc/d' drivers/media/platform/msm/Kconfig || true
 
 echo "  - 删除 esoc_bus 驱动"
 rm -rf drivers/esoc/esoc_bus.c || true
