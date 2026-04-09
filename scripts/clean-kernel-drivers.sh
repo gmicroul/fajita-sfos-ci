@@ -323,6 +323,25 @@ if [ -f "scripts/Makefile.build" ]; then
 fi
 
 echo ""
+echo "11. 清理 Kconfig 引用..."
+
+# 从 Kconfig 中移除对已删除目录的引用
+echo "  - 清理 drivers/Kconfig"
+sed -i '/source "drivers\/sensors\/Kconfig"/d' drivers/Kconfig || true
+
+echo "  - 清理 drivers/video/Kconfig"
+sed -i '/source "drivers\/gpu\/msm\/Kconfig"/d' drivers/video/Kconfig || true
+
+echo "  - 清理 drivers/media/platform/msm/Kconfig"
+sed -i '/source "drivers\/media\/platform\/msm\/vidc\/Kconfig"/d' drivers/media/platform/msm/Kconfig || true
+
+echo "  - 清理 net/Kconfig"
+sed -i '/source "net\/ipc_router\/Kconfig"/d' net/Kconfig || true
+
+echo "  - 清理 arch/arm64/Kconfig.debug"
+sed -i '/source "drivers\/hwtracing\/coresight\/Kconfig"/d' arch/arm64/Kconfig.debug || true
+
+echo ""
 echo "=========================================="
 echo "清理完成！"
 echo "=========================================="
