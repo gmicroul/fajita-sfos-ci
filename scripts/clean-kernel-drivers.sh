@@ -62,6 +62,11 @@ echo "  - 删除 mdss-dp-pll-10nm-util 驱动"
 rm -rf drivers/clk/qcom/mdss/mdss-dp-pll-10nm-util.c || true
 sed -i '/mdss-dp-pll-10nm-util/d' drivers/clk/qcom/mdss/Makefile || true
 
+# 删除 mdss-dp-pll-10nm 驱动（依赖于 dp_* 函数）
+echo "  - 删除 mdss-dp-pll-10nm 驱动"
+rm -rf drivers/clk/qcom/mdss/mdss-dp-pll-10nm.c || true
+sed -i '/mdss-dp-pll-10nm/d' drivers/clk/qcom/mdss/Makefile || true
+
 echo ""
 echo "3. 删除有问题的 kgsl GPU 驱动..."
 
@@ -145,6 +150,43 @@ sed -i '/adsprpc/d' drivers/char/Makefile || true
 echo "  - 删除 esoc-mdm-4x 驱动"
 rm -rf drivers/esoc/esoc-mdm-4x.c || true
 sed -i '/esoc-mdm-4x/d' drivers/esoc/Makefile || true
+
+# 删除所有依赖于 subsystem_* 函数的驱动
+echo "  - 删除 spss_utils 驱动"
+rm -rf drivers/soc/qcom/spss_utils.c || true
+sed -i '/spss_utils/d' drivers/soc/qcom/Makefile || true
+
+echo "  - 删除 cdsp-loader 驱动"
+rm -rf drivers/soc/qcom/qdsp6v2/cdsp-loader.c || true
+sed -i '/cdsp-loader/d' drivers/soc/qcom/qdsp6v2/Makefile || true
+
+echo "  - 删除 peripheral-loader 驱动"
+rm -rf drivers/soc/qcom/peripheral-loader.c || true
+sed -i '/peripheral-loader/d' drivers/soc/qcom/Makefile || true
+
+echo "  - 删除 subsys-pil-tz 驱动"
+rm -rf drivers/soc/qcom/subsys-pil-tz.c || true
+sed -i '/subsys-pil-tz/d' drivers/soc/qcom/Makefile || true
+
+echo "  - 删除 pil-q6v5-mss 驱动"
+rm -rf drivers/soc/qcom/pil-q6v5-mss.c || true
+sed -i '/pil-q6v5-mss/d' drivers/soc/qcom/Makefile || true
+
+echo "  - 删除 msm_vidc 驱动"
+rm -rf drivers/media/platform/msm/vidc || true
+sed -i '/vidc/d' drivers/media/platform/msm/Makefile || true
+
+echo "  - 删除 esoc_bus 驱动"
+rm -rf drivers/esoc/esoc_bus.c || true
+sed -i '/esoc_bus/d' drivers/esoc/Makefile || true
+
+echo "  - 删除 sensors_ssc 驱动"
+rm -rf drivers/sensors/sensors_ssc.c || true
+sed -i '/sensors_ssc/d' drivers/sensors/Makefile || true
+
+echo "  - 删除 ipc_router 驱动"
+rm -rf net/ipc_router/ipc_router_core.c || true
+sed -i '/ipc_router_core/d' net/ipc_router/Makefile || true
 
 # 删除 diag_usb 驱动（依赖于 usb_diag 函数）
 echo "  - 删除 diag_usb 驱动"
@@ -274,18 +316,28 @@ echo "  - bluetooth-power.c (蓝牙电源管理)"
 echo "  - mdss-dsi-pll-10nm.c (MDSS DSI PLL 10nm 驱动)"
 echo "  - mdss-pll.c (MDSS PLL 驱动)"
 echo "  - mdss-dp-pll-10nm-util.c (MDSS DP PLL 10nm 工具)"
+echo "  - mdss-dp-pll-10nm.c (MDSS DP PLL 10nm 驱动)"
 echo "  - 所有 kgsl 相关文件 (KGSL GPU 驱动)"
 echo "  - 所有 adreno 相关文件 (Adreno GPU 驱动)"
 echo "  - drivers/gpu/msm (MSM GPU 驱动目录)"
 echo "  - drivers/media/platform/msm/camera (摄像头驱动)"
+echo "  - drivers/media/platform/msm/vidc (视频驱动)"
 echo "  - drivers/platform/msm/ipa (IPA 网络加速器)"
 echo "  - tracer_pkt.c (数据包追踪驱动)"
 echo "  - glink.c (glink 驱动)"
 echo "  - glink_loopback_server.c (glink 回环服务器)"
 echo "  - spcom.c (spcom 驱动)"
+echo "  - spss_utils.c (spss 工具)"
+echo "  - cdsp-loader.c (CDSP 加载器)"
+echo "  - peripheral-loader.c (外设加载器)"
 echo "  - subsystem_restart.c (子系统重启驱动)"
+echo "  - subsys-pil-tz.c (子系统 PIL TZ 驱动)"
+echo "  - pil-q6v5-mss.c (PIL Q6v5 MSS 驱动)"
 echo "  - adsprpc.c (adsprpc 驱动)"
 echo "  - esoc-mdm-4x.c (esoc MDM 4x 驱动)"
+echo "  - esoc_bus.c (esoc 总线驱动)"
+echo "  - sensors_ssc.c (传感器 SSC 驱动)"
+echo "  - ipc_router_core.c (IPC 路由器核心)"
 echo "  - diag_usb.c (diag USB 驱动)"
 echo "  - diagchar.c (diag 字符驱动)"
 echo "  - configfs.c (USB gadget configfs)"
