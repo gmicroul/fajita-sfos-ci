@@ -166,6 +166,11 @@ echo "  - 删除 cdsp-loader 驱动"
 rm -rf drivers/soc/qcom/qdsp6v2/cdsp-loader.c || true
 sed -i '/cdsp-loader/d' drivers/soc/qcom/qdsp6v2/Makefile || true
 
+# 删除整个 qdsp6v2 目录（如果为空）
+echo "  - 删除 qdsp6v2 目录"
+rm -rf drivers/soc/qcom/qdsp6v2 || true
+sed -i '/qdsp6v2/d' drivers/soc/qcom/Makefile || true
+
 echo "  - 删除 peripheral-loader 驱动"
 rm -rf drivers/soc/qcom/peripheral-loader.c || true
 sed -i '/peripheral-loader/d' drivers/soc/qcom/Makefile || true
@@ -337,6 +342,7 @@ echo "  - glink_loopback_server.c (glink 回环服务器)"
 echo "  - spcom.c (spcom 驱动)"
 echo "  - spss_utils.c (spss 工具)"
 echo "  - cdsp-loader.c (CDSP 加载器)"
+echo "  - drivers/soc/qcom/qdsp6v2 (QDSP6v2 目录)"
 echo "  - peripheral-loader.c (外设加载器)"
 echo "  - subsystem_restart.c (子系统重启驱动)"
 echo "  - subsys-pil-tz.c (子系统 PIL TZ 驱动)"
