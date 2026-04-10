@@ -189,25 +189,7 @@ jobs:
 
         ls -lh arch/arm64/boot/Image.gz
 
-        # Find device tree file
-        DTB_FILE=$(find arch/arm64/boot/dts -name "*fajita*.dtb" | head -1)
-        if [ -z "$DTB_FILE" ]; then
-          DTB_FILE=$(find arch/arm64/boot/dts -name "*sdm845*.dtb" | head -1)
-        fi
-
-        if [ -z "$DTB_FILE" ]; then
-          echo "Error: Device tree file not found"
-          echo "Available DTB files:"
-          find arch/arm64/boot/dts -name "*.dtb" | head -20
-          exit 1
-        fi
-
-        echo "Device tree file: $DTB_FILE"
-        ls -lh "$DTB_FILE"
-
-        # Show device tree model
-        echo "Device tree model:"
-        dtc -I dtb -O dts "$DTB_FILE" | grep -E "model|compatible" | head -10
+        # Note: Device tree will be extracted from original boot.img later
 
     - name: Download original boot.img
       run: |
@@ -245,7 +227,7 @@ jobs:
         echo "Boot configuration:"
         cat bootimg.cfg
 
-    - name: Replace kernel and device tree
+    - name: Replace kernel
       run: |
         cd $ANDROID_ROOT/boot-repack
 
@@ -253,13 +235,16 @@ jobs:
         echo "Copying new kernel..."
         cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz kernel
 
-        echo "Replacing device tree..."
-        echo "Device tree file: $DTB_FILE"
-        cp "$DTB_FILE" dtb
+        # Note: Device tree (dtb) is already extracted from original boot.img
+        # We will use the original device tree
 
         # Verify
         ls -lh kernel
-        ls -lh dtb
+        if [ -f "dtb" ]; then
+          ls -lh dtb
+        else
+          echo "Warning: No dtb file found in unpacked boot.img"
+        fi
 
     - name: Repack boot.img
       run: |
