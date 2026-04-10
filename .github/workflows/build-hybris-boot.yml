@@ -209,7 +209,8 @@ jobs:
     - name: Install mkbootimg
       run: |
         sudo apt-get update
-        sudo apt-get install -y mkbootimg
+        sudo apt-get install -y mkbootimg python3-pip
+        pip3 install gki
 
     - name: Unpack original boot.img
       run: |
