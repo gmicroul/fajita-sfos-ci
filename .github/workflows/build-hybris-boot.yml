@@ -206,27 +206,45 @@ jobs:
         ls -lh droid-boot.img
         file droid-boot.img
 
-    - name: Install mkbootimg
+    - name: Install boot image tools
       run: |
         sudo apt-get update
         sudo apt-get install -y mkbootimg python3-pip
-        pip3 install gki
+        # Install magiskboot for unpacking boot.img
+        wget -O magiskboot https://github.com/topjohnwu/Magisk/releases/download/v27.0/magiskboot
+        chmod +x magiskboot
+        sudo mv magiskboot /usr/local/bin/
 
     - name: Unpack original boot.img
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Unpack boot.img
+        # Unpack boot.img using magiskboot
         echo "Unpacking boot.img..."
-        mkbootimg --unpack droid-boot.img
+        magiskboot unpack droid-boot.img
 
         # Show unpacked files
         echo "Unpacked files:"
         ls -lh
 
-        # Show bootimg.cfg
-        echo "Boot configuration:"
-        cat bootimg.cfg
+        # Show boot configuration
+        if [ -f "bootimg.cfg" ]; then
+          echo "Boot configuration:"
+          cat bootimg.cfg
+        fi
+
+        # Check for kernel and ramdisk
+        if [ -f "kernel" ]; then
+          echo "Kernel file found"
+          file kernel
+        fi
+        if [ -f "ramdisk.cpio" ] || [ -f "ramdisk" ]; then
+          echo "Ramdisk file found"
+        fi
+        if [ -f "dtb" ]; then
+          echo "DTB file found"
+          file dtb
+        fi
 
     - name: Replace kernel
       run: |
@@ -251,50 +269,9 @@ jobs:
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Read bootimg.cfg and extract parameters
-        echo "Reading boot configuration..."
-        BASE=$(grep "^base" bootimg.cfg | awk '{print $2}')
-        PAGESIZE=$(grep "^pagesize" bootimg.cfg | awk '{print $2}')
-        KERNEL_OFFSET=$(grep "^kernel_offset" bootimg.cfg | awk '{print $2}')
-        RAMDISK_OFFSET=$(grep "^ramdisk_offset" bootimg.cfg | awk '{print $2}')
-        SECOND_OFFSET=$(grep "^second_offset" bootimg.cfg | awk '{print $2}')
-        TAGS_OFFSET=$(grep "^tags_offset" bootimg.cfg | awk '{print $2}')
-        DTB_OFFSET=$(grep "^dtb_offset" bootimg.cfg | awk '{print $2}')
-        CMDLINE=$(grep "^cmdline" bootimg.cfg | sed 's/cmdline //')
-
-        echo "Boot parameters:"
-        echo "  BASE=$BASE"
-        echo "  PAGESIZE=$PAGESIZE"
-        echo "  KERNEL_OFFSET=$KERNEL_OFFSET"
-        echo "  RAMDISK_OFFSET=$RAMDISK_OFFSET"
-        echo "  SECOND_OFFSET=$SECOND_OFFSET"
-        echo "  TAGS_OFFSET=$TAGS_OFFSET"
-        echo "  DTB_OFFSET=$DTB_OFFSET"
-        echo "  CMDLINE=$CMDLINE"
-
-        # Check if DTB exists
-        if [ -f "dtb" ]; then
-          DTB_PARAM="--dtb dtb"
-          echo "Using DTB from unpacked boot.img"
-        else
-          DTB_PARAM=""
-          echo "No DTB found, skipping"
-        fi
-
-        # Repack boot.img using command line parameters
+        # Repack boot.img using magiskboot
         echo "Repacking boot.img..."
-        mkbootimg \
-          --kernel kernel \
-          --ramdisk ramdisk \
-          --cmdline "$CMDLINE" \
-          --base "$BASE" \
-          --pagesize "$PAGESIZE" \
-          --kernel_offset "$KERNEL_OFFSET" \
-          --ramdisk_offset "$RAMDISK_OFFSET" \
-          --second_offset "$SECOND_OFFSET" \
-          --tags_offset "$TAGS_OFFSET" \
-          $DTB_PARAM \
-          --output hybris-boot.img
+        magiskboot repack droid-boot.img hybris-boot.img
 
         # Verify
         ls -lh hybris-boot.img
