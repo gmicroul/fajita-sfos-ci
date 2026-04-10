@@ -212,7 +212,10 @@ jobs:
         sudo apt-get install -y unzip
         # Download Magisk APK and extract magiskboot
         wget -O magisk.apk https://github.com/topjohnwu/Magisk/releases/download/v30.7/Magisk-v30.7.apk
-        unzip -j magisk.apk assets/magiskboot -d .
+        # List all files in the APK
+        unzip -l magisk.apk
+        # Extract magiskboot (it might be in a different location)
+        unzip -j magisk.apk "*magiskboot*" -d . || true
         chmod +x magiskboot
         sudo mv magiskboot /usr/local/bin/
 
