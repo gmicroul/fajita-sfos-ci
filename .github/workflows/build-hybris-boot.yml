@@ -178,7 +178,7 @@ jobs:
         make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -Wno-implicit-function-declaration" WERROR=0 HOSTCFLAGS="-Wno-error"
 
         # Build device tree
-# Skip device tree compilation (use dtb from original boot.img)
+        # Skip device tree compilation (use dtb from original boot.img)
 
         # Check if kernel image was built
         if [ ! -f arch/arm64/boot/Image.gz ]; then
