@@ -209,19 +209,15 @@ jobs:
     - name: Install boot image tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y mkbootimg python3-pip
-        # Install magiskboot for unpacking boot.img
-        wget -O magiskboot https://github.com/topjohnwu/Magisk/releases/download/v27.0/magiskboot
-        chmod +x magiskboot
-        sudo mv magiskboot /usr/local/bin/
+        sudo apt-get install -y abootimg
 
     - name: Unpack original boot.img
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Unpack boot.img using magiskboot
+        # Unpack boot.img using abootimg
         echo "Unpacking boot.img..."
-        magiskboot unpack droid-boot.img
+        abootimg -x droid-boot.img
 
         # Show unpacked files
         echo "Unpacked files:"
@@ -234,12 +230,13 @@ jobs:
         fi
 
         # Check for kernel and ramdisk
-        if [ -f "kernel" ]; then
+        if [ -f "zImage" ] || [ -f "kernel" ]; then
           echo "Kernel file found"
-          file kernel
+          file zImage kernel 2>/dev/null || true
         fi
-        if [ -f "ramdisk.cpio" ] || [ -f "ramdisk" ]; then
+        if [ -f "initrd.img" ] || [ -f "ramdisk" ]; then
           echo "Ramdisk file found"
+          file initrd.img ramdisk 2>/dev/null || true
         fi
         if [ -f "dtb" ]; then
           echo "DTB file found"
@@ -252,30 +249,36 @@ jobs:
 
         # Copy new kernel
         echo "Copying new kernel..."
-        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz kernel
+        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz zImage
 
         # Note: Device tree (dtb) is already extracted from original boot.img
         # We will use the original device tree
 
         # Verify
-        ls -lh kernel
+        ls -lh zImage
         if [ -f "dtb" ]; then
           ls -lh dtb
         else
           echo "Warning: No dtb file found in unpacked boot.img"
+        fi
+        if [ -f "initrd.img" ]; then
+          ls -lh initrd.img
         fi
 
     - name: Repack boot.img
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Repack boot.img using magiskboot
+        # Repack boot.img using abootimg
         echo "Repacking boot.img..."
-        magiskboot repack droid-boot.img hybris-boot.img
+        abootimg -u droid-boot.img -k zImage -r initrd.img -o hybris-boot.img
 
         # Verify
         ls -lh hybris-boot.img
         file hybris-boot.img
+
+        # Show boot image info
+        abootimg -i hybris-boot.img
 
     - name: Upload boot image
       uses: actions/upload-artifact@v4
