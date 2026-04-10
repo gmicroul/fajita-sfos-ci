@@ -271,7 +271,7 @@ jobs:
 
         # Repack boot.img using abootimg
         echo "Repacking boot.img..."
-        abootimg -u droid-boot.img -k zImage -r initrd.img -o hybris-boot.img
+        abootimg --create hybris-boot.img -f bootimg.cfg -k zImage -r initrd.img
 
         # Verify
         ls -lh hybris-boot.img
