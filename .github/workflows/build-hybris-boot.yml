@@ -163,6 +163,10 @@ jobs:
 
         echo "Building with defconfig: $DEFCONFIG"
 
+        # Clean problematic drivers to avoid compilation errors
+        # IMPORTANT: This must run BEFORE make defconfig, because make defconfig reads Kconfig files
+        bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+
         # Build kernel
         make $DEFCONFIG
 
@@ -170,9 +174,6 @@ jobs:
         sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_STRONG=n/g' .config || true
         sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
         sed -i 's/CONFIG_CC_STACKPROTECTOR_REGULAR=y/CONFIG_CC_STACKPROTECTOR_REGULAR=n/g' .config || true
-
-        # Clean problematic drivers to avoid compilation errors
-        bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
         # Build kernel with stack protector disabled
         make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -Wno-implicit-function-declaration" WERROR=0 HOSTCFLAGS="-Wno-error"
