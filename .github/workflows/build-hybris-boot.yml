@@ -249,8 +249,8 @@ jobs:
         cd $ANDROID_ROOT/boot-repack
 
         # Copy new kernel
-          exit 1
-        fi
+        echo "Copying new kernel..."
+        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz kernel
 
         echo "Replacing device tree..."
         echo "Device tree file: $DTB_FILE"
