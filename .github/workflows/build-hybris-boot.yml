@@ -217,7 +217,7 @@ jobs:
 
         # Unpack boot.img using abootimg
         echo "Unpacking boot.img..."
-        abootimg -x droid-boot.img
+        abootimg -x droid-boot.img bootimg.cfg zImage initrd.img
 
         # Show unpacked files
         echo "Unpacked files:"
@@ -230,13 +230,13 @@ jobs:
         fi
 
         # Check for kernel and ramdisk
-        if [ -f "zImage" ] || [ -f "kernel" ]; then
+        if [ -f "zImage" ]; then
           echo "Kernel file found"
-          file zImage kernel 2>/dev/null || true
+          file zImage 2>/dev/null || true
         fi
-        if [ -f "initrd.img" ] || [ -f "ramdisk" ]; then
+        if [ -f "initrd.img" ]; then
           echo "Ramdisk file found"
-          file initrd.img ramdisk 2>/dev/null || true
+          file initrd.img 2>/dev/null || true
         fi
         if [ -f "dtb" ]; then
           echo "DTB file found"
@@ -247,9 +247,10 @@ jobs:
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Copy new kernel
+        # Copy and decompress new kernel
         echo "Copying new kernel..."
-        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz zImage
+        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz .
+        gunzip -c Image.gz > zImage
 
         # Note: Device tree (dtb) is already extracted from original boot.img
         # We will use the original device tree
@@ -269,11 +270,34 @@ jobs:
       run: |
         cd $ANDROID_ROOT/boot-repack
 
+        # Check if all required files exist
+        echo "Checking required files..."
+        if [ ! -f "bootimg.cfg" ]; then
+          echo "Error: bootimg.cfg not found"
+          exit 1
+        fi
+        if [ ! -f "zImage" ]; then
+          echo "Error: zImage not found"
+          exit 1
+        fi
+        if [ ! -f "initrd.img" ]; then
+          echo "Error: initrd.img not found"
+          exit 1
+        fi
+
+        echo "All required files found"
+        ls -lh bootimg.cfg zImage initrd.img
+
         # Repack boot.img using abootimg
         echo "Repacking boot.img..."
         abootimg --create hybris-boot.img -f bootimg.cfg -k zImage -r initrd.img
 
         # Verify
+        if [ ! -f "hybris-boot.img" ]; then
+          echo "Error: hybris-boot.img not created"
+          exit 1
+        fi
+
         ls -lh hybris-boot.img
         file hybris-boot.img
 
