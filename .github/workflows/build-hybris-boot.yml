@@ -200,7 +200,7 @@ jobs:
         # Download original boot.img from GitHub Releases
         echo "Downloading original boot.img..."
         wget -O droid-boot.img \
-          https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot-new.img
+          https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img
 
         # Verify download
         ls -lh droid-boot.img
