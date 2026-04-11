@@ -217,7 +217,7 @@ jobs:
 
         # Unpack boot.img using abootimg
         echo "Unpacking boot.img..."
-        abootimg -x droid-boot.img bootimg.cfg zImage initrd.img
+        abootimg -x droid-boot.img bootimg.cfg zImage initrd.img dtb
 
         # Show unpacked files
         echo "Unpacked files:"
@@ -241,16 +241,17 @@ jobs:
         if [ -f "dtb" ]; then
           echo "DTB file found"
           file dtb
+        else
+          echo "Warning: No dtb file found"
         fi
 
     - name: Replace kernel
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Copy and decompress new kernel
+        # Copy new kernel (keep it compressed as Image.gz)
         echo "Copying new kernel..."
-        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz .
-        gunzip -c Image.gz > zImage
+        cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz zImage
 
         # Note: Device tree (dtb) is already extracted from original boot.img
         # We will use the original device tree
@@ -288,9 +289,19 @@ jobs:
         echo "All required files found"
         ls -lh bootimg.cfg zImage initrd.img
 
+        # Check if dtb exists
+        if [ -f "dtb" ]; then
+          echo "DTB file found, will include in boot.img"
+          ls -lh dtb
+          DTB_PARAM="-s dtb"
+        else
+          echo "Warning: No dtb file found, boot.img may not boot"
+          DTB_PARAM=""
+        fi
+
         # Repack boot.img using abootimg
         echo "Repacking boot.img..."
-        abootimg --create hybris-boot.img -f bootimg.cfg -k zImage -r initrd.img
+        abootimg --create hybris-boot.img -f bootimg.cfg -k zImage -r initrd.img $DTB_PARAM
 
         # Verify
         if [ ! -f "hybris-boot.img" ]; then
