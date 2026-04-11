@@ -230,6 +230,8 @@ jobs:
         git clone https://github.com/osm0sis/mkbootimg.git /tmp/mkbootimg
         sudo cp /tmp/mkbootimg/mkbootimg /usr/local/bin/
         sudo chmod +x /usr/local/bin/mkbootimg
+        # Install Python dependencies for mkbootimg
+        pip3 install -q gki generate_gki_certificate
 
     - name: Unpack LineageOS 16 boot.img
       run: |
