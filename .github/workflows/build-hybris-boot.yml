@@ -231,26 +231,34 @@ jobs:
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Use dtbo.img as dtb
-        echo "Using dtbo.img as dtb..."
-        cp dtbo.img dtb
+        # Unpack boot.img using abootimg
+        echo "Unpacking boot.img..."
+        abootimg -x boot.img bootimg.cfg zImage initrd.img dtb
 
-        # Show files
-        echo "Available files:"
+        # Show unpacked files
+        echo "Unpacked files:"
         ls -lh
 
-        # Show boot.img info
-        if [ -f "boot.img" ]; then
-          echo "Boot.img file found"
-          file boot.img 2>/dev/null || true
+        # Show boot configuration
+        if [ -f "bootimg.cfg" ]; then
+          echo "Boot configuration:"
+          cat bootimg.cfg
         fi
-        if [ -f "dtbo.img" ]; then
-          echo "DTBO file found"
-          file dtbo.img 2>/dev/null || true
+
+        # Check for kernel and ramdisk
+        if [ -f "zImage" ]; then
+          echo "Kernel file found"
+          file zImage 2>/dev/null || true
+        fi
+        if [ -f "initrd.img" ]; then
+          echo "Ramdisk file found"
+          file initrd.img 2>/dev/null || true
         fi
         if [ -f "dtb" ]; then
           echo "DTB file found"
           file dtb 2>/dev/null || true
+        else
+          echo "Warning: No dtb file found"
         fi
 
     - name: Replace kernel
