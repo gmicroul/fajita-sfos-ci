@@ -226,6 +226,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y abootimg mkbootimg
+        pip3 install -q gki generate_gki_certificate
 
     - name: Unpack LineageOS 16 boot.img
       run: |
