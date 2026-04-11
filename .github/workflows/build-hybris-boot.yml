@@ -259,6 +259,9 @@ jobs:
           file dtb 2>/dev/null || true
         else
           echo "Warning: No dtb file found"
+          echo "Using dtbo.img as dtb..."
+          cp dtbo.img dtb
+          echo "DTB created from dtbo.img"
         fi
 
     - name: Replace kernel
