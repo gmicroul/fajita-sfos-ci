@@ -191,58 +191,66 @@ jobs:
 
         # Note: Device tree will be extracted from original boot.img later
 
-    - name: Download original boot.img
+    - name: Download LineageOS 16 boot.img
       run: |
         cd $ANDROID_ROOT
         mkdir -p boot-repack
         cd boot-repack
 
-        # Download original boot.img from GitHub Releases
-        echo "Downloading original boot.img..."
-        wget -O droid-boot.img \
-          https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img
+        # Download LineageOS 16 OTA package
+        echo "Downloading LineageOS 16 OTA package..."
+        wget -O lineage-16.0-fajita.zip \
+          https://gh-proxy.com/https://github.com/VerdandiTeam/droid-config-enchilada/releases/download/4.5.0.13/lineage-16.0-20200325-nightly-fajita-signed.zip
 
         # Verify download
-        ls -lh droid-boot.img
-        file droid-boot.img
+        ls -lh lineage-16.0-fajita.zip
+
+        # Clone payload_dumper
+        cd $ANDROID_ROOT
+        git clone https://github.com/vm03/payload_dumper.git
+        cd payload_dumper
+        pip3 install -q protobuf bsdiff4 brotli zstandard fsspec
+
+        # Extract boot.img from OTA package
+        python3 payload_dumper.py ../boot-repack/lineage-16.0-fajita.zip
+
+        # Copy boot.img and dtbo.img
+        cp output/boot.img ../boot-repack/
+        cp output/dtbo.img ../boot-repack/
+
+        # Verify
+        ls -lh ../boot-repack/boot.img
+        ls -lh ../boot-repack/dtbo.img
 
     - name: Install boot image tools
       run: |
         sudo apt-get update
         sudo apt-get install -y abootimg
 
-    - name: Unpack original boot.img
+    - name: Unpack LineageOS 16 boot.img
       run: |
         cd $ANDROID_ROOT/boot-repack
 
-        # Unpack boot.img using abootimg
-        echo "Unpacking boot.img..."
-        abootimg -x droid-boot.img bootimg.cfg zImage initrd.img dtb
+        # Use dtbo.img as dtb
+        echo "Using dtbo.img as dtb..."
+        cp dtbo.img dtb
 
-        # Show unpacked files
-        echo "Unpacked files:"
+        # Show files
+        echo "Available files:"
         ls -lh
 
-        # Show boot configuration
-        if [ -f "bootimg.cfg" ]; then
-          echo "Boot configuration:"
-          cat bootimg.cfg
+        # Show boot.img info
+        if [ -f "boot.img" ]; then
+          echo "Boot.img file found"
+          file boot.img 2>/dev/null || true
         fi
-
-        # Check for kernel and ramdisk
-        if [ -f "zImage" ]; then
-          echo "Kernel file found"
-          file zImage 2>/dev/null || true
-        fi
-        if [ -f "initrd.img" ]; then
-          echo "Ramdisk file found"
-          file initrd.img 2>/dev/null || true
+        if [ -f "dtbo.img" ]; then
+          echo "DTBO file found"
+          file dtbo.img 2>/dev/null || true
         fi
         if [ -f "dtb" ]; then
           echo "DTB file found"
-          file dtb
-        else
-          echo "Warning: No dtb file found"
+          file dtb 2>/dev/null || true
         fi
 
     - name: Replace kernel
