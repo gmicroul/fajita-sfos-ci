@@ -225,8 +225,11 @@ jobs:
     - name: Install boot image tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y abootimg mkbootimg
-        pip3 install -q gki generate_gki_certificate
+        sudo apt-get install -y abootimg
+        # Install Android mkbootimg from AOSP
+        git clone https://github.com/osm0sis/mkbootimg.git /tmp/mkbootimg
+        sudo cp /tmp/mkbootimg/mkbootimg /usr/local/bin/
+        sudo chmod +x /usr/local/bin/mkbootimg
 
     - name: Unpack LineageOS 16 boot.img
       run: |
