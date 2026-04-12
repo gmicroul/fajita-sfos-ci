@@ -228,8 +228,12 @@ jobs:
         sudo apt-get install -y abootimg
         # Install Android mkbootimg from AOSP
         git clone https://github.com/osm0sis/mkbootimg.git /tmp/mkbootimg
-        sudo cp /tmp/mkbootimg/mkbootimg /usr/local/bin/
+        cd /tmp/mkbootimg
+        make
+        sudo cp mkbootimg /usr/local/bin/
+        sudo cp unpackbootimg /usr/local/bin/
         sudo chmod +x /usr/local/bin/mkbootimg
+        sudo chmod +x /usr/local/bin/unpackbootimg
         # Install Python dependencies for mkbootimg
         pip3 install -q gki generate_gki_certificate
 
