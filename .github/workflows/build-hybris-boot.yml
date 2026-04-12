@@ -168,6 +168,9 @@ jobs:
         # Use v2 script to preserve power management and clock drivers (required for boot)
         bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers-v2.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
+        # Create empty trace headers to fix compilation errors
+        bash $GITHUB_WORKSPACE/scripts/create-empty-trace-headers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+
         # Build kernel
         make $DEFCONFIG
 
