@@ -229,6 +229,8 @@ jobs:
         # Install Android mkbootimg from AOSP
         git clone https://github.com/osm0sis/mkbootimg.git /tmp/mkbootimg
         cd /tmp/mkbootimg
+        # Remove -Werror flag to avoid treating warnings as errors
+        sed -i 's/-Werror//g' Makefile
         make
         sudo cp mkbootimg /usr/local/bin/
         sudo cp unpackbootimg /usr/local/bin/
