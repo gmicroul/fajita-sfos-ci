@@ -33,7 +33,7 @@ cd "$KERNEL_DIR"
 echo "创建空的 trace 头文件..."
 
 # 创建 mdss_pll_trace.h
-echo " - 创建 mdss_pll_trace.h"
+echo " - 创建 drivers/clk/qcom/mdss/mdss_pll_trace.h"
 cat > drivers/clk/qcom/mdss/mdss_pll_trace.h << 'EOF'
 /* Empty trace header file to fix compilation error */
 /* This file is needed for mdss-dsi-pll-10nm.c compilation */
@@ -52,6 +52,27 @@ cat > drivers/clk/qcom/mdss/mdss_pll_trace.h << 'EOF'
 #include <trace/define_trace.h>
 EOF
 
+# 创建 trace/events/mdss_pll.h
+echo " - 创建 trace/events/mdss_pll.h"
+mkdir -p trace/events
+cat > trace/events/mdss_pll.h << 'EOF'
+/* Empty trace events file to fix compilation error */
+/* This file is needed for mdss-dsi-pll-10nm.c compilation */
+
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM mdss_pll
+
+#if !defined(_TRACE_MDSS_PLL_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_MDSS_PLL_H
+
+#include <linux/tracepoint.h>
+
+#endif /* _TRACE_MDSS_PLL_H */
+
+/* This part must be outside protection */
+#include <trace/define_trace.h>
+EOF
+
 echo ""
 echo "=========================================="
 echo "创建完成！"
@@ -59,4 +80,5 @@ echo "=========================================="
 echo ""
 echo "已创建的文件："
 echo " - drivers/clk/qcom/mdss/mdss_pll_trace.h"
+echo " - trace/events/mdss_pll.h"
 echo ""
