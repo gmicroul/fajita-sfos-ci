@@ -1,4 +1,4 @@
-name: Build Hybris Boot Image
+name: Build Hybris Boot Image - Triggered by Hermes Agent
 
 on:
   workflow_dispatch:
