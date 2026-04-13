@@ -17,6 +17,8 @@ on:
       - '.github/workflows/build-hybris-boot.yml'
       - 'scripts/apply-docker-kernel-patch-v2.sh'
       - 'scripts/clean-kernel-drivers.sh'
+      - 'scripts/clean-kernel-drivers-v2.sh'
+      - 'scripts/create-empty-trace-headers.sh'
 
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}
