@@ -129,7 +129,7 @@ case $choice in
         
         # 编译内核
         echo "开始编译内核..."
-        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -Wno-implicit-function-declaration" WERROR=0
+        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector" WERROR=0
         
         # 检查编译结果
         if [ ! -f "arch/arm64/boot/Image.gz" ]; then

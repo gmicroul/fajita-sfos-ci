@@ -93,7 +93,7 @@ sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_STRONG=n/g'
 sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
 
 # 编译内核
-make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -Wno-implicit-function-declaration" WERROR=0
+make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector" WERROR=0
 
 # 检查编译结果
 if [ ! -f "arch/arm64/boot/Image.gz" ]; then
