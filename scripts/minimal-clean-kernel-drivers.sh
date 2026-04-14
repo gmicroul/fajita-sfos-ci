@@ -31,9 +31,9 @@ echo ""
 
 # 重要：保留所有关键驱动，只修复编译错误
 
-# 1. 修复摄像头驱动结构体定义
-echo "1. 修复摄像头驱动结构体定义..."
-bash $GITHUB_WORKSPACE/scripts/fix-camera-structs.sh "$KERNEL_DIR"
+# 1. 修复摄像头驱动头文件（使用真实头文件）
+echo "1. 修复摄像头驱动头文件..."
+bash $GITHUB_WORKSPACE/scripts/fix-camera-headers.sh "$KERNEL_DIR"
 
 # 2. 修复MDSS PLL编译错误
 echo "2. 修复MDSS PLL编译错误..."
