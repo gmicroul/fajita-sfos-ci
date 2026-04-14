@@ -29,13 +29,13 @@ fi
 echo "内核目录: $KERNEL_DIR"
 echo ""
 
-cd "$KERNEL_DIR"
-
 # 重要：保留所有关键驱动，只修复编译错误
 
 # 1. 修复摄像头驱动头文件（使用真实头文件）
 echo "1. 修复摄像头驱动头文件..."
-bash /home/user/.hermes/fajita-sfos-ci/scripts/fix-camera-headers.sh "$KERNEL_DIR"
+bash $GITHUB_WORKSPACE/scripts/fix-camera-headers.sh "$KERNEL_DIR"
+
+cd "$KERNEL_DIR"
 
 # 2. 修复蓝牙驱动编译错误
 echo "2. 修复蓝牙驱动编译错误..."
