@@ -33,18 +33,12 @@ cd "$KERNEL_DIR"
 
 # 重要：保留所有关键驱动，只修复编译错误
 
-# 1. 创建空的trace头文件来修复缺失的头文件错误
-mkdir -p include/trace/events || true
-mkdir -p drivers/soc/qcom || true
-mkdir -p drivers/platform/msm || true
-
-# 创建必要的空头文件
-touch include/trace/events/mdss_pll.h || true
-touch drivers/soc/qcom/sysmon.h || true
-touch drivers/platform/msm/ipa/ipa_qmi_service_v01.h || true
+# 1. 修复摄像头驱动头文件（使用真实头文件）
+echo "1. 修复摄像头驱动头文件..."
+bash /home/user/.hermes/fajita-sfos-ci/scripts/fix-camera-headers.sh "$KERNEL_DIR"
 
 # 2. 修复蓝牙驱动编译错误
-echo "1. 修复蓝牙驱动编译错误..."
+echo "2. 修复蓝牙驱动编译错误..."
 if [ -f "drivers/bluetooth/Makefile" ]; then
  # 移除导致编译错误的文件
  rm -rf drivers/bluetooth/btfm_slim.c || true
@@ -54,7 +48,7 @@ if [ -f "drivers/bluetooth/Makefile" ]; then
 fi
 
 # 3. 修复GPU驱动编译错误
-echo "2. 修复GPU驱动编译错误..."
+echo "3. 修复GPU驱动编译错误..."
 if [ -f "drivers/gpu/msm/Makefile" ]; then
  # 只删除有问题的trace文件，保留核心GPU驱动
  rm -rf drivers/gpu/msm/kgsl_trace.c || true
@@ -62,43 +56,21 @@ if [ -f "drivers/gpu/msm/Makefile" ]; then
  rm -rf drivers/gpu/msm/kgsl_events.c || true
 fi
 
-# 4. 修复摄像头驱动编译错误
-echo "3. 修复摄像头驱动编译错误..."
-if [ -d "drivers/media/platform/msm/camera" ]; then
- # 创建必要的空头文件
- mkdir -p drivers/media/platform/msm/camera/cam_sensor_module || true
- mkdir -p drivers/media/platform/msm/camera/cam_core || true
- mkdir -p drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr || true
- touch drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_core.h || true
- touch drivers/media/platform/msm/camera/cam_core/cam_context.h || true
- touch drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h || true
- 
- # 修复cam_trace.h中的头文件引用
- if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
- sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- fi
- 
- # 修复cam_isp_packet_parser.h中的头文件引用
- if [ -f "drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h" ]; then
- sed -i 's|#include "cam_ife_hw_mgr.h"|#include "../cam_ife_hw_mgr.h"|g' drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h || true
- fi
-fi
-
-# 5. 修复USB gadget驱动编译错误
+# 4. 修复USB gadget驱动编译错误
 echo "4. 修复USB gadget驱动编译错误..."
 if [ -d "drivers/usb/gadget/function" ]; then
  # 创建必要的空头文件
  touch drivers/usb/gadget/function/u_ncm.h || true
 fi
 
-# 6. 修复coresight驱动编译错误
+# 5. 修复coresight驱动编译错误
 echo "5. 修复coresight驱动编译错误..."
 if [ -f "drivers/hwtracing/coresight/Makefile" ]; then
  # 只删除有问题的文件，保留核心功能
  rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
 fi
 
-# 7. 禁用WERROR避免编译失败
+# 6. 禁用WERROR避免编译失败
 echo "6. 禁用WERROR..."
 if [ -f "Makefile" ]; then
  sed -i 's/-Werror//g' Makefile || true
@@ -110,14 +82,14 @@ if [ -f "scripts/Makefile.build" ]; then
  sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build || true
 fi
 
-# 8. 禁用stack protector避免编译器不支持
+# 7. 禁用stack protector避免编译器不支持
 echo "7. 禁用stack protector..."
 if [ -f "Makefile" ]; then
  sed -i 's/-fstack-protector-strong//g' Makefile || true
  sed -i 's/-fstack-protector//g' Makefile || true
 fi
 
-echo "9. 修复-implicit-function-declaration编译错误..."
+echo "8. 修复-implicit-function-declaration编译错误..."
 if [ -f "Makefile" ]; then
  # 修复错误的-implicit-function-declaration选项
  sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' Makefile || true
@@ -135,6 +107,7 @@ fi
 find . -name "Makefile" -o -name "Kbuild" | while read file; do
  sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' "$file" || true
 done
+
 if [ -f "drivers/video/Kconfig" ]; then
  sed -i '/source "drivers\/gpu\/msm\/Kconfig"/d' drivers/video/Kconfig || true
 fi
@@ -151,7 +124,7 @@ echo ""
 echo "保留的关键驱动："
 echo " - GPU驱动 (kgsl, adreno)"
 echo " - 显示驱动 (MDSS)"
-echo " - 摄像头驱动"
+echo " - 摄像头驱动（使用真实头文件）"
 echo " - USB驱动"
 echo " - 音频驱动 (QDSP6v2)"
 echo " - 传感器驱动"
@@ -160,7 +133,6 @@ echo ""
 echo "修复的编译错误："
 echo " - 蓝牙驱动编译错误"
 echo " - GPU trace文件缺失"
-echo " - 摄像头头文件缺失"
 echo " - USB gadget头文件缺失"
 echo " - coresight驱动编译错误"
 echo " - WERROR编译选项"
