@@ -103,8 +103,24 @@ if [ -f "Makefile" ]; then
  sed -i 's/-fstack-protector//g' Makefile || true
 fi
 
-# 9. 创建空的Kconfig引用避免编译错误
-echo "8. 清理Kconfig引用..."
+echo "9. 修复-implicit-function-declaration编译错误..."
+if [ -f "Makefile" ]; then
+ # 修复错误的-implicit-function-declaration选项
+ sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' Makefile || true
+fi
+
+if [ -f "scripts/Makefile.build" ]; then
+ sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' scripts/Makefile.build || true
+fi
+
+if [ -f "scripts/Makefile.lib" ]; then
+ sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' scripts/Makefile.lib || true
+fi
+
+# 同时搜索其他可能的Makefile文件
+find . -name "Makefile" -o -name "Kbuild" | while read file; do
+ sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' "$file" || true
+done
 if [ -f "drivers/video/Kconfig" ]; then
  sed -i '/source "drivers\/gpu\/msm\/Kconfig"/d' drivers/video/Kconfig || true
 fi
