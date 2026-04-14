@@ -48,12 +48,15 @@ cat > "$KERNEL_DIR/drivers/clk/qcom/mdss/mdss_pll_trace.h" << 'EOF'
 #endif /* _MDSS_PLL_TRACE_H */
 
 /* This part must be outside protection */
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../..  /* Go up 3 levels from drivers/clk/qcom/mdss/ to root, then to include/trace/events */
 #include <trace/define_trace.h>
 EOF
 
-# 注意：fix-mdss-pll-trace.sh已经创建了 drivers/clk/qcom/mdss/trace/events/mdss_pll.h
-# 这里我们不需要再创建 trace/events/mdss_pll.h
-# 只需要创建 mdss_pll_trace.h
+# 注意：fix-mdss-pll-trace.sh已经创建了 include/trace/events/mdss_pll.h
+# 这里我们只需要创建 mdss_pll_trace.h
+# TRACE_INCLUDE_PATH设置为../../..，所以会从drivers/clk/qcom/mdss/
+# 向上三级到根目录，然后找到include/trace/events/mdss_pll.h
 
 echo ""
 echo "=========================================="
@@ -63,4 +66,4 @@ echo ""
 echo "已创建的文件："
 echo " - drivers/clk/qcom/mdss/mdss_pll_trace.h"
 echo ""
-echo "注意：fix-mdss-pll-trace.sh会创建相应的trace/events目录和mdss_pll.h文件"
+echo "注意：fix-mdss-pll-trace.sh会创建include/trace/events/mdss_pll.h文件"
