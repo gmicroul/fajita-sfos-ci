@@ -51,23 +51,9 @@ cat > "$KERNEL_DIR/drivers/clk/qcom/mdss/mdss_pll_trace.h" << 'EOF'
 #include <trace/define_trace.h>
 EOF
 
-# 创建 trace/events/mdss_pll.h
-echo " - 创建 trace/events/mdss_pll.h"
-mkdir -p "$KERNEL_DIR/trace/events"
-cat > "$KERNEL_DIR/trace/events/mdss_pll.h" << 'EOF'
-/* Empty trace events file to fix compilation error */
-/* This file is needed for mdss-dsi-pll-10nm.c compilation */
-
-#ifndef _TRACE_EVENTS_MDSS_PLL_H
-#define _TRACE_EVENTS_MDSS_PLL_H
-
-#include <linux/tracepoint.h>
-
-#endif /* _TRACE_EVENTS_MDSS_PLL_H */
-
-/* This part must be outside protection */
-#include <trace/define_trace.h>
-EOF
+# 注意：fix-mdss-pll-trace.sh已经创建了 drivers/clk/qcom/mdss/trace/events/mdss_pll.h
+# 这里我们不需要再创建 trace/events/mdss_pll.h
+# 只需要创建 mdss_pll_trace.h
 
 echo ""
 echo "=========================================="
@@ -76,5 +62,5 @@ echo "=========================================="
 echo ""
 echo "已创建的文件："
 echo " - drivers/clk/qcom/mdss/mdss_pll_trace.h"
-echo " - trace/events/mdss_pll.h"
 echo ""
+echo "注意：fix-mdss-pll-trace.sh会创建相应的trace/events目录和mdss_pll.h文件"
