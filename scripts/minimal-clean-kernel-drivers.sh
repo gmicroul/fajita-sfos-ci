@@ -93,23 +93,27 @@ if [ -f "Makefile" ]; then
  sed -i 's/-fstack-protector//g' Makefile || true
 fi
 
-echo "9. 修复-implicit-function-declaration编译错误..."
+echo "9. 清理无效编译标志..."
 if [ -f "Makefile" ]; then
- # 修复错误的-implicit-function-declaration选项
- sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' Makefile || true
+  # 移除可能存在的无效编译标志
+  sed -i 's/-implicit-function-declaration//g' Makefile || true
+  sed -i 's/-Wno-implicit-function-declaration//g' Makefile || true
 fi
 
 if [ -f "scripts/Makefile.build" ]; then
- sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' scripts/Makefile.build || true
+  sed -i 's/-implicit-function-declaration//g' scripts/Makefile.build || true
+  sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.build || true
 fi
 
 if [ -f "scripts/Makefile.lib" ]; then
- sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' scripts/Makefile.lib || true
+  sed -i 's/-implicit-function-declaration//g' scripts/Makefile.lib || true
+  sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.lib || true
 fi
 
 # 同时搜索其他可能的Makefile文件
 find . -name "Makefile" -o -name "Kbuild" | while read file; do
- sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' "$file" || true
+  sed -i 's/-implicit-function-declaration//g' "$file" || true
+  sed -i 's/-Wno-implicit-function-declaration//g' "$file" || true
 done
 
 if [ -f "drivers/video/Kconfig" ]; then
