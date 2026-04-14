@@ -70,15 +70,19 @@ jobs:
           g++-12-arm-linux-gnueabihf \
           abootimg
 
-    - name: Cache kernel build
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.ccache
-          /home/runner/work/android/kernel
-        key: kernel-${{ env.DEVICE }}-${{ github.sha }}
-        restore-keys: |
-          kernel-${{ env.DEVICE }}-
+    - name: Clear kernel cache and force fresh build
+      run: |
+        echo "Clearing kernel cache to ensure fresh build..."
+        # Remove cached kernel directory to force fresh clone
+        if [ -d "/home/runner/work/android/kernel" ]; then
+          rm -rf /home/runner/work/android/kernel
+          echo "Removed cached kernel directory"
+        fi
+        # Clear ccache as well
+        if [ -d "~/.ccache" ]; then
+          rm -rf ~/.ccache
+          echo "Cleared ccache"
+        fi
 
     - name: Clone kernel source
       env:
