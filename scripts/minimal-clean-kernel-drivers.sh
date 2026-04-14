@@ -33,7 +33,7 @@ echo ""
 
 # 1. 修复摄像头驱动头文件（使用真实头文件）
 echo "1. 修复摄像头驱动头文件..."
-bash $GITHUB_WORKSPACE/scripts/fix-camera-headers.sh "$KERNEL_DIR"
+bash $GITHUB_WORKSPACE/scripts/fix-camera-headers-enhanced.sh "$KERNEL_DIR"
 
 # 2. 修复MDSS PLL编译错误
 echo "2. 修复MDSS PLL编译错误..."

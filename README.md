@@ -255,3 +255,4 @@ MIT License
 # 测试触发运行
 # Trigger new build test
 # 测试提交: Tue Apr 14 20:24:58 UTC 2026
+# 测试摄像头驱动修复

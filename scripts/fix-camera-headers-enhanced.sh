@@ -46,14 +46,13 @@ download_with_retry() {
         
         if [ $attempt -lt $max_retries ]; then
             echo "  第${attempt}次下载失败，${retry_delay}秒后重试..."
-            sleep $retry_delay
-            # 增加下次重试的延迟
-            retry_delay=$((retry_delay * 2))
-        fi
-    done
-    
-    echo "  错误：下载失败，达到最大重试次数"
-    return 1
+ndeclare -A files
+files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_node.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_core/cam_node.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h"
 }
 
 # 回退函数：如果下载失败，创建空文件
@@ -74,10 +73,14 @@ create_fallback_header() {
 
 #include <linux/types.h>
 
-/* 最小结构体定义 */
-struct $(basename "$file" .h) {
-    uint32_t placeholder;
-    void *priv;
+necho "修复头文件引用路径..."
+
+# cam_debug_util.h和cam_node.h不需要复制到camera目录
+# 因为它们原本就在camera_oneplus目录中
+
+# cam_context.h需要复制到camera目录
+mkdir -p drivers/media/platform/msm/camera/cam_core
+cp drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h drivers/media/platform/msm/camera/cam_core/cam_context.h
 };
 
 #endif /* _${header_name}_H */
@@ -88,12 +91,13 @@ echo "下载缺失的摄像头驱动头文件..."
 
 # 要下载的文件列表
 declare -A files
-files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h"
-
-# 下载所有文件
+necho "已修复的头文件："
+echo " - cam_context.h (真实文件或回退版本)"
+echo " - cam_debug_util.h"
+echo " - cam_node.h"
+echo " - cam_ife_hw_mgr.h"
+echo " - cam_isp_hw_mgr.h"
+echo " - cam_sensor_core.h"
 for output_path in "${!files[@]}"; do
     url="${files[$output_path]}"
     
