@@ -37,8 +37,10 @@ bash $GITHUB_WORKSPACE/scripts/fix-camera-headers.sh "$KERNEL_DIR"
 
 cd "$KERNEL_DIR"
 
-# 2. 修复蓝牙驱动编译错误
-echo "2. 修复蓝牙驱动编译错误..."
+# 2. 修复MDSS PLL编译错误
+echo "2. 修复MDSS PLL编译错误..."
+bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh "$KERNEL_DIR"
+echo "3. 修复蓝牙驱动编译错误..."
 if [ -f "drivers/bluetooth/Makefile" ]; then
  # 移除导致编译错误的文件
  rm -rf drivers/bluetooth/btfm_slim.c || true
@@ -47,8 +49,8 @@ if [ -f "drivers/bluetooth/Makefile" ]; then
  sed -i '/bluetooth-power/d' drivers/bluetooth/Makefile || true
 fi
 
-# 3. 修复GPU驱动编译错误
-echo "3. 修复GPU驱动编译错误..."
+# 4. 修复GPU驱动编译错误
+echo "4. 修复GPU驱动编译错误..."
 if [ -f "drivers/gpu/msm/Makefile" ]; then
  # 只删除有问题的trace文件，保留核心GPU驱动
  rm -rf drivers/gpu/msm/kgsl_trace.c || true
@@ -56,22 +58,22 @@ if [ -f "drivers/gpu/msm/Makefile" ]; then
  rm -rf drivers/gpu/msm/kgsl_events.c || true
 fi
 
-# 4. 修复USB gadget驱动编译错误
-echo "4. 修复USB gadget驱动编译错误..."
+# 5. 修复USB gadget驱动编译错误
+echo "5. 修复USB gadget驱动编译错误..."
 if [ -d "drivers/usb/gadget/function" ]; then
  # 创建必要的空头文件
  touch drivers/usb/gadget/function/u_ncm.h || true
 fi
 
-# 5. 修复coresight驱动编译错误
-echo "5. 修复coresight驱动编译错误..."
+# 6. 修复coresight驱动编译错误
+echo "6. 修复coresight驱动编译错误..."
 if [ -f "drivers/hwtracing/coresight/Makefile" ]; then
  # 只删除有问题的文件，保留核心功能
  rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
 fi
 
-# 6. 禁用WERROR避免编译失败
-echo "6. 禁用WERROR..."
+# 7. 禁用WERROR避免编译失败
+echo "7. 禁用WERROR..."
 if [ -f "Makefile" ]; then
  sed -i 's/-Werror//g' Makefile || true
  sed -i 's/WERROR=y/WERROR=n/g' Makefile || true
@@ -82,14 +84,14 @@ if [ -f "scripts/Makefile.build" ]; then
  sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build || true
 fi
 
-# 7. 禁用stack protector避免编译器不支持
-echo "7. 禁用stack protector..."
+# 8. 禁用stack protector避免编译器不支持
+echo "8. 禁用stack protector..."
 if [ -f "Makefile" ]; then
  sed -i 's/-fstack-protector-strong//g' Makefile || true
  sed -i 's/-fstack-protector//g' Makefile || true
 fi
 
-echo "8. 修复-implicit-function-declaration编译错误..."
+echo "9. 修复-implicit-function-declaration编译错误..."
 if [ -f "Makefile" ]; then
  # 修复错误的-implicit-function-declaration选项
  sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' Makefile || true
@@ -131,6 +133,7 @@ echo " - 传感器驱动"
 echo " - 电源管理驱动"
 echo ""
 echo "修复的编译错误："
+echo " - MDSS PLL trace文件缺失"
 echo " - 蓝牙驱动编译错误"
 echo " - GPU trace文件缺失"
 echo " - USB gadget头文件缺失"
