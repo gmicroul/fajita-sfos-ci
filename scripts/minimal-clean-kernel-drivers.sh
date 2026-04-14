@@ -43,7 +43,7 @@ bash $GITHUB_WORKSPACE/scripts/fix-camera-structs.sh "$KERNEL_DIR"
 
 # 3. 修复MDSS PLL编译错误
 echo "3. 修复MDSS PLL编译错误..."
-bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh
+bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh "$KERNEL_DIR"
 
 # 4. 修复蓝牙驱动编译错误
 echo "4. 修复蓝牙驱动编译错误..."
