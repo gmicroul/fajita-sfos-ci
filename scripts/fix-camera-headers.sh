@@ -28,9 +28,13 @@ cd "$KERNEL_DIR"
 # 下载缺失的摄像头驱动头文件
 echo "下载缺失的摄像头驱动头文件..."
 
-# cam_context.h
+# cam_context.h (两个位置都需要)
 mkdir -p drivers/media/platform/msm/camera_oneplus/cam_core
 curl -s "$REPO_BASE/drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h" -o drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h
+
+# 同时复制到camera目录
+mkdir -p drivers/media/platform/msm/camera/cam_core
+cp drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h drivers/media/platform/msm/camera/cam_core/cam_context.h
 
 # cam_ife_hw_mgr.h
 mkdir -p drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr
@@ -46,7 +50,12 @@ curl -s "$REPO_BASE/drivers/media/platform/msm/camera_oneplus/cam_sensor_module/
 # 修复头文件引用路径
 echo "修复头文件引用路径..."
 
-# 修复cam_trace.h中的引用
+# 修复cam_trace.h中的引用 (camera目录)
+if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
+ sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' drivers/media/platform/msm/camera/cam_utils/cam_trace.h
+fi
+
+# 修复cam_trace.h中的引用 (camera_oneplus目录)
 if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
  sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h
 fi
