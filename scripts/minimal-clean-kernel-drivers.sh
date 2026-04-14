@@ -31,22 +31,18 @@ echo ""
 
 # 重要：保留所有关键驱动，只修复编译错误
 
-# 1. 修复摄像头驱动头文件（使用真实头文件）
-echo "1. 修复摄像头驱动头文件..."
-bash $GITHUB_WORKSPACE/scripts/fix-camera-headers-offline.sh "$KERNEL_DIR"
+# 1. 修复摄像头驱动结构体定义
+echo "1. 修复摄像头驱动结构体定义..."
+bash $GITHUB_WORKSPACE/scripts/fix-camera-structs.sh "$KERNEL_DIR"
 
 cd "$KERNEL_DIR"
 
-# 2. 修复摄像头驱动结构体定义
-echo "2. 修复摄像头驱动结构体定义..."
-bash $GITHUB_WORKSPACE/scripts/fix-camera-structs.sh "$KERNEL_DIR"
-
-# 3. 修复MDSS PLL编译错误
-echo "3. 修复MDSS PLL编译错误..."
+# 2. 修复MDSS PLL编译错误
+echo "2. 修复MDSS PLL编译错误..."
 bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh "$KERNEL_DIR"
 
-# 4. 修复蓝牙驱动编译错误
-echo "4. 修复蓝牙驱动编译错误..."
+# 3. 修复蓝牙驱动编译错误
+echo "3. 修复蓝牙驱动编译错误..."
 if [ -f "drivers/bluetooth/Makefile" ]; then
  # 移除导致编译错误的文件
  rm -rf drivers/bluetooth/btfm_slim.c || true
@@ -55,8 +51,8 @@ if [ -f "drivers/bluetooth/Makefile" ]; then
  sed -i '/bluetooth-power/d' drivers/bluetooth/Makefile || true
 fi
 
-# 5. 修复GPU驱动编译错误
-echo "5. 修复GPU驱动编译错误..."
+# 4. 修复GPU驱动编译错误
+echo "4. 修复GPU驱动编译错误..."
 if [ -f "drivers/gpu/msm/Makefile" ]; then
  # 只删除有问题的trace文件，保留核心GPU驱动
  rm -rf drivers/gpu/msm/kgsl_trace.c || true
@@ -64,22 +60,22 @@ if [ -f "drivers/gpu/msm/Makefile" ]; then
  rm -rf drivers/gpu/msm/kgsl_events.c || true
 fi
 
-# 6. 修复USB gadget驱动编译错误
-echo "6. 修复USB gadget驱动编译错误..."
+# 5. 修复USB gadget驱动编译错误
+echo "5. 修复USB gadget驱动编译错误..."
 if [ -d "drivers/usb/gadget/function" ]; then
  # 创建必要的空头文件
  touch drivers/usb/gadget/function/u_ncm.h || true
 fi
 
-# 7. 修复coresight驱动编译错误
-echo "7. 修复coresight驱动编译错误..."
+# 6. 修复coresight驱动编译错误
+echo "6. 修复coresight驱动编译错误..."
 if [ -f "drivers/hwtracing/coresight/Makefile" ]; then
  # 只删除有问题的文件，保留核心功能
  rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
 fi
 
-# 8. 禁用WERROR避免编译失败
-echo "8. 禁用WERROR..."
+# 7. 禁用WERROR避免编译失败
+echo "7. 禁用WERROR..."
 if [ -f "Makefile" ]; then
  sed -i 's/-Werror//g' Makefile || true
  sed -i 's/WERROR=y/WERROR=n/g' Makefile || true
@@ -90,14 +86,14 @@ if [ -f "scripts/Makefile.build" ]; then
  sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build || true
 fi
 
-# 9. 禁用stack protector避免编译器不支持
-echo "9. 禁用stack protector..."
+# 8. 禁用stack protector避免编译器不支持
+echo "8. 禁用stack protector..."
 if [ -f "Makefile" ]; then
  sed -i 's/-fstack-protector-strong//g' Makefile || true
  sed -i 's/-fstack-protector//g' Makefile || true
 fi
 
-echo "10. 修复-implicit-function-declaration编译错误..."
+echo "9. 修复-implicit-function-declaration编译错误..."
 if [ -f "Makefile" ]; then
  # 修复错误的-implicit-function-declaration选项
  sed -i 's/-implicit-function-declaration/-Wimplicit-function-declaration/g' Makefile || true
