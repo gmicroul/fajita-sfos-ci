@@ -33,13 +33,15 @@ echo ""
 
 # 1. 修复摄像头驱动头文件（使用真实头文件）
 echo "1. 修复摄像头驱动头文件..."
-bash $GITHUB_WORKSPACE/scripts/fix-camera-headers.sh "$KERNEL_DIR"
+bash $GITHUB_WORKSPACE/scripts/fix-camera-headers-offline.sh "$KERNEL_DIR"
 
 cd "$KERNEL_DIR"
 
 # 2. 修复MDSS PLL编译错误
 echo "2. 修复MDSS PLL编译错误..."
-bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh "$KERNEL_DIR"
+bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh
+
+# 3. 修复蓝牙驱动编译错误
 echo "3. 修复蓝牙驱动编译错误..."
 if [ -f "drivers/bluetooth/Makefile" ]; then
  # 移除导致编译错误的文件

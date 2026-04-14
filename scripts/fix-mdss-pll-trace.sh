@@ -5,24 +5,10 @@
 
 set -e
 
-# 从参数或环境变量获取内核目录
-KERNEL_DIR="${1:-$ANDROID_ROOT/kernel/oneplus/sdm845}"
-
 echo "=========================================="
 echo "修复MDSS PLL编译错误"
 echo "=========================================="
 echo ""
-
-# 检查内核目录是否存在
-if [ ! -d "$KERNEL_DIR" ]; then
- echo "错误：内核目录不存在: $KERNEL_DIR"
- exit 1
-fi
-
-echo "内核目录: $KERNEL_DIR"
-echo ""
-
-cd "$KERNEL_DIR"
 
 # 创建trace/events目录
 mkdir -p include/trace/events
