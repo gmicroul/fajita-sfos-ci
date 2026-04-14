@@ -39,7 +39,7 @@ cd "$KERNEL_DIR"
 
 # 2. 修复摄像头驱动结构体定义
 echo "2. 修复摄像头驱动结构体定义..."
-bash $GITHUB_WORKSPACE/scripts/fix-camera-structs.sh
+bash $GITHUB_WORKSPACE/scripts/fix-camera-structs.sh "$KERNEL_DIR"
 
 # 3. 修复MDSS PLL编译错误
 echo "3. 修复MDSS PLL编译错误..."
