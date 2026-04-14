@@ -67,7 +67,14 @@ echo "3. 修复摄像头驱动编译错误..."
 if [ -d "drivers/media/platform/msm/camera" ]; then
  # 创建必要的空头文件
  mkdir -p drivers/media/platform/msm/camera/cam_sensor_module || true
+ mkdir -p drivers/media/platform/msm/camera/cam_core || true
  touch drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_core.h || true
+ touch drivers/media/platform/msm/camera/cam_core/cam_context.h || true
+ 
+ # 修复cam_trace.h中的头文件引用
+ if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
+ sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ fi
 fi
 
 # 5. 修复USB gadget驱动编译错误
