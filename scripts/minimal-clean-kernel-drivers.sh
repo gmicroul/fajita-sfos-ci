@@ -138,7 +138,7 @@ echo " - 音频驱动 (QDSP6v2)"
 echo " - 传感器驱动"
 echo " - 电源管理驱动"
 echo ""
-修复的编译错误：
+echo "修复的编译错误："
 echo " - 摄像头驱动结构体定义缺失"
 echo " - MDSS PLL trace文件缺失"
 echo " - 蓝牙驱动编译错误"
