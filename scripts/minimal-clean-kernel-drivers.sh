@@ -5,6 +5,9 @@
 
 set -e
 
+# 保存当前目录（为了脚本结束后能恢复）
+ORIGINAL_DIR="$(pwd)"
+
 # 从参数或环境变量获取内核目录
 KERNEL_DIR="${1:-$ANDROID_ROOT/kernel/oneplus/sdm845}"
 
@@ -35,9 +38,13 @@ echo ""
 echo "1. 修复摄像头驱动头文件..."
 bash $GITHUB_WORKSPACE/scripts/fix-camera-headers-enhanced.sh "$KERNEL_DIR"
 
-# 2. 修复MDSS PLL编译错误
+# 2. 修复MDSS PLL编译错误（创建include/trace/events/mdss_pll.h）
 echo "2. 修复MDSS PLL编译错误..."
 bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh "$KERNEL_DIR"
+
+# 3. 创建空的trace头文件（创建drivers/clk/qcom/mdss/mdss_pll_trace.h）
+echo "3. 创建空的trace头文件..."
+bash $GITHUB_WORKSPACE/scripts/create-empty-trace-headers.sh "$KERNEL_DIR"
 
 cd "$KERNEL_DIR"
 
@@ -139,8 +146,8 @@ echo " - 传感器驱动"
 echo " - 电源管理驱动"
 echo ""
 echo "修复的编译错误："
-echo " - 摄像头驱动结构体定义缺失"
-echo " - MDSS PLL trace文件缺失"
+echo " - 摄像头驱动结构体定义缺失（使用真实头文件）"
+echo " - MDSS PLL trace文件缺失（创建include/trace/events/mdss_pll.h和drivers/clk/qcom/mdss/mdss_pll_trace.h）"
 echo " - 蓝牙驱动编译错误"
 echo " - GPU trace文件缺失"
 echo " - USB gadget头文件缺失"
@@ -152,3 +159,7 @@ echo "下一步："
 echo " make $DEFCONFIG"
 echo " make -j\$(nproc) Image.gz KCFLAGS=\"-Wno-error -fno-stack-protector\""
 echo ""
+
+# 恢复原始目录
+cd "$ORIGINAL_DIR"
+echo "已返回原始目录：$ORIGINAL_DIR"
