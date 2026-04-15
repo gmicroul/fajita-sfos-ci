@@ -168,22 +168,27 @@ echo ""
 # 创建其他增强的头文件（简化版）
 for header in "cam_ife_hw_mgr.h" "cam_isp_hw_mgr.h" "cam_sensor_core.h"; do
     dir_path=""
-    if header == "cam_ife_hw_mgr.h" or header == "cam_isp_hw_mgr.h":
-        dir_path = "cam_isp/isp_hw_mgr"
-    elif header == "cam_sensor_core.h":
-        dir_path = "cam_sensor_module"
+    if [ "$header" = "cam_ife_hw_mgr.h" ] || [ "$header" = "cam_isp_hw_mgr.h" ]; then
+        dir_path="cam_isp/isp_hw_mgr"
+    elif [ "$header" = "cam_sensor_core.h" ]; then
+        dir_path="cam_sensor_module"
+    fi
     
     mkdir -p "$KERNEL_DIR/drivers/media/platform/msm/camera_oneplus/$dir_path"
+    
+    # 生成大写的头文件保护宏
+    header_upper=$(echo "$header" | tr '.' '_' | tr '[:lower:]' '[:upper:]')
+    struct_name=$(echo "$header" | sed 's/\.h$//' | sed 's/cam_//')
     
     cat > "$KERNEL_DIR/drivers/media/platform/msm/camera_oneplus/$dir_path/$header" << EOF
 /* Enhanced $header for kernel compilation */
 
-#ifndef _$(header.replace('.', '_').upper())
-#define _$(header.replace('.', '_').upper())
+#ifndef _${header_upper}
+#define _${header_upper}
 
 #include <linux/types.h>
 
-struct $(header.replace('.h', '').replace('cam_', '')) {
+struct ${struct_name} {
     uint32_t ctx_id;
     void *priv;
     uint32_t flags;
@@ -191,7 +196,7 @@ struct $(header.replace('.h', '').replace('cam_', '')) {
     struct mutex lock;
 };
 
-#endif /* _$(header.replace('.', '_').upper()) */
+#endif /* _${header_upper} */
 EOF
     
     echo "已创建增强版 $header"
