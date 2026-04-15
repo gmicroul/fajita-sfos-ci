@@ -1,5 +1,5 @@
 name: Build Hybris Boot Image - Triggered by Hermes Agent
-
+#trigger auto detect test1
 on:
   workflow_dispatch:
     inputs:
