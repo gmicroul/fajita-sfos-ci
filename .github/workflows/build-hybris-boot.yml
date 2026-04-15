@@ -180,6 +180,9 @@ jobs:
         # This script also creates empty trace headers
         bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
+        # Change to kernel directory (script changes directory internally)
+        cd $ANDROID_ROOT/kernel/oneplus/sdm845/
+
         # Build kernel
         make $DEFCONFIG
 
