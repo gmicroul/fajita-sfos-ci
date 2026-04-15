@@ -21,10 +21,10 @@ on:
       - 'scripts/clean-kernel-drivers-v2.sh'
       - 'scripts/create-empty-trace-headers.sh'
       - 'scripts/minimal-clean-kernel-drivers.sh'
-     - 'scripts/fix-camera-structs.sh'
-     - 'scripts/fix-mdss-pll-trace.sh'
-     - 'README.md'
-     - 'scripts/real-camera-headers-fix.sh'
+      - 'scripts/fix-camera-structs.sh'
+      - 'scripts/fix-mdss-pll-trace.sh'
+      - 'README.md'
+      - 'scripts/real-camera-headers-fix.sh'
 
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}
