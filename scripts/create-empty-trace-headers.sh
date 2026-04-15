@@ -53,10 +53,96 @@ cat > "$KERNEL_DIR/drivers/clk/qcom/mdss/mdss_pll_trace.h" << 'EOF'
 #include <trace/define_trace.h>
 EOF
 
-# 注意：fix-mdss-pll-trace.sh已经创建了 include/trace/events/mdss_pll.h
-# 这里我们只需要创建 mdss_pll_trace.h
-# TRACE_INCLUDE_PATH设置为../../..，所以会从drivers/clk/qcom/mdss/
-# 向上三级到根目录，然后找到include/trace/events/mdss_pll.h
+# 创建 kgsl_trace.h (GPU)
+mkdir -p "$KERNEL_DIR/drivers/gpu/msm"
+echo " - 创建 drivers/gpu/msm/kgsl_trace.h"
+cat > "$KERNEL_DIR/drivers/gpu/msm/kgsl_trace.h" << 'EOF'
+/* Empty trace header file to fix compilation error */
+/* This file is needed for GPU driver compilation */
+
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM kgsl
+
+#if !defined(_KGSL_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _KGSL_TRACE_H
+
+#include <linux/tracepoint.h>
+
+#endif /* _KGSL_TRACE_H */
+
+/* This part must be outside protection */
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../../..  /* Go up 4 levels from drivers/gpu/msm/ to root */
+#include <trace/define_trace.h>
+EOF
+
+# 创建 adreno_trace.h (GPU)
+echo " - 创建 drivers/gpu/msm/adreno_trace.h"
+cat > "$KERNEL_DIR/drivers/gpu/msm/adreno_trace.h" << 'EOF'
+/* Empty trace header file to fix compilation error */
+/* This file is needed for Adreno GPU driver compilation */
+
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM adreno
+
+#if !defined(_ADRENO_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _ADRENO_TRACE_H
+
+#include <linux/tracepoint.h>
+
+#endif /* _ADRENO_TRACE_H */
+
+/* This part must be outside protection */
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../../..  /* Go up 4 levels from drivers/gpu/msm/ to root */
+#include <trace/define_trace.h>
+EOF
+
+# 创建 usb_trace.h (USB gadget)
+mkdir -p "$KERNEL_DIR/drivers/usb/gadget"
+echo " - 创建 drivers/usb/gadget/usb_trace.h"
+cat > "$KERNEL_DIR/drivers/usb/gadget/usb_trace.h" << 'EOF'
+/* Empty trace header file to fix compilation error */
+/* This file is needed for USB gadget driver compilation */
+
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM usb_gadget
+
+#if !defined(_USB_GADGET_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _USB_GADGET_TRACE_H
+
+#include <linux/tracepoint.h>
+
+#endif /* _USB_GADGET_TRACE_H */
+
+/* This part must be outside protection */
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../..  /* Go up 3 levels from drivers/usb/gadget/ to root */
+#include <trace/define_trace.h>
+EOF
+
+# 创建 coresight_trace.h (coresight)
+mkdir -p "$KERNEL_DIR/drivers/hwtracing/coresight"
+echo " - 创建 drivers/hwtracing/coresight/coresight_trace.h"
+cat > "$KERNEL_DIR/drivers/hwtracing/coresight/coresight_trace.h" << 'EOF'
+/* Empty trace header file to fix compilation error */
+/* This file is needed for Coresight driver compilation */
+
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM coresight
+
+#if !defined(_CORESIGHT_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _CORESIGHT_TRACE_H
+
+#include <linux/tracepoint.h>
+
+#endif /* _CORESIGHT_TRACE_H */
+
+/* This part must be outside protection */
+#undef TRACE_INCLUDE_PATH
+#define TRACE_INCLUDE_PATH ../../../..  /* Go up 4 levels from drivers/hwtracing/coresight/ to root */
+#include <trace/define_trace.h>
+EOF
 
 echo ""
 echo "=========================================="
@@ -65,5 +151,9 @@ echo "=========================================="
 echo ""
 echo "已创建的文件："
 echo " - drivers/clk/qcom/mdss/mdss_pll_trace.h"
+echo " - drivers/gpu/msm/kgsl_trace.h"
+echo " - drivers/gpu/msm/adreno_trace.h"
+echo " - drivers/usb/gadget/usb_trace.h"
+echo " - drivers/hwtracing/coresight/coresight_trace.h"
 echo ""
 echo "注意：fix-mdss-pll-trace.sh会创建include/trace/events/mdss_pll.h文件"
