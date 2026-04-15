@@ -53,16 +53,6 @@ download_with_retry() {
     return 1
 }
 
-# 要下载的文件列表
-declare -A files
-files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_node.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_core/cam_node.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h"
-}
-
 # 回退函数：如果下载失败，创建空文件
 create_fallback_header() {
     local file="$1"
@@ -88,14 +78,6 @@ EOF
 echo "下载缺失的摄像头驱动头文件..."
 
 # 要下载的文件列表
-
-#endif /* _${header_name}_H */
-EOF
-}
-
-echo "下载缺失的摄像头驱动头文件..."
-
-# 要下载的文件列表
 declare -A files
 files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h"
@@ -111,6 +93,7 @@ echo " - cam_node.h"
 echo " - cam_ife_hw_mgr.h"
 echo " - cam_isp_hw_mgr.h"
 echo " - cam_sensor_core.h"
+
 for output_path in "${!files[@]}"; do
     url="${files[$output_path]}"
     
@@ -132,26 +115,36 @@ if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
     sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' drivers/media/platform/msm/camera/cam_utils/cam_trace.h
 fi
 
-# 修复cam_trace.h中的引用 (camera_oneplus目录)
-if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
-    sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h
+# 修复cam_sensor_core.h中的引用 (camera_oneplus目录)
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h" ]; then
+    # 确保cam_sensor_core.h有正确的包含
+    sed -i 's|#include "cam_debug_util.h"|#include "../cam_utils/cam_debug_util.h"|g' drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h
+    sed -i 's|#include "cam_sensor_dev.h"|#include "cam_sensor_dev.h"|g' drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h
 fi
 
-# 修复cam_isp_packet_parser.h中的引用
-if [ -f "drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h" ]; then
-    sed -i 's|#include "cam_ife_hw_mgr.h"|#include "../cam_ife_hw_mgr.h"|g' drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h
+# 修复cam_node.h中的引用 (camera_oneplus目录)
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_core/cam_node.h" ]; then
+    sed -i 's|#include "cam_debug_util.h"|#include "../cam_utils/cam_debug_util.h"|g' drivers/media/platform/msm/camera_oneplus/cam_core/cam_node.h
+fi
+
+# 修复cam_isp_hw_mgr.h中的引用 (camera_oneplus目录)
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h" ]; then
+    sed -i 's|#include "cam_debug_util.h"|#include "../../cam_utils/cam_debug_util.h"|g' drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h
+fi
+
+# 修复cam_ife_hw_mgr.h中的引用 (camera_oneplus目录)
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h" ]; then
+    sed -i 's|#include "cam_debug_util.h"|#include "../../cam_utils/cam_debug_util.h"|g' drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h
 fi
 
 echo ""
 echo "=========================================="
-echo "头文件修复完成！"
+echo "摄像头驱动头文件修复完成！"
 echo "=========================================="
 echo ""
-echo "已修复的头文件："
-echo " - cam_context.h (真实文件或回退版本)"
-echo " - cam_ife_hw_mgr.h"
-echo " - cam_isp_hw_mgr.h"
-echo " - cam_sensor_core.h"
+echo "确保摄像头驱动可以正常编译，同时保留相机功能"
 echo ""
-echo "确保相机驱动可以编译通过"
+echo "下一步："
+echo " make $DEFCONFIG"
+echo " make -j\$(nproc) Image.gz KCFLAGS=\"-Wno-error -fno-stack-protector\""
 echo ""
