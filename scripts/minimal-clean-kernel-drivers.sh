@@ -10,6 +10,7 @@ ORIGINAL_DIR="$(pwd)"
 
 # 从参数或环境变量获取内核目录
 KERNEL_DIR="${1:-$ANDROID_ROOT/kernel/oneplus/sdm845}"
+GITHUB_WORKSPACE="${GITHUB_WORKSPACE:-$(pwd)}"
 
 echo "=========================================="
 echo "最小化内核清理脚本"
