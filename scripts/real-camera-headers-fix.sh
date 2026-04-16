@@ -79,7 +79,10 @@ files["drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h"]="${REPO
 files["drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_interface.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_interface.h"
 files["drivers/media/platform/msm/camera/cam_hw_mgr_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_hw_mgr_intf.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_req_mgr/cam_req_mgr_interface.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_interface.h"
-files["drivers/media/platform/msm/camera_oneplus/cam_hw_mgr_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_hw_mgr_intf.h"
+files["drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_core.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_req_mgr/cam_req_mgr_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_core.h"
+files["drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_util.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_req_mgr/cam_req_mgr_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_util.h"
 
 # ISP packet parser和相关头文件
 files["drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"
