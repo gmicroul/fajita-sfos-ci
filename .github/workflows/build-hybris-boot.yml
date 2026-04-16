@@ -25,6 +25,7 @@ on:
       - 'scripts/fix-mdss-pll-trace.sh'
       - 'README.md'
       - 'scripts/real-camera-headers-fix.sh'
+      - 'scripts/fix-camera-trace-paths.sh'
 
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}

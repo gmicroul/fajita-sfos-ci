@@ -39,83 +39,87 @@ echo ""
 echo "1. 修复摄像头驱动头文件..."
 bash $GITHUB_WORKSPACE/scripts/real-camera-headers-fix.sh "$KERNEL_DIR"
 
-# 2. 修复MDSS PLL编译错误（创建include/trace/events/mdss_pll.h）
-echo "2. 修复MDSS PLL编译错误..."
+# 2. 修复cam_trace.h中的路径问题
+echo "2. 修复摄像头trace头文件路径..."
+bash $GITHUB_WORKSPACE/scripts/fix-camera-trace-paths.sh "$KERNEL_DIR"
+
+# 3. 修复MDSS PLL编译错误（创建include/trace/events/mdss_pll.h）
+echo "3. 修复MDSS PLL编译错误..."
 bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh "$KERNEL_DIR"
 
-# 3. 创建空的trace头文件（创建drivers/clk/qcom/mdss/mdss_pll_trace.h）
-echo "3. 创建空的trace头文件..."
+# 4. 创建空的trace头文件（创建drivers/clk/qcom/mdss/mdss_pll_trace.h）
+echo "4. 创建空的trace头文件..."
 bash $GITHUB_WORKSPACE/scripts/create-empty-trace-headers.sh "$KERNEL_DIR"
 
 cd "$KERNEL_DIR"
 
-# 3. 修复蓝牙驱动编译错误
-echo "3. 修复蓝牙驱动编译错误..."
+# 5. 修复蓝牙驱动编译错误
+echo "5. 修复蓝牙驱动编译错误..."
 if [ -f "drivers/bluetooth/Makefile" ]; then
- # 移除导致编译错误的文件
- rm -rf drivers/bluetooth/btfm_slim.c || true
- rm -rf drivers/bluetooth/bluetooth-power.c || true
- sed -i '/btfm_slim/d' drivers/bluetooth/Makefile || true
- sed -i '/bluetooth-power/d' drivers/bluetooth/Makefile || true
+    # 移除导致编译错误的文件
+    rm -rf drivers/bluetooth/btfm_slim.c || true
+    rm -rf drivers/bluetooth/bluetooth-power.c || true
+    sed -i '/btfm_slim/d' drivers/bluetooth/Makefile || true
+    sed -i '/bluetooth-power/d' drivers/bluetooth/Makefile || true
 fi
 
-# 4. 修复GPU驱动编译错误
-echo "4. 修复GPU驱动编译错误..."
+# 6. 修复GPU驱动编译错误
+echo "6. 修复GPU驱动编译错误..."
 if [ -f "drivers/gpu/msm/Makefile" ]; then
- # 只删除有问题的trace文件，保留核心GPU驱动
- rm -rf drivers/gpu/msm/kgsl_trace.c || true
- rm -rf drivers/gpu/msm/adreno_trace.c || true
- rm -rf drivers/gpu/msm/kgsl_events.c || true
+    # 只删除有问题的trace文件，保留核心GPU驱动
+    rm -rf drivers/gpu/msm/kgsl_trace.c || true
+    rm -rf drivers/gpu/msm/adreno_trace.c || true
+    rm -rf drivers/gpu/msm/kgsl_events.c || true
 fi
 
-# 5. 修复USB gadget驱动编译错误
-echo "5. 修复USB gadget驱动编译错误..."
+# 7. 修复USB gadget驱动编译错误
+echo "7. 修复USB gadget驱动编译错误..."
 if [ -d "drivers/usb/gadget/function" ]; then
- # 创建必要的空头文件
- touch drivers/usb/gadget/function/u_ncm.h || true
+    # 创建必要的空头文件
+    touch drivers/usb/gadget/function/u_ncm.h || true
 fi
 
-# 6. 修复coresight驱动编译错误
-echo "6. 修复coresight驱动编译错误..."
+# 8. 修复coresight驱动编译错误
+echo "8. 修复coresight驱动编译错误..."
 if [ -f "drivers/hwtracing/coresight/Makefile" ]; then
- # 只删除有问题的文件，保留核心功能
- rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
+    # 只删除有问题的文件，保留核心功能
+    rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
 fi
 
-# 7. 禁用WERROR避免编译失败
-echo "7. 禁用WERROR..."
+# 9. 禁用WERROR避免编译失败
+echo "9. 禁用WERROR..."
 if [ -f "Makefile" ]; then
- sed -i 's/-Werror//g' Makefile || true
- sed -i 's/WERROR=y/WERROR=n/g' Makefile || true
+    sed -i 's/-Werror//g' Makefile || true
+    sed -i 's/WERROR=y/WERROR=n/g' Makefile || true
 fi
 
 if [ -f "scripts/Makefile.build" ]; then
- sed -i 's/-Werror//g' scripts/Makefile.build || true
- sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build || true
+    sed -i 's/-Werror//g' scripts/Makefile.build || true
+    sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build || true
 fi
 
-# 8. 禁用stack protector避免编译器不支持
-echo "8. 禁用stack protector..."
+# 10. 禁用stack protector避免编译器不支持
+echo "10. 禁用stack protector..."
 if [ -f "Makefile" ]; then
- sed -i 's/-fstack-protector-strong//g' Makefile || true
- sed -i 's/-fstack-protector//g' Makefile || true
+    sed -i 's/-fstack-protector-strong//g' Makefile || true
+    sed -i 's/-fstack-protector//g' Makefile || true
 fi
 
-echo "9. 清理无效编译标志..."
+echo "11. 清理无效编译标志..."
 if [ -f "Makefile" ]; then
-  # 移除可能存在的无效编译标志
-  sed -i 's/-implicit-function-declaration//g' Makefile || true
-  sed -i 's/-Wno-implicit-function-declaration//g' Makefile || true
+    # 移除可能存在的无效编译标志
+    sed -i 's/-implicit-function-declaration//g' Makefile || true
+    sed -i 's/-Wno-implicit-function-declaration//g' Makefile || true
 fi
 
 if [ -f "scripts/Makefile.build" ]; then
-  sed -i 's/-implicit-function-declaration//g' scripts/Makefile.build || true
-  sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.build || true
+    sed -i 's/-implicit-function-declaration//g' scripts/Makefile.build || true
+    sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.build || true
 fi
 
 if [ -f "scripts/Makefile.lib" ]; then
-  sed -i 's/-implicit-function-declaration//g' scripts/Makefile.lib || true
-  sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.lib || true
+    sed -i 's/-implicit-function-declaration//g' scripts/Makefile.lib || true
+    sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.lib || true
 fi
 
 # 同时搜索其他可能的Makefile文件

@@ -155,6 +155,21 @@ EOF
        drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h
 fi
 
+# 修复cam_trace.h中的路径问题
+echo "修复cam_trace.h中的路径问题..."
+if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
+    echo "修复camera/cam_utils/cam_trace.h..."
+    # 替换#include "cam_context.h"为#include "../cam_core/cam_context.h"
+    sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' \
+        drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+fi
+
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
+    echo "修复camera_oneplus/cam_utils/cam_trace.h..."
+    sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' \
+        drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+fi
+
 echo ""
 echo "=========================================="
 echo "真实头文件修复完成！"
