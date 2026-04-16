@@ -81,6 +81,12 @@ files["drivers/media/platform/msm/camera/cam_hw_mgr_intf.h"]="${REPO_BASE}/drive
 files["drivers/media/platform/msm/camera_oneplus/cam_req_mgr/cam_req_mgr_interface.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_interface.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_hw_mgr_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_hw_mgr_intf.h"
 
+# ISP packet parser和相关头文件
+files["drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"
+files["drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"
+
 echo "下载文件列表："
 for output_path in "${!files[@]}"; do
     echo "  - $(basename "$output_path")"
@@ -168,6 +174,25 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; the
     echo "修复camera_oneplus/cam_utils/cam_trace.h..."
     sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' \
         drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+fi
+
+# 修复cam_isp_packet_parser.h中的路径
+echo "修复cam_isp_packet_parser.h中的路径..."
+if [ -f "drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h" ]; then
+    echo "修复camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h..."
+    # 从hw_utils/include/到isp_hw_mgr/的相对路径是../../
+    sed -i 's|#include "cam_ife_hw_mgr.h"|#include "../../cam_ife_hw_mgr.h"|g' \
+        drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h || true
+    sed -i 's|#include "cam_isp_hw_mgr.h"|#include "../../cam_isp_hw_mgr.h"|g' \
+        drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h || true
+fi
+
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h" ]; then
+    echo "修复camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h..."
+    sed -i 's|#include "cam_ife_hw_mgr.h"|#include "../../cam_ife_hw_mgr.h"|g' \
+        drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h || true
+    sed -i 's|#include "cam_isp_hw_mgr.h"|#include "../../cam_isp_hw_mgr.h"|g' \
+        drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h || true
 fi
 
 echo ""
