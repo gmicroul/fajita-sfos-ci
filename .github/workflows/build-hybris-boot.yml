@@ -28,9 +28,10 @@ on:
       - 'scripts/fix-camera-trace-paths.sh'
       - 'scripts/enhanced-fix-camera.sh'
       - 'scripts/fix-camera-headers.sh'
-      - 'scripts/fix-camera-headers-enhanced.sh'
-      - 'scripts/fix-camera-headers-offline.sh'
-      - 'scripts/apply-docker-kernel-patch.sh'
+- 'scripts/fix-camera-headers-enhanced.sh'
+- 'scripts/fix-camera-headers-offline.sh'
+- 'scripts/apply-docker-kernel-patch.sh'
+- 'scripts/fix-cam-req-mgr.sh'
 
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}
