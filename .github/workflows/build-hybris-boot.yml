@@ -182,12 +182,11 @@ jobs:
 
         echo "Building with defconfig: $DEFCONFIG"
 
-        # Minimal cleanup: preserve critical drivers, only fix compilation errors
-        # IMPORTANT: This must run BEFORE make defconfig, because make defconfig reads Kconfig files
-        # Use minimal script to preserve GPU, display, USB, camera drivers (required for boot)
-        # This script also creates empty trace headers
-        bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
-        bash $GITHUB_WORKSPACE/scripts/fix-camera-headers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+ # Minimal cleanup: preserve critical drivers, only fix compilation errors
+ # IMPORTANT: This must run BEFORE make defconfig, because make defconfig reads Kconfig files
+ # Use minimal script to preserve GPU, display, USB, camera drivers (required for boot)
+ # This script also creates empty trace headers and fixes camera headers (real-camera-headers-fix.sh)
+ bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
         # Change to kernel directory (script changes directory internally)
         cd $ANDROID_ROOT/kernel/oneplus/sdm845/
