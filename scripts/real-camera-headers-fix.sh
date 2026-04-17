@@ -164,19 +164,38 @@ EOF
        drivers/media/platform/msm/camera_oneplus/cam_utils/cam_debug_util.h
 fi
 
-# 修复cam_trace.h中的路径问题
-echo "修复cam_trace.h中的路径问题..."
+# 修复 cam_trace.h 中的路径问题
+echo "修复 cam_trace.h 中的路径问题..."
 if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
-    echo "修复camera/cam_utils/cam_trace.h..."
-    # 替换#include "cam_context.h"为#include "../cam_core/cam_context.h"
-    sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' \
-        drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ echo "修复 camera/cam_utils/cam_trace.h..."
+ # 注释掉所有#include 语句，避免依赖缺失的头文件
+ sed -i 's|^#include|// #include|g' \
+ drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ # 添加最小化的 trace 宏定义
+ cat >> drivers/media/platform/msm/camera/cam_utils/cam_trace.h << 'EOF'
+
+/* 最小化 trace 宏定义 */
+#ifndef _CAM_TRACE_MINIMAL
+#define _CAM_TRACE_MINIMAL
+#define CAM_TRACE_EVENT(event, args...) do {} while(0)
+#define trace_cam_print_event(event, args...) do {} while(0)
+#endif
+EOF
 fi
 
 if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
-    echo "修复camera_oneplus/cam_utils/cam_trace.h..."
-    sed -i 's|#include "cam_context.h"|#include "../cam_core/cam_context.h"|g' \
-        drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+ echo "修复 camera_oneplus/cam_utils/cam_trace.h..."
+ sed -i 's|^#include|// #include|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+ cat >> drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h << 'EOF'
+
+/* 最小化 trace 宏定义 */
+#ifndef _CAM_TRACE_MINIMAL
+#define _CAM_TRACE_MINIMAL
+#define CAM_TRACE_EVENT(event, args...) do {} while(0)
+#define trace_cam_print_event(event, args...) do {} while(0)
+#endif
+EOF
 fi
 
 # 修复cam_isp_packet_parser.h中的路径
