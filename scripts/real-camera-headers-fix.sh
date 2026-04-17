@@ -7,6 +7,7 @@ set -e
 
 KERNEL_DIR="${1:-$ANDROID_ROOT/kernel/oneplus/sdm845}"
 REPO_BASE="https://raw.githubusercontent.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable/lineage-16.0"
+REPO_PROXY="https://gh-proxy.com/https://raw.githubusercontent.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable/lineage-16.0"
 
 echo "=========================================="
 echo "下载真实摄像头驱动头文件"
@@ -26,32 +27,35 @@ cd "$KERNEL_DIR"
 
 # 下载函数，带重试机制
 download_with_retry() {
-    local url="$1"
-    local output="$2"
-    local max_retries=5
-    local retry_delay=3
-    
-    echo "下载: $(basename "$output")"
-    
-    for attempt in $(seq 1 $max_retries); do
-        if curl -s --fail "$url" -o "$output"; then
-            if [ -s "$output" ]; then
-                echo "  成功下载 (第${attempt}次尝试)"
-                return 0
-            else
-                echo "  警告：下载的文件为空"
-                rm -f "$output"
-            fi
-        fi
-        
-        if [ $attempt -lt $max_retries ]; then
-            echo "  第${attempt}次下载失败，${retry_delay}秒后重试..."
-            sleep $retry_delay
-        fi
-    done
-    
-    echo "  错误：无法下载文件"
-    return 1
+ local url="$1"
+ local output="$2"
+ local max_retries=5
+ local retry_delay=3
+ 
+ # 使用代理 URL
+ local proxy_url="${url/$REPO_BASE/$REPO_PROXY}"
+ 
+ echo "下载：$(basename "$output")"
+ 
+ for attempt in $(seq 1 $max_retries); do
+ if curl -s --fail "$proxy_url" -o "$output"; then
+   if [ -s "$output" ]; then
+     echo " 成功下载 (第${attempt}次尝试)"
+     return 0
+   else
+     echo " 警告：下载的文件为空"
+     rm -f "$output"
+   fi
+ fi
+ 
+ if [ $attempt -lt $max_retries ]; then
+   echo " 第${attempt}次下载失败，${retry_delay}秒后重试..."
+   sleep $retry_delay
+ fi
+ done
+ 
+ echo " 错误：无法下载文件"
+ return 1
 }
 
 echo "下载摄像头驱动核心头文件..."
