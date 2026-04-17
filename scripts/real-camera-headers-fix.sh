@@ -171,7 +171,18 @@ if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
  # 注释掉所有#include 语句，避免依赖缺失的头文件
  sed -i 's|^#include|// #include|g' \
  drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
-# 添加最小化的 trace 宏定义和函数声明
+ # 注释掉所有 trace 事件宏定义
+ sed -i 's|^TP_printk|// TP_printk|g' \
+ drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ sed -i 's|^TP_PROTO|// TP_PROTO|g' \
+ drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ sed -i 's|^TP_ARGS|// TP_ARGS|g' \
+ drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ sed -i 's|^TP_STRUCT__entry|// TP_STRUCT__entry|g' \
+ drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ sed -i 's|^TP_fast_assign|// TP_fast_assign|g' \
+ drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
+ # 添加最小化的 trace 宏定义和函数声明
 cat >> drivers/media/platform/msm/camera/cam_utils/cam_trace.h << 'EOF'
 
 /* 最小化 trace 宏定义和函数声明 */
@@ -203,6 +214,17 @@ fi
 if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
 echo "修复 camera_oneplus/cam_utils/cam_trace.h..."
 sed -i 's|^#include|// #include|g' \
+drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+# 注释掉所有 trace 事件宏定义
+sed -i 's|^TP_printk|// TP_printk|g' \
+drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+sed -i 's|^TP_PROTO|// TP_PROTO|g' \
+drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+sed -i 's|^TP_ARGS|// TP_ARGS|g' \
+drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+sed -i 's|^TP_STRUCT__entry|// TP_STRUCT__entry|g' \
+drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+sed -i 's|^TP_fast_assign|// TP_fast_assign|g' \
 drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
 cat >> drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h << 'EOF'
 
