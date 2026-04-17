@@ -64,6 +64,8 @@ files["drivers/media/platform/msm/camera/cam_core/cam_node.h"]="${REPO_BASE}/dri
 files["drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"
 files["drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"
 files["drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_core.h"
+files["drivers/media/platform/msm/camera/cam_sensor_module/cam_cci/cam_cci_dev.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_cci/cam_cci_dev.h"
+files["drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"
 
 # camera_oneplus 目录的相同文件
 files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_core/cam_context.h"
@@ -72,6 +74,8 @@ files["drivers/media/platform/msm/camera_oneplus/cam_core/cam_node.h"]="${REPO_B
 files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/cam_ife_hw_mgr.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_core.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_cci/cam_cci_dev.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_cci/cam_cci_dev.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"
 
 # 其他必要的头文件
 files["drivers/media/platform/msm/camera/cam_utils/cam_trace.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_utils/cam_trace.h"
