@@ -166,26 +166,11 @@ fi
 
 # 修复 cam_trace.h 中的路径问题
 echo "修复 cam_trace.h 中的路径问题..."
-if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
- echo "修复 camera/cam_utils/cam_trace.h..."
- # 注释掉所有#include 语句，避免依赖缺失的头文件
- sed -i 's|^#include|// #include|g' \
- drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- # 注释掉所有 trace 事件宏定义（包括带空格的）
- sed -i 's|^[[:space:]]*TP_printk|// TP_printk|g' \
- drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- sed -i 's|^[[:space:]]*TP_PROTO|// TP_PROTO|g' \
- drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- sed -i 's|^[[:space:]]*TP_ARGS|// TP_ARGS|g' \
- drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- sed -i 's|^[[:space:]]*TP_STRUCT__entry|// TP_STRUCT__entry|g' \
- drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- sed -i 's|^[[:space:]]*TP_fast_assign|// TP_fast_assign|g' \
- drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- # 添加最小化的 trace 宏定义和函数声明
-cat >> drivers/media/platform/msm/camera/cam_utils/cam_trace.h << 'EOF'
 
-/* 最小化 trace 宏定义和函数声明 */
+# 直接覆盖 cam_trace.h，只保留最小化定义
+if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
+ echo "覆盖 camera/cam_utils/cam_trace.h..."
+ cat > drivers/media/platform/msm/camera/cam_utils/cam_trace.h << 'EOF'
 #ifndef _CAM_TRACE_MINIMAL
 #define _CAM_TRACE_MINIMAL
 
@@ -212,23 +197,8 @@ EOF
 fi
 
 if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
-echo "修复 camera_oneplus/cam_utils/cam_trace.h..."
-sed -i 's|^#include|// #include|g' \
-drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
-# 注释掉所有 trace 事件宏定义（包括带空格的）
-sed -i 's|^[[:space:]]*TP_printk|// TP_printk|g' \
-drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
-sed -i 's|^[[:space:]]*TP_PROTO|// TP_PROTO|g' \
-drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
-sed -i 's|^[[:space:]]*TP_ARGS|// TP_ARGS|g' \
-drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
-sed -i 's|^[[:space:]]*TP_STRUCT__entry|// TP_STRUCT__entry|g' \
-drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
-sed -i 's|^[[:space:]]*TP_fast_assign|// TP_fast_assign|g' \
-drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
-cat >> drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h << 'EOF'
-
-/* 最小化 trace 宏定义和函数声明 */
+ echo "覆盖 camera_oneplus/cam_utils/cam_trace.h..."
+ cat > drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h << 'EOF'
 #ifndef _CAM_TRACE_MINIMAL
 #define _CAM_TRACE_MINIMAL
 
@@ -252,6 +222,35 @@ static inline void trace_cam_isp_buf_done(const char *tag, void *ctx, void *req)
 
 #endif
 EOF
+fi
+
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
+echo "覆盖 camera_oneplus/cam_utils/cam_trace.h..."
+cat > drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h << 'EOF'
+#ifndef _CAM_TRACE_MINIMAL
+#define _CAM_TRACE_MINIMAL
+
+/* 前向声明 */
+struct cam_context;
+struct cam_ctx_request;
+
+/* Trace 函数占位符定义 - 使用 void* 接受任意类型 */
+static inline void trace_cam_buf_done(const char *tag, struct cam_context *ctx, void *req) {}
+static inline void trace_cam_print_event(const char *tag, int event, void *data) {}
+
+/* 其他可能用到的 trace 函数占位符 */
+static inline void trace_cam_frame_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_req_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_hw_buf_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_isp_buf_done(const char *tag, void *ctx, void *req) {}
+
+/* Trace 宏 */
+#define CAM_TRACE_EVENT(event, args...) do {} while(0)
+#define TRACE_CAM_PRINT_EVENT(event, args...) do {} while(0)
+
+#endif
+EOF
+fi
 fi
 
 # 修复cam_isp_packet_parser.h中的路径
