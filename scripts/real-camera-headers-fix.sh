@@ -92,11 +92,17 @@ files["drivers/media/platform/msm/camera_oneplus/cam_req_mgr/cam_req_mgr_core.h"
 files["drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_util.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_req_mgr/cam_req_mgr_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_req_mgr/cam_req_mgr_util.h"
 
-# ISP packet parser和相关头文件
+# ISP packet parser 和相关头文件
 files["drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"
 files["drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"
+
+# cam_sync 相关头文件
+files["drivers/media/platform/msm/camera/cam_sync/cam_sync_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sync/cam_sync_api.h"
+files["drivers/media/platform/msm/camera/cam_sync/cam_sync_private.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sync/cam_sync_private.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_sync/cam_sync_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sync/cam_sync_api.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_sync/cam_sync_private.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sync/cam_sync_private.h"
 
 echo "下载文件列表："
 for output_path in "${!files[@]}"; do
@@ -171,6 +177,7 @@ fix_i2c_include_path "drivers/media/platform/msm/camera/cam_sensor_module/cam_se
 fix_i2c_include_path "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"
 
 # 创建缺失的 cam_sensor_cmn_header.h 头文件
+# 这个文件需要放在 include/media/ 目录下，以便 #include <cam_sensor_cmn_header.h> 能找到
 echo "创建 cam_sensor_cmn_header.h 头文件..."
 mkdir -p include/media
 cat > include/media/cam_sensor_cmn_header.h << 'EOF'
@@ -183,33 +190,45 @@ cat > include/media/cam_sensor_cmn_header.h << 'EOF'
 
 /* 相机传感器类型枚举 */
 enum camera_sensor_i2c_type {
-    CAMERA_SENSOR_I2C_TYPE_U8,
-    CAMERA_SENSOR_I2C_TYPE_U16,
-    CAMERA_SENSOR_I2C_TYPE_U32,
+ CAMERA_SENSOR_I2C_TYPE_U8,
+ CAMERA_SENSOR_I2C_TYPE_U16,
+ CAMERA_SENSOR_I2C_TYPE_U32,
 };
 
 /* CCI 主设备类型 */
 enum camera_master_type {
-    CCI_MASTER = 0,
-    I2C_MASTER = 1,
+ CCI_MASTER = 0,
+ I2C_MASTER = 1,
 };
 
 /* 相机传感器功率设置结构 */
 struct cam_sensor_power_setting {
-    u16 seq_val;
-    u16 seq_type;
-    u32 config_val;
-    u32 delay;
+ u16 seq_val;
+ u16 seq_type;
+ u32 config_val;
+ u32 delay;
 };
 
 /* 相机传感器功率设置数据结构 */
 struct cam_sensor_power_setting_array {
-    struct cam_sensor_power_setting *power_setting;
-    u16 size;
+ struct cam_sensor_power_setting *power_setting;
+ u16 size;
 };
 
 /* 相机传感器输出格式 */
 enum v4l2_mbus_pixelcode;
+
+/* 相机传感器模式 */
+enum cam_sensor_mode_type {
+ CAMERA_SENSOR_CUSTOM_MODE,
+ CAMERA_SENSOR_AUTO_MODE,
+};
+
+/* 相机传感器功率设置类型 */
+enum cam_sensor_power_setting_type {
+ CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
+ CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+};
 
 #endif /* _CAM_SENSOR_CMN_HEADER_H_ */
 EOF
