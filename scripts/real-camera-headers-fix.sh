@@ -149,19 +149,24 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h" ]; th
  drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h || true
 fi
 
-# 修复 cam_sensor_i2c.h 中的 cam_cci_dev.h 路径
-echo "修复 cam_sensor_i2c.h 中的路径..."
-if [ -f "drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h" ]; then
- echo "修复 camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h..."
- sed -i 's|#include "cam_cci_dev.h"|#include "../cam_cci/cam_cci_dev.h"|g' \
- drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h || true
-fi
+# 修复 cam_sensor_i2c.h 中的 cam_cci_dev.h 包含
+# 由于存在循环依赖（cam_cci_dev.h → cam_sensor_util.h → cam_sensor_io.h → cam_sensor_i2c.h → cam_cci_dev.h）
+# 我们移除 cam_sensor_i2c.h 中的 #include "cam_cci_dev.h"，添加前向声明
+echo "修复 cam_sensor_i2c.h 中的循环依赖..."
 
-if [ -f "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h" ]; then
- echo "修复 camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h..."
- sed -i 's|#include "cam_cci_dev.h"|#include "../cam_cci/cam_cci_dev.h"|g' \
- drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h || true
-fi
+fix_i2c_circular_dep() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        echo "  修复：$file"
+        # 移除 cam_cci_dev.h 的包含
+        sed -i 's|#include "cam_cci_dev.h"|/* #include "cam_cci_dev.h" - 移除以避免循环依赖 */|g' "$file"
+        # 添加前向声明到 #define _CAM_SENSOR_I2C_H_ 之后
+        sed -i '/#define _CAM_SENSOR_I2C_H_/a\\nstruct cam_sensor_cci_client;' "$file"
+    fi
+}
+
+fix_i2c_circular_dep "drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"
+fix_i2c_circular_dep "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"
 
 # 确保cam_debug_util.h存在
 if [ ! -f "drivers/media/platform/msm/camera/cam_utils/cam_debug_util.h" ]; then
