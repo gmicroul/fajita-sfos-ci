@@ -180,6 +180,73 @@ fix_i2c_include_path() {
 fix_i2c_include_path "drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"
 fix_i2c_include_path "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h"
 
+# 复制 cam_sensor_cmn_header.h 到 include/media/ 目录
+# 因为 cam_sensor_util.h 使用 #include <cam_sensor_cmn_header.h>（尖括号）
+# 编译器会在 include/ 目录中查找
+echo "复制 cam_sensor_cmn_header.h 到 include/media/ 目录..."
+mkdir -p include/media
+if [ -f "drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h" ]; then
+ cp drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h include/media/cam_sensor_cmn_header.h
+ echo " 已复制 camera/cam_sensor_utils/cam_sensor_cmn_header.h 到 include/media/"
+elif [ -f "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h" ]; then
+ cp drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h include/media/cam_sensor_cmn_header.h
+ echo " 已复制 camera_oneplus/cam_sensor_utils/cam_sensor_cmn_header.h 到 include/media/"
+else
+ echo " 警告：未找到 cam_sensor_cmn_header.h，创建基本回退文件..."
+ cat > include/media/cam_sensor_cmn_header.h << 'EOF'
+/* 相机传感器公共头文件 - 最小化定义 */
+#ifndef _CAM_SENSOR_CMN_HEADER_H_
+#define _CAM_SENSOR_CMN_HEADER_H_
+
+#include <linux/types.h>
+#include <linux/videodev2.h>
+
+/* 相机传感器类型枚举 */
+enum camera_sensor_i2c_type {
+ CAMERA_SENSOR_I2C_TYPE_U8,
+ CAMERA_SENSOR_I2C_TYPE_U16,
+ CAMERA_SENSOR_I2C_TYPE_U32,
+};
+
+/* CCI 主设备类型 */
+enum camera_master_type {
+ CCI_MASTER = 0,
+ I2C_MASTER = 1,
+};
+
+/* 相机传感器功率设置结构 */
+struct cam_sensor_power_setting {
+ u16 seq_val;
+ u16 seq_type;
+ u32 config_val;
+ u32 delay;
+};
+
+/* 相机传感器功率设置数据结构 */
+struct cam_sensor_power_setting_array {
+ struct cam_sensor_power_setting *power_setting;
+ u16 size;
+};
+
+/* 相机传感器输出格式 */
+enum v4l2_mbus_pixelcode;
+
+/* 相机传感器模式 */
+enum cam_sensor_mode_type {
+ CAMERA_SENSOR_CUSTOM_MODE,
+ CAMERA_SENSOR_AUTO_MODE,
+};
+
+/* 相机传感器功率设置类型 */
+enum cam_sensor_power_setting_type {
+ CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
+ CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+};
+
+#endif /* _CAM_SENSOR_CMN_HEADER_H_ */
+EOF
+fi
+
 # 确保 cam_debug_util.h 存在
 if [ ! -f "drivers/media/platform/msm/camera/cam_utils/cam_debug_util.h" ]; then
     echo "创建cam_debug_util.h..."
