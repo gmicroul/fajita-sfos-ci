@@ -186,6 +186,12 @@ struct cam_ctx_request;
 static inline void trace_cam_buf_done(const char *tag, struct cam_context *ctx, void *req) {}
 static inline void trace_cam_print_event(const char *tag, int event, void *data) {}
 
+/* 其他可能用到的 trace 函数占位符 */
+static inline void trace_cam_frame_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_req_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_hw_buf_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_isp_buf_done(const char *tag, void *ctx, void *req) {}
+
 /* Trace 宏 */
 #define CAM_TRACE_EVENT(event, args...) do {} while(0)
 #define TRACE_CAM_PRINT_EVENT(event, args...) do {} while(0)
@@ -211,6 +217,12 @@ struct cam_ctx_request;
 /* Trace 函数占位符定义 - 使用 void* 接受任意类型 */
 static inline void trace_cam_buf_done(const char *tag, struct cam_context *ctx, void *req) {}
 static inline void trace_cam_print_event(const char *tag, int event, void *data) {}
+
+/* 其他可能用到的 trace 函数占位符 */
+static inline void trace_cam_frame_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_req_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_hw_buf_done(const char *tag, void *ctx, void *req) {}
+static inline void trace_cam_isp_buf_done(const char *tag, void *ctx, void *req) {}
 
 /* Trace 宏 */
 #define CAM_TRACE_EVENT(event, args...) do {} while(0)
