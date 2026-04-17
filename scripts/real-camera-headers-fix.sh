@@ -251,7 +251,6 @@ static inline void trace_cam_isp_buf_done(const char *tag, void *ctx, void *req)
 #endif
 EOF
 fi
-fi
 
 # 修复cam_isp_packet_parser.h中的路径
 echo "修复cam_isp_packet_parser.h中的路径..."
