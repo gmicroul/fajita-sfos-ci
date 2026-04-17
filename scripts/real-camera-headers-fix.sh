@@ -144,9 +144,23 @@ if [ -f "drivers/media/platform/msm/camera/cam_core/cam_context.h" ]; then
 fi
 
 if [ -f "drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h" ]; then
-    echo "修复 camera_oneplus/cam_core/cam_context.h..."
-    sed -i 's|#include "cam_req_mgr_interface.h"|#include "../cam_req_mgr/cam_req_mgr_interface.h"|g' \
-        drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h || true
+ echo "修复 camera_oneplus/cam_core/cam_context.h..."
+ sed -i 's|#include "cam_req_mgr_interface.h"|/#include "../cam_req_mgr/cam_req_mgr_interface.h"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h || true
+fi
+
+# 修复 cam_sensor_i2c.h 中的 cam_cci_dev.h 路径
+echo "修复 cam_sensor_i2c.h 中的路径..."
+if [ -f "drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h" ]; then
+ echo "修复 camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h..."
+ sed -i 's|#include "cam_cci_dev.h"|#include "../cam_cci/cam_cci_dev.h"|g' \
+ drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h || true
+fi
+
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h" ]; then
+ echo "修复 camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h..."
+ sed -i 's|#include "cam_cci_dev.h"|#include "../cam_cci/cam_cci_dev.h"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_io/cam_sensor_i2c.h || true
 fi
 
 # 确保cam_debug_util.h存在
