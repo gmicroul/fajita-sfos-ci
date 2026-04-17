@@ -171,8 +171,8 @@ if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
  # 注释掉所有#include 语句，避免依赖缺失的头文件
  sed -i 's|^#include|// #include|g' \
  drivers/media/platform/msm/camera/cam_utils/cam_trace.h || true
- # 添加最小化的 trace 宏定义和函数声明
- cat >> drivers/media/platform/msm/camera/cam_utils/cam_trace.h << 'EOF'
+# 添加最小化的 trace 宏定义和函数声明
+cat >> drivers/media/platform/msm/camera/cam_utils/cam_trace.h << 'EOF'
 
 /* 最小化 trace 宏定义和函数声明 */
 #ifndef _CAM_TRACE_MINIMAL
@@ -180,10 +180,10 @@ if [ -f "drivers/media/platform/msm/camera/cam_utils/cam_trace.h" ]; then
 
 /* 前向声明 */
 struct cam_context;
-struct cam_req_mgr_data;
+struct cam_ctx_request;
 
-/* Trace 函数占位符定义 */
-static inline void trace_cam_buf_done(const char *tag, struct cam_context *ctx, struct cam_req_mgr_data *req) {}
+/* Trace 函数占位符定义 - 使用 void* 接受任意类型 */
+static inline void trace_cam_buf_done(const char *tag, struct cam_context *ctx, void *req) {}
 static inline void trace_cam_print_event(const char *tag, int event, void *data) {}
 
 /* Trace 宏 */
@@ -195,10 +195,10 @@ EOF
 fi
 
 if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; then
- echo "修复 camera_oneplus/cam_utils/cam_trace.h..."
- sed -i 's|^#include|// #include|g' \
- drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
- cat >> drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h << 'EOF'
+echo "修复 camera_oneplus/cam_utils/cam_trace.h..."
+sed -i 's|^#include|// #include|g' \
+drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h || true
+cat >> drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h << 'EOF'
 
 /* 最小化 trace 宏定义和函数声明 */
 #ifndef _CAM_TRACE_MINIMAL
@@ -206,10 +206,10 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_utils/cam_trace.h" ]; the
 
 /* 前向声明 */
 struct cam_context;
-struct cam_req_mgr_data;
+struct cam_ctx_request;
 
-/* Trace 函数占位符定义 */
-static inline void trace_cam_buf_done(const char *tag, struct cam_context *ctx, struct cam_req_mgr_data *req) {}
+/* Trace 函数占位符定义 - 使用 void* 接受任意类型 */
+static inline void trace_cam_buf_done(const char *tag, struct cam_context *ctx, void *req) {}
 static inline void trace_cam_print_event(const char *tag, int event, void *data) {}
 
 /* Trace 宏 */
