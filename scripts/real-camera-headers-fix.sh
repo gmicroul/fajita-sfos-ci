@@ -120,6 +120,12 @@ files["drivers/media/platform/msm/camera_oneplus/cam_cpas_api.h"]="${REPO_BASE}/
 files["drivers/media/platform/msm/camera/cam_soc_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_soc_util.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_soc_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_soc_util.h"
 
+# cam_fd (Face Detection) 相关头文件
+files["drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.h"
+files["drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"
+
 echo "下载文件列表："
 for output_path in "${!files[@]}"; do
     echo "  - $(basename "$output_path")"
