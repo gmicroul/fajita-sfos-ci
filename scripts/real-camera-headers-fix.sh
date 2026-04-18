@@ -108,6 +108,18 @@ files["drivers/media/platform/msm/camera_oneplus/cam_sync/cam_sync_private.h"]="
 files["drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h"
 
+# cam_cci_dev.h 需要的其他头文件
+files["drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_util.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_utils/cam_sensor_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_sensor_utils/cam_sensor_util.h"
+files["drivers/media/platform/msm/camera/cam_sensor_module/cam_io/cam_io_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_io/cam_io_util.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_io/cam_io_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_sensor_module/cam_io/cam_io_util.h"
+files["drivers/media/platform/msm/camera/cam_subdev.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_subdev.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_subdev.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_subdev.h"
+files["drivers/media/platform/msm/camera/cam_cpas_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cpas_api.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_cpas_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cpas_api.h"
+files["drivers/media/platform/msm/camera/cam_soc_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_soc_util.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_soc_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_soc_util.h"
+
 echo "下载文件列表："
 for output_path in "${!files[@]}"; do
     echo "  - $(basename "$output_path")"
@@ -192,55 +204,146 @@ elif [ -f "drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_senso
  cp drivers/media/platform/msm/camera_oneplus/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h include/media/cam_sensor_cmn_header.h
  echo " 已复制 camera_oneplus/cam_sensor_utils/cam_sensor_cmn_header.h 到 include/media/"
 else
- echo " 警告：未找到 cam_sensor_cmn_header.h，创建基本回退文件..."
+ echo " 警告：未找到 cam_sensor_cmn_header.h，创建完整回退文件..."
  cat > include/media/cam_sensor_cmn_header.h << 'EOF'
-/* 相机传感器公共头文件 - 最小化定义 */
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+
 #ifndef _CAM_SENSOR_CMN_HEADER_H_
 #define _CAM_SENSOR_CMN_HEADER_H_
 
+#include <linux/i2c.h>
 #include <linux/types.h>
-#include <linux/videodev2.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+#include <linux/delay.h>
+#include <linux/list.h>
 
-/* 相机传感器类型枚举 */
+#define MAX_REGULATOR 5
+#define MAX_POWER_CONFIG 12
+#define MAX_PER_FRAME_ARRAY 32
+#define BATCH_SIZE_MAX 16
+#define MAX_SYSTEM_PIPELINE_DELAY 2
+#define CAM_PKT_NOP_OPCODE 127
+
+#define CAM_SENSOR_NAME "cam-sensor"
+#define CAM_ACTUATOR_NAME "cam-actuator"
+#define CAM_CSIPHY_NAME "cam-csiphy"
+#define CAM_FLASH_NAME "cam-flash"
+#define CAM_EEPROM_NAME "cam-eeprom"
+#define CAM_OIS_NAME "cam-ois"
+
+enum camera_sensor_cmd_type {
+	CAMERA_SENSOR_CMD_TYPE_INVALID,
+	CAMERA_SENSOR_CMD_TYPE_PROBE,
+	CAMERA_SENSOR_CMD_TYPE_PWR_UP,
+	CAMERA_SENSOR_CMD_TYPE_PWR_DOWN,
+	CAMERA_SENSOR_CMD_TYPE_I2C_INFO,
+	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_WR,
+	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_RD,
+	CAMERA_SENSOR_CMD_TYPE_I2C_CONT_WR,
+	CAMERA_SENSOR_CMD_TYPE_I2C_CONT_RD,
+	CAMERA_SENSOR_CMD_TYPE_WAIT,
+	CAMERA_SENSOR_FLASH_CMD_TYPE_INIT_INFO,
+	CAMERA_SENSOR_FLASH_CMD_TYPE_FIRE,
+	CAMERA_SENSOR_FLASH_CMD_TYPE_RER,
+	CAMERA_SENSOR_FLASH_CMD_TYPE_QUERYCURR,
+	CAMERA_SENSOR_FLASH_CMD_TYPE_WIDGET,
+	CAMERA_SENSOR_CMD_TYPE_RD_DATA,
+	CAMERA_SENSOR_FLASH_CMD_TYPE_INIT_FIRE,
+	CAMERA_SENSOR_CMD_TYPE_MAX,
+};
+
+enum camera_sensor_i2c_op_code {
+	CAMERA_SENSOR_I2C_OP_INVALID,
+	CAMERA_SENSOR_I2C_OP_RNDM_WR,
+	CAMERA_SENSOR_I2C_OP_RNDM_WR_VERF,
+	CAMERA_SENSOR_I2C_OP_CONT_WR_BRST,
+	CAMERA_SENSOR_I2C_OP_CONT_WR_BRST_VERF,
+	CAMERA_SENSOR_I2C_OP_CONT_WR_SEQN,
+	CAMERA_SENSOR_I2C_OP_CONT_WR_SEQN_VERF,
+	CAMERA_SENSOR_I2C_OP_MAX,
+};
+
+enum camera_sensor_wait_op_code {
+	CAMERA_SENSOR_WAIT_OP_INVALID,
+	CAMERA_SENSOR_WAIT_OP_COND,
+	CAMERA_SENSOR_WAIT_OP_HW_UCND,
+	CAMERA_SENSOR_WAIT_OP_SW_UCND,
+	CAMERA_SENSOR_WAIT_OP_MAX,
+};
+
+enum camera_flash_opcode {
+	CAMERA_SENSOR_FLASH_OP_INVALID,
+	CAMERA_SENSOR_FLASH_OP_OFF,
+	CAMERA_SENSOR_FLASH_OP_FIRELOW,
+	CAMERA_SENSOR_FLASH_OP_FIREHIGH,
+	CAMERA_SENSOR_FLASH_OP_MAX,
+};
+
 enum camera_sensor_i2c_type {
- CAMERA_SENSOR_I2C_TYPE_U8,
- CAMERA_SENSOR_I2C_TYPE_U16,
- CAMERA_SENSOR_I2C_TYPE_U32,
+	CAMERA_SENSOR_I2C_TYPE_INVALID,
+	CAMERA_SENSOR_I2C_TYPE_BYTE,
+	CAMERA_SENSOR_I2C_TYPE_WORD,
+	CAMERA_SENSOR_I2C_TYPE_3B,
+	CAMERA_SENSOR_I2C_TYPE_DWORD,
+	CAMERA_SENSOR_I2C_TYPE_MAX,
 };
 
-/* CCI 主设备类型 */
+enum i2c_freq_mode {
+	I2C_FREQ_MODE_INVALID,
+	I2C_FREQ_MODE_STANDARD,
+	I2C_FREQ_MODE_FAST,
+	I2C_FREQ_MODE_HIGH,
+	I2C_FREQ_MODE_MAX,
+};
+
 enum camera_master_type {
- CCI_MASTER = 0,
- I2C_MASTER = 1,
+	CCI_MASTER = 0,
+	I2C_MASTER = 1,
 };
 
-/* 相机传感器功率设置结构 */
-struct cam_sensor_power_setting {
- u16 seq_val;
- u16 seq_type;
- u32 config_val;
- u32 delay;
-};
-
-/* 相机传感器功率设置数据结构 */
-struct cam_sensor_power_setting_array {
- struct cam_sensor_power_setting *power_setting;
- u16 size;
-};
-
-/* 相机传感器输出格式 */
-enum v4l2_mbus_pixelcode;
-
-/* 相机传感器模式 */
 enum cam_sensor_mode_type {
- CAMERA_SENSOR_CUSTOM_MODE,
- CAMERA_SENSOR_AUTO_MODE,
+	CAMERA_SENSOR_CUSTOM_MODE,
+	CAMERA_SENSOR_AUTO_MODE,
 };
 
-/* 相机传感器功率设置类型 */
 enum cam_sensor_power_setting_type {
- CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
- CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+	CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
+	CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+};
+
+struct cam_sensor_power_setting {
+	u16 seq_val;
+	u16 seq_type;
+	u32 config_val;
+	u32 delay;
+};
+
+struct cam_sensor_power_setting_array {
+	struct cam_sensor_power_setting *power_setting;
+	u16 size;
+};
+
+struct cam_sensor_cfg_data {
+	u32 def_type;
+};
+
+struct cam_sensor_dev_config {
+	u32 csid_params;
+	u32 csid_minor;
+	u32 lane_cnt;
+	u32 mode;
 };
 
 #endif /* _CAM_SENSOR_CMN_HEADER_H_ */
