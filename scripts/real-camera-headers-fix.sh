@@ -192,14 +192,18 @@ echo "修复头文件引用路径..."
 
 # cam_context.h 需要包含其他头文件
 if [ -f "drivers/media/platform/msm/camera/cam_core/cam_context.h" ]; then
-    echo "修复 camera/cam_core/cam_context.h..."
-    sed -i 's|#include "cam_req_mgr_interface.h"|#include "../cam_req_mgr/cam_req_mgr_interface.h"|g' \
-        drivers/media/platform/msm/camera/cam_core/cam_context.h || true
+ echo "修复 camera/cam_core/cam_context.h..."
+ sed -i 's|#include \"cam_req_mgr_interface.h\"|#include \"../cam_req_mgr/cam_req_mgr_interface.h\"|g' \
+ drivers/media/platform/msm/camera/cam_core/cam_context.h || true
+ sed -i 's|#include \"cam_hw_mgr_intf.h\"|#include \"../cam_hw_mgr_intf.h\"|g' \
+ drivers/media/platform/msm/camera/cam_core/cam_context.h || true
 fi
 
 if [ -f "drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h" ]; then
  echo "修复 camera_oneplus/cam_core/cam_context.h..."
- sed -i 's|#include "cam_req_mgr_interface.h"|/#include "../cam_req_mgr/cam_req_mgr_interface.h"|g' \
+ sed -i 's|#include \"cam_req_mgr_interface.h\"|/#include \"../cam_req_mgr/cam_req_mgr_interface.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h || true
+ sed -i 's|#include \"cam_hw_mgr_intf.h\"|#include \"../cam_hw_mgr_intf.h\"|g' \
  drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h || true
 fi
 
