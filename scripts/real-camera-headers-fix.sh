@@ -136,6 +136,12 @@ files["drivers/media/platform/msm/camera_oneplus/cam_cdm_intf_api.h"]="${REPO_BA
 files["include/media/cam_defs.h"]="${REPO_BASE}/include/media/cam_defs.h"
 files["include/media/cam_fd.h"]="${REPO_BASE}/include/media/cam_fd.h"
 
+# cam_cdm (Command DMA Manager) 相关头文件
+files["drivers/media/platform/msm/camera/cam_cdm.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_cdm.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm.h"
+files["drivers/media/platform/msm/camera/cam_smmu_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_smmu_api.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_smmu_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_smmu_api.h"
+
 echo "下载文件列表："
 for output_path in "${!files[@]}"; do
     echo "  - $(basename "$output_path")"
