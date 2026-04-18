@@ -590,6 +590,36 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_cdm_intf_api.h" ]; then
  echo " 已复制 cam_cdm_intf_api.h 到 camera_oneplus/cam_cdm/"
 fi
 
+# 修复 cam_cdm.h 中的其他包含路径
+echo "修复 cam_cdm.h 中的包含路径..."
+if [ -f "drivers/media/platform/msm/camera/cam_cdm/cam_cdm.h" ]; then
+ sed -i 's|#include \"cam_soc_util.h\"|#include \"../cam_soc_util.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_cpas_api.h\"|#include \"../cam_cpas_api.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_hw_intf.h\"|#include \"../cam_hw_intf.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_hw.h\"|#include \"../cam_hw.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_debug_util.h\"|#include \"../cam_utils/cam_debug_util.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm.h || true
+ echo " 已修复 camera/cam_cdm/cam_cdm.h\""
+fi
+
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm.h" ]; then
+ sed -i 's|#include \"cam_soc_util.h\"|#include \"../cam_soc_util.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_cpas_api.h\"|#include \"../cam_cpas_api.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_hw_intf.h\"|#include \"../cam_hw_intf.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_hw.h\"|#include \"../cam_hw.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm.h || true
+ sed -i 's|#include \"cam_debug_util.h\"|#include \"../cam_utils/cam_debug_util.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm.h || true
+ echo " 已修复 camera_oneplus/cam_cdm/cam_cdm.h\""
+fi
+
 echo ""
 echo "=========================================="
 echo "真实头文件修复完成！"
