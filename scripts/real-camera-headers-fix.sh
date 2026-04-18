@@ -125,6 +125,16 @@ files["drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.h
 files["drivers/media/platform/msm/camera_oneplus/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_core.h"
 files["drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_soc.h"
+files["drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_intf.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_intf.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_fd/fd_hw_mgr/fd_hw/cam_fd_hw_intf.h"
+files["drivers/media/platform/msm/camera/cam_common_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_common_util.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_common_util.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_common_util.h"
+files["drivers/media/platform/msm/camera/cam_cdm_intf_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm_intf_api.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_cdm_intf_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm_intf_api.h"
+
+# media 目录下的头文件 (使用尖括号包含)
+files["include/media/cam_defs.h"]="${REPO_BASE}/include/media/cam_defs.h"
+files["include/media/cam_fd.h"]="${REPO_BASE}/include/media/cam_fd.h"
 
 echo "下载文件列表："
 for output_path in "${!files[@]}"; do
