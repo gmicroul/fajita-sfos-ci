@@ -221,6 +221,28 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.c" ]; th
  echo " 已修复 camera_oneplus/cam_core/cam_context.c\""
 fi
 
+# 修复 cam_cdm_soc.c 中的包含路径
+echo "修复 cam_cdm_soc.c 中的包含路径..."
+if [ -f "drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.c" ]; then
+ sed -i 's|#include \"cam_soc_util.h\"|#include \"../cam_soc_util.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.c || true
+ sed -i 's|#include \"cam_smmu_api.h\"|#include \"../cam_smmu_api.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.c || true
+ sed -i 's|#include \"cam_io_util.h\"|#include \"../cam_sensor_module/cam_io/cam_io_util.h\"|g' \
+ drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.c || true
+ echo " 已修复 camera/cam_cdm/cam_cdm_soc.c\""
+fi
+
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.c" ]; then
+ sed -i 's|#include \"cam_soc_util.h\"|#include \"../cam_soc_util.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.c || true
+ sed -i 's|#include \"cam_smmu_api.h\"|#include \"../cam_smmu_api.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.c || true
+ sed -i 's|#include \"cam_io_util.h\"|#include \"../cam_sensor_module/cam_io/cam_io_util.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.c || true
+ echo " 已修复 camera_oneplus/cam_cdm/cam_cdm_soc.c\""
+fi
+
 # 修复 cam_sensor_i2c.h 中的 cam_cci_dev.h 包含路径
 # cam_sensor_i2c.h 需要 cam_cci_dev.h 中的完整结构体定义
 # 使用相对路径指向 ../cam_cci/cam_cci_dev.h
