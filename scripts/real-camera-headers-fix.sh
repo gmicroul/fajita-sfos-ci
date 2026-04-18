@@ -207,6 +207,20 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h" ]; th
  drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.h || true
 fi
 
+# 修复 cam_context.c 中的包含路径
+echo "修复 cam_context.c 中的包含路径..."
+if [ -f "drivers/media/platform/msm/camera/cam_core/cam_context.c" ]; then
+ sed -i 's|#include \"cam_debug_util.h\"|#include \"../cam_utils/cam_debug_util.h\"|g' \
+ drivers/media/platform/msm/camera/cam_core/cam_context.c || true
+ echo " 已修复 camera/cam_core/cam_context.c\""
+fi
+
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.c" ]; then
+ sed -i 's|#include \"cam_debug_util.h\"|#include \"../cam_utils/cam_debug_util.h\"|g' \
+ drivers/media/platform/msm/camera_oneplus/cam_core/cam_context.c || true
+ echo " 已修复 camera_oneplus/cam_core/cam_context.c\""
+fi
+
 # 修复 cam_sensor_i2c.h 中的 cam_cci_dev.h 包含路径
 # cam_sensor_i2c.h 需要 cam_cci_dev.h 中的完整结构体定义
 # 使用相对路径指向 ../cam_cci/cam_cci_dev.h
