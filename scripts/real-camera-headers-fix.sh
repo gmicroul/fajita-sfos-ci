@@ -146,6 +146,8 @@ files["drivers/media/platform/msm/camera_oneplus/cam_hw_intf.h"]="${REPO_BASE}/d
 files["drivers/media/platform/msm/camera/cam_hw.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_hw.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_hw.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_hw.h"
 
+# 复制 cam_cdm_intf_api.h 到 cam_cdm/ 目录（因为 cam_cdm.h 使用 #include "cam_cdm_intf_api.h"）
+
 echo "下载文件列表："
 for output_path in "${!files[@]}"; do
     echo "  - $(basename "$output_path")"
@@ -569,6 +571,19 @@ struct cam_sync_device {
 };
 #endif /* _CAM_SYNC_PRIVATE_H_ */
 EOF
+fi
+
+# 复制 cam_cdm_intf_api.h 到 cam_cdm/ 目录（因为 cam_cdm.h 使用 #include "cam_cdm_intf_api.h"）
+echo "复制 cam_cdm_intf_api.h 到 cam_cdm/ 目录..."
+mkdir -p drivers/media/platform/msm/camera/cam_cdm
+mkdir -p drivers/media/platform/msm/camera_oneplus/cam_cdm
+if [ -f "drivers/media/platform/msm/camera/cam_cdm_intf_api.h" ]; then
+ cp drivers/media/platform/msm/camera/cam_cdm_intf_api.h drivers/media/platform/msm/camera/cam_cdm/cam_cdm_intf_api.h
+ echo " 已复制 cam_cdm_intf_api.h 到 camera/cam_cdm/"
+fi
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_cdm_intf_api.h" ]; then
+ cp drivers/media/platform/msm/camera_oneplus/cam_cdm_intf_api.h drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_intf_api.h
+ echo " 已复制 cam_cdm_intf_api.h 到 camera_oneplus/cam_cdm/"
 fi
 
 echo ""
