@@ -158,12 +158,14 @@ echo "  创建 include/media/cam_sync_private.h"
 echo "1. 修复摄像头驱动头文件..."
 bash $GITHUB_WORKSPACE/scripts/real-camera-headers-fix.sh "$KERNEL_DIR"
 
-# 1b. 确保 cam_sensor_cmn_header.h 存在于 include/media/ 目录
+# 1b. 确保 cam_sensor_cmn_header.h 存在于 include/ 和 include/media/ 目录
 # 这是双重保障，防止 real-camera-headers-fix.sh 下载失败或复制失败
-echo "1b. 确保 cam_sensor_cmn_header.h 存在于 include/media/..."
+# cam_sensor_util.h 使用 #include <cam_sensor_cmn_header.h>（尖括号，在 include/ 根目录搜索）
+echo "1b. 确保 cam_sensor_cmn_header.h 存在于 include/ 和 include/media/..."
 cd "$KERNEL_DIR"
 mkdir -p include/media
-cat > include/media/cam_sensor_cmn_header.h << 'CAMHEADER'
+# 同时在 include/ 根目录创建（因为 #include <cam_sensor_cmn_header.h> 在根目录搜索）
+cat > include/cam_sensor_cmn_header.h << 'CAMHEADER'
 /* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -257,7 +259,10 @@ struct cam_sensor_dev_config {
 
 #endif /* _CAM_SENSOR_CMN_HEADER_H_ */
 CAMHEADER
-echo "  已创建 include/media/cam_sensor_cmn_header.h"
+echo " 已创建 include/cam_sensor_cmn_header.h"
+# 同时复制到 include/media/ 目录，供其他可能的引用
+cp include/cam_sensor_cmn_header.h include/media/cam_sensor_cmn_header.h
+echo " 已复制到 include/media/cam_sensor_cmn_header.h"
 
 # 1c. 确保 cam_sync_api.h 和 cam_sync_private.h 存在于 include/media/ 目录
 # cam_sync.c 使用 #include <cam_sync_api.h>（尖括号）
