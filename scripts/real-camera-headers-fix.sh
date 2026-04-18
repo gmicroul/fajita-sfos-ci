@@ -373,13 +373,82 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/i
         drivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h || true
 fi
 
+# 复制 cam_sync_api.h 和 cam_sync_private.h 到 include/media/ 目录
+# 因为 cam_sync_util.h 使用 #include <cam_sync_api.h>（尖括号）
+# 编译器会在 include/ 目录中查找
+echo "复制 cam_sync_api.h 和 cam_sync_private.h 到 include/media/ 目录..."
+mkdir -p include/media
+if [ -f "drivers/media/platform/msm/camera/cam_sync/cam_sync_api.h" ]; then
+ cp drivers/media/platform/msm/camera/cam_sync/cam_sync_api.h include/media/cam_sync_api.h
+ echo " 已复制 camera/cam_sync/cam_sync_api.h 到 include/media/"
+elif [ -f "drivers/media/platform/msm/camera_oneplus/cam_sync/cam_sync_api.h" ]; then
+ cp drivers/media/platform/msm/camera_oneplus/cam_sync/cam_sync_api.h include/media/cam_sync_api.h
+ echo " 已复制 camera_oneplus/cam_sync/cam_sync_api.h 到 include/media/"
+else
+ echo " 警告：未找到 cam_sync_api.h，创建基本头文件..."
+ cat > include/media/cam_sync_api.h << 'EOF'
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved. */
+#ifndef _CAM_SYNC_API_H_
+#define _CAM_SYNC_API_H_
+#include <linux/types.h>
+#define CAM_SYNC_DEVICE_NAME "cam_sync"
+enum cam_sync_opcode {
+	CAM_SYNC_IS_MASTER,
+	CAM_SYNC_REGISTER_CALLBACK,
+	CAM_SYNC_UNREGISTER_CALLBACK,
+	CAM_SYNC_DESTROY,
+	CAM_SYNC_GET_SYNCINFO,
+	CAM_SYNC_WAIT,
+	CAM_SYNC_SIGNAL,
+	CAM_SYNC_GET_NUM_CLIENTS,
+};
+enum cam_sync_event_type {
+	CAM_SYNC_EVENT_RESET,
+	CAM_SYNC_EVENT_SIGNAL,
+};
+struct cam_sync_wait {
+	u32 syncobj;
+	u32 timeout;
+};
+struct cam_sync_info {
+	char name[64];
+	u32 id;
+	u32 state;
+};
+#endif /* _CAM_SYNC_API_H_ */
+EOF
+fi
+
+if [ -f "drivers/media/platform/msm/camera/cam_sync/cam_sync_private.h" ]; then
+ cp drivers/media/platform/msm/camera/cam_sync/cam_sync_private.h include/media/cam_sync_private.h
+ echo " 已复制 camera/cam_sync/cam_sync_private.h 到 include/media/"
+elif [ -f "drivers/media/platform/msm/camera_oneplus/cam_sync/cam_sync_private.h" ]; then
+ cp drivers/media/platform/msm/camera_oneplus/cam_sync/cam_sync_private.h include/media/cam_sync_private.h
+ echo " 已复制 camera_oneplus/cam_sync/cam_sync_private.h 到 include/media/"
+else
+ echo " 警告：未找到 cam_sync_private.h，创建基本头文件..."
+ cat > include/media/cam_sync_private.h << 'EOF'
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved. */
+#ifndef _CAM_SYNC_PRIVATE_H_
+#define _CAM_SYNC_PRIVATE_H_
+#include <linux/types.h>
+#include <media/cam_sync_api.h>
+struct cam_sync_device {
+	struct device *device;
+	struct mutex mutex;
+	u32 num_clients;
+};
+#endif /* _CAM_SYNC_PRIVATE_H_ */
+EOF
+fi
+
 echo ""
 echo "=========================================="
 echo "真实头文件修复完成！"
 echo "=========================================="
 echo ""
 echo "使用真实头文件修复编译错误，保留摄像头功能"
-echo "头文件来自: $REPO_BASE"
+echo "头文件来自：$REPO_BASE"
 echo ""
 echo "注意：如果网络下载失败，会创建基本头文件"
 echo "但这可能影响摄像头功能的完整性"
