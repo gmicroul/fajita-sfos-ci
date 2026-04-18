@@ -30,8 +30,127 @@ if [ ! -d "$KERNEL_DIR" ]; then
  exit 1
 fi
 
-echo "内核目录: $KERNEL_DIR"
+echo "内核目录：$KERNEL_DIR"
 echo ""
+
+# 0. 在任何操作之前，先创建所有必需的头文件
+# 这样可以确保即使后续脚本失败，编译也能找到头文件
+echo "0. 创建必需的头文件..."
+cd "$KERNEL_DIR"
+mkdir -p include/media
+
+# 0a. cam_sensor_cmn_header.h
+cat > include/media/cam_sensor_cmn_header.h << 'CAMSENSORHEADER'
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved. */
+#ifndef _CAM_SENSOR_CMN_HEADER_H_
+#define _CAM_SENSOR_CMN_HEADER_H_
+#include <linux/i2c.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+#include <linux/delay.h>
+#include <linux/list.h>
+#define MAX_REGULATOR 5
+#define MAX_POWER_CONFIG 12
+#define MAX_PER_FRAME_ARRAY 32
+#define BATCH_SIZE_MAX 16
+enum camera_sensor_cmd_type {
+	CAMERA_SENSOR_CMD_TYPE_INVALID,
+	CAMERA_SENSOR_CMD_TYPE_PROBE,
+	CAMERA_SENSOR_CMD_TYPE_PWR_UP,
+	CAMERA_SENSOR_CMD_TYPE_PWR_DOWN,
+	CAMERA_SENSOR_CMD_TYPE_I2C_INFO,
+	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_WR,
+	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_RD,
+};
+enum camera_sensor_i2c_type {
+	CAMERA_SENSOR_I2C_TYPE_U8,
+	CAMERA_SENSOR_I2C_TYPE_U16,
+	CAMERA_SENSOR_I2C_TYPE_U32,
+};
+enum camera_master_type {
+	CCI_MASTER = 0,
+	I2C_MASTER = 1,
+};
+struct cam_sensor_power_setting {
+	u16 seq_val;
+	u16 seq_type;
+	u32 config_val;
+	u32 delay;
+};
+struct cam_sensor_power_setting_array {
+	struct cam_sensor_power_setting *power_setting;
+	u16 size;
+};
+enum cam_sensor_mode_type {
+	CAMERA_SENSOR_CUSTOM_MODE,
+	CAMERA_SENSOR_AUTO_MODE,
+};
+enum cam_sensor_power_setting_type {
+	CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
+	CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+};
+struct cam_sensor_cfg_data {
+	u32 def_type;
+};
+struct cam_sensor_dev_config {
+	u32 csid_params;
+	u32 csid_minor;
+	u32 lane_cnt;
+	u32 mode;
+};
+#endif
+CAMSENSORHEADER
+echo "  创建 include/media/cam_sensor_cmn_header.h"
+
+# 0b. cam_sync_api.h
+cat > include/media/cam_sync_api.h << 'CAMSYNCAPI'
+#ifndef _CAM_SYNC_API_H_
+#define _CAM_SYNC_API_H_
+#include <linux/types.h>
+#define CAM_SYNC_DEVICE_NAME "cam_sync"
+enum cam_sync_opcode {
+	CAM_SYNC_IS_MASTER,
+	CAM_SYNC_REGISTER_CALLBACK,
+	CAM_SYNC_UNREGISTER_CALLBACK,
+	CAM_SYNC_DESTROY,
+	CAM_SYNC_GET_SYNCINFO,
+	CAM_SYNC_WAIT,
+	CAM_SYNC_SIGNAL,
+	CAM_SYNC_GET_NUM_CLIENTS,
+};
+enum cam_sync_event_type {
+	CAM_SYNC_EVENT_RESET,
+	CAM_SYNC_EVENT_SIGNAL,
+};
+struct cam_sync_wait {
+	u32 syncobj;
+	u32 timeout;
+};
+struct cam_sync_info {
+	char name[64];
+	u32 id;
+	u32 state;
+};
+#endif
+CAMSYNCAPI
+echo "  创建 include/media/cam_sync_api.h"
+
+# 0c. cam_sync_private.h
+cat > include/media/cam_sync_private.h << 'CAMSYNCPRIV'
+#ifndef _CAM_SYNC_PRIVATE_H_
+#define _CAM_SYNC_PRIVATE_H_
+#include <linux/types.h>
+#include <media/cam_sync_api.h>
+struct cam_sync_device {
+	struct device *device;
+	struct mutex mutex;
+	u32 num_clients;
+};
+#endif
+CAMSYNCPRIV
+echo "  创建 include/media/cam_sync_private.h"
 
 # 重要：保留所有关键驱动，只修复编译错误
 
