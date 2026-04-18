@@ -39,7 +39,108 @@ echo ""
 echo "1. 修复摄像头驱动头文件..."
 bash $GITHUB_WORKSPACE/scripts/real-camera-headers-fix.sh "$KERNEL_DIR"
 
-# 2. 修复cam_trace.h中的路径问题
+# 1b. 确保 cam_sensor_cmn_header.h 存在于 include/media/ 目录
+# 这是双重保障，防止 real-camera-headers-fix.sh 下载失败或复制失败
+echo "1b. 确保 cam_sensor_cmn_header.h 存在于 include/media/..."
+cd "$KERNEL_DIR"
+mkdir -p include/media
+cat > include/media/cam_sensor_cmn_header.h << 'CAMHEADER'
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+
+#ifndef _CAM_SENSOR_CMN_HEADER_H_
+#define _CAM_SENSOR_CMN_HEADER_H_
+
+#include <linux/i2c.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/timer.h>
+#include <linux/delay.h>
+#include <linux/list.h>
+#include <media/cam_sensor.h>
+#include <media/cam_req_mgr.h>
+
+#define MAX_REGULATOR 5
+#define MAX_POWER_CONFIG 12
+#define MAX_PER_FRAME_ARRAY 32
+#define BATCH_SIZE_MAX 16
+
+#define CAM_SENSOR_NAME "cam-sensor"
+#define CAM_ACTUATOR_NAME "cam-actuator"
+#define CAM_CSIPHY_NAME "cam-csiphy"
+#define CAM_FLASH_NAME "cam-flash"
+#define CAM_EEPROM_NAME "cam-eeprom"
+#define CAM_OIS_NAME "cam-ois"
+
+enum camera_sensor_cmd_type {
+	CAMERA_SENSOR_CMD_TYPE_INVALID,
+	CAMERA_SENSOR_CMD_TYPE_PROBE,
+	CAMERA_SENSOR_CMD_TYPE_PWR_UP,
+	CAMERA_SENSOR_CMD_TYPE_PWR_DOWN,
+	CAMERA_SENSOR_CMD_TYPE_I2C_INFO,
+	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_WR,
+	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_RD,
+};
+
+enum camera_sensor_i2c_type {
+	CAMERA_SENSOR_I2C_TYPE_U8,
+	CAMERA_SENSOR_I2C_TYPE_U16,
+	CAMERA_SENSOR_I2C_TYPE_U32,
+};
+
+enum camera_master_type {
+	CCI_MASTER = 0,
+	I2C_MASTER = 1,
+};
+
+struct cam_sensor_power_setting {
+	u16 seq_val;
+	u16 seq_type;
+	u32 config_val;
+	u32 delay;
+};
+
+struct cam_sensor_power_setting_array {
+	struct cam_sensor_power_setting *power_setting;
+	u16 size;
+};
+
+enum cam_sensor_mode_type {
+	CAMERA_SENSOR_CUSTOM_MODE,
+	CAMERA_SENSOR_AUTO_MODE,
+};
+
+enum cam_sensor_power_setting_type {
+	CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
+	CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+};
+
+struct cam_sensor_cfg_data {
+	u32 def_type;
+};
+
+struct cam_sensor_dev_config {
+	u32 csid_params;
+	u32 csid_minor;
+	u32 lane_cnt;
+	u32 mode;
+};
+
+#endif /* _CAM_SENSOR_CMN_HEADER_H_ */
+CAMHEADER
+echo "  已创建 include/media/cam_sensor_cmn_header.h"
+
+# 2. 修复 cam_trace.h 中的路径问题
 echo "2. 修复摄像头trace头文件路径..."
 bash $GITHUB_WORKSPACE/scripts/fix-camera-trace-paths.sh "$KERNEL_DIR"
 
