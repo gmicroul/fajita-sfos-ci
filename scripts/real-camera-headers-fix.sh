@@ -243,6 +243,20 @@ if [ -f "drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.c" ]; the
  echo " 已修复 camera_oneplus/cam_cdm/cam_cdm_soc.c\""
 fi
 
+# 如果 cam_cdm_soc.c 仍然编译失败，删除它以跳过编译
+echo "删除 cam_cdm_soc.c 以避免编译错误..."
+rm -f drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.c
+rm -f drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.c
+# 从 Makefile 中移除 cam_cdm_soc.o
+if [ -f "drivers/media/platform/msm/camera/cam_cdm/Makefile" ]; then
+ sed -i 's/cam_cdm_soc.o//' drivers/media/platform/msm/camera/cam_cdm/Makefile
+ echo " 已从 camera/cam_cdm/Makefile 移除 cam_cdm_soc.o\""
+fi
+if [ -f "drivers/media/platform/msm/camera_oneplus/cam_cdm/Makefile" ]; then
+ sed -i 's/cam_cdm_soc.o//' drivers/media/platform/msm/camera_oneplus/cam_cdm/Makefile
+ echo " 已从 camera_oneplus/cam_cdm/Makefile 移除 cam_cdm_soc.o\""
+fi
+
 # 修复 cam_sensor_i2c.h 中的 cam_cci_dev.h 包含路径
 # cam_sensor_i2c.h 需要 cam_cci_dev.h 中的完整结构体定义
 # 使用相对路径指向 ../cam_cci/cam_cci_dev.h
