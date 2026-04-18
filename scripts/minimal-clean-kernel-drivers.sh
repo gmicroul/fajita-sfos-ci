@@ -140,6 +140,94 @@ struct cam_sensor_dev_config {
 CAMHEADER
 echo "  已创建 include/media/cam_sensor_cmn_header.h"
 
+# 1c. 确保 cam_sync_api.h 和 cam_sync_private.h 存在于 include/media/ 目录
+# cam_sync.c 使用 #include <cam_sync_api.h>（尖括号）
+echo "1c. 确保 cam_sync 头文件存在于 include/media/..."
+cat > include/media/cam_sync_api.h << 'CAMSYNCAPI'
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+
+#ifndef _CAM_SYNC_API_H_
+#define _CAM_SYNC_API_H_
+
+#include <linux/types.h>
+
+#define CAM_SYNC_DEVICE_NAME "cam_sync"
+
+enum cam_sync_opcode {
+	CAM_SYNC_IS_MASTER,
+	CAM_SYNC_REGISTER_CALLBACK,
+	CAM_SYNC_UNREGISTER_CALLBACK,
+	CAM_SYNC_DESTROY,
+	CAM_SYNC_GET_SYNCINFO,
+	CAM_SYNC_WAIT,
+	CAM_SYNC_SIGNAL,
+	CAM_SYNC_GET_NUM_CLIENTS,
+};
+
+enum cam_sync_event_type {
+	CAM_SYNC_EVENT_RESET,
+	CAM_SYNC_EVENT_SIGNAL,
+};
+
+struct cam_sync_wait {
+	u32 syncobj;
+	u32 timeout;
+};
+
+struct cam_sync_info {
+	char name[64];
+	u32 id;
+	u32 state;
+};
+
+int cam_sync_create(struct cam_sync_info *info);
+int cam_sync_destroy(u32 syncobj);
+int cam_sync_signal(u32 syncobj, enum cam_sync_event_type event);
+int cam_sync_wait(u32 syncobj, u32 timeout);
+
+#endif /* _CAM_SYNC_API_H_ */
+CAMSYNCAPI
+echo "  已创建 include/media/cam_sync_api.h"
+
+cat > include/media/cam_sync_private.h << 'CAMSYNCPRIV'
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ */
+
+#ifndef _CAM_SYNC_PRIVATE_H_
+#define _CAM_SYNC_PRIVATE_H_
+
+#include <linux/types.h>
+#include <media/cam_sync_api.h>
+
+struct cam_sync_device {
+	struct device *device;
+	struct mutex mutex;
+	u32 num_clients;
+};
+
+#endif /* _CAM_SYNC_PRIVATE_H_ */
+CAMSYNCPRIV
+echo "  已创建 include/media/cam_sync_private.h"
+
 # 2. 修复 cam_trace.h 中的路径问题
 echo "2. 修复摄像头trace头文件路径..."
 bash $GITHUB_WORKSPACE/scripts/fix-camera-trace-paths.sh "$KERNEL_DIR"
