@@ -136,6 +136,14 @@ files["drivers/media/platform/msm/camera_oneplus/cam_cdm_intf_api.h"]="${REPO_BA
 files["drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.h"
 
+# cam_cdm 其他头文件
+files["drivers/media/platform/msm/camera/cam_cdm/cam_cdm_core_common.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_core_common.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_core_common.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_core_common.h"
+files["drivers/media/platform/msm/camera/cam_cdm/cam_cdm_virtual.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_virtual.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_virtual.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_virtual.h"
+files["drivers/media/platform/msm/camera/cam_cdm/cam_hw_cdm170_reg.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_hw_cdm170_reg.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_hw_cdm170_reg.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_hw_cdm170_reg.h"
+
 # media 目录下的头文件 (使用尖括号包含)
 files["include/media/cam_defs.h"]="${REPO_BASE}/include/media/cam_defs.h"
 files["include/media/cam_fd.h"]="${REPO_BASE}/include/media/cam_fd.h"
