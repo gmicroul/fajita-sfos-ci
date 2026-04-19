@@ -204,7 +204,6 @@ jobs:
  echo "Starting kernel compilation..."
  make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -mcmodel=large" WERROR=0 HOSTCFLAGS="-Wno-error" 2>&1 | tee /tmp/build_output.log
  BUILD_STATUS=${PIPESTATUS[0]}
- 
  # If build fails, show detailed error information
  if [ $BUILD_STATUS -ne 0 ]; then
  echo "=========================================="
