@@ -190,17 +190,18 @@ declare -A HEADER_FILES
 # cam_utils/ 下的头文件（被 cam_cdm 等通过 ccflags-y 引用）
 HEADER_FILES["$CAM_BASE/cam_utils/cam_soc_util.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_soc_util.h"
 HEADER_FILES["$CAM_BASE/cam_utils/cam_debug_util.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_debug_util.h"
-HEADER_FILES["$CAM_BASE/cam_utils/cam_hw_intf.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_hw_intf.h"
+HEADER_FILES["$CAM_BASE/cam_utils/cam_hw_intf.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_hw_intf.h"
 HEADER_FILES["$CAM_BASE/cam_utils/cam_io_util.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_io_util.h"
-HEADER_FILES["$CAM_BASE/cam_utils/cam_smmu_api.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_smmu_api.h"
+HEADER_FILES["$CAM_BASE/cam_utils/cam_smmu_api.h"]="$REPO_BASE/$CAM_BASE/cam_smmu/cam_smmu_api.h"
+HEADER_FILES["$CAM_BASE/cam_smmu/cam_smmu_api.h"]="$REPO_BASE/$CAM_BASE/cam_smmu/cam_smmu_api.h"
 HEADER_FILES["$CAM_BASE/cam_utils/cam_trace.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_trace.h"
 
 # cam_core/ 下的头文件
 HEADER_FILES["$CAM_BASE/cam_core/cam_context.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_context.h"
 HEADER_FILES["$CAM_BASE/cam_core/cam_node.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_node.h"
 HEADER_FILES["$CAM_BASE/cam_core/cam_hw.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_hw.h"
-HEADER_FILES["$CAM_BASE/cam_core/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_cdm_intf_api.h"
-HEADER_FILES["$CAM_BASE/cam_core/cam_cpas_api.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_cpas_api.h"
+HEADER_FILES["$CAM_BASE/cam_core/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_intf_api.h"
+HEADER_FILES["$CAM_BASE/cam_core/cam_cpas_api.h"]="$REPO_BASE/$CAM_BASE/cam_cpas/include/cam_cpas_api.h"
 
 # cam_cdm/ 下的头文件
 HEADER_FILES["$CAM_BASE/cam_cdm/cam_cdm.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm.h"
@@ -208,7 +209,8 @@ HEADER_FILES["$CAM_BASE/cam_cdm/cam_cdm_soc.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/ca
 HEADER_FILES["$CAM_BASE/cam_cdm/cam_cdm_core_common.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_core_common.h"
 HEADER_FILES["$CAM_BASE/cam_cdm/cam_cdm_virtual.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_virtual.h"
 HEADER_FILES["$CAM_BASE/cam_cdm/cam_hw_cdm170_reg.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_hw_cdm170_reg.h"
-HEADER_FILES["$CAM_BASE/cam_cdm/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_cdm_intf_api.h"
+HEADER_FILES["$CAM_BASE/cam_cdm/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_intf_api.h"
+HEADER_FILES["$CAM_BASE/cam_cdm/cam_cdm_util.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_util.h"
 
 # cam_req_mgr/ 下的头文件
 HEADER_FILES["$CAM_BASE/cam_req_mgr/cam_req_mgr_interface.h"]="$REPO_BASE/$CAM_BASE/cam_req_mgr/cam_req_mgr_interface.h"
@@ -245,9 +247,9 @@ HEADER_FILES["$CAM_BASE/cam_isp/isp_hw_mgr/cam_isp_hw_mgr.h"]="$REPO_BASE/$CAM_B
 HEADER_FILES["$CAM_BASE/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"]="$REPO_BASE/$CAM_BASE/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"
 HEADER_FILES["$CAM_BASE/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"]="$REPO_BASE/$CAM_BASE/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"
 
-# include/media/ 下的头文件（尖括号引用）
-HEADER_FILES["include/media/cam_defs.h"]="$REPO_BASE/include/media/cam_defs.h"
-HEADER_FILES["include/media/cam_fd.h"]="$REPO_BASE/include/media/cam_fd.h"
+# include/uapi/media/ 下的头文件（尖括号引用）
+HEADER_FILES["include/media/cam_defs.h"]="$REPO_BASE/include/uapi/media/cam_defs.h"
+HEADER_FILES["include/media/cam_fd.h"]="$REPO_BASE/include/uapi/media/cam_fd.h"
 
 # ========== camera_oneplus 目录的相同头文件 ==========
 # camera_oneplus 子目录引用 camera/ 的头文件（通过 ccflags-y 指向 camera_oneplus/ 自身目录）
@@ -255,23 +257,25 @@ HEADER_FILES["include/media/cam_fd.h"]="$REPO_BASE/include/media/cam_fd.h"
 
 HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_soc_util.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_soc_util.h"
 HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_debug_util.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_debug_util.h"
-HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_hw_intf.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_hw_intf.h"
+HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_hw_intf.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_hw_intf.h"
 HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_io_util.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_io_util.h"
-HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_smmu_api.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_smmu_api.h"
+HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_smmu_api.h"]="$REPO_BASE/$CAM_BASE/cam_smmu/cam_smmu_api.h"
+HEADER_FILES["$CAM_OP_BASE/cam_smmu/cam_smmu_api.h"]="$REPO_BASE/$CAM_BASE/cam_smmu/cam_smmu_api.h"
 HEADER_FILES["$CAM_OP_BASE/cam_utils/cam_trace.h"]="$REPO_BASE/$CAM_BASE/cam_utils/cam_trace.h"
 
 HEADER_FILES["$CAM_OP_BASE/cam_core/cam_context.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_context.h"
 HEADER_FILES["$CAM_OP_BASE/cam_core/cam_node.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_node.h"
 HEADER_FILES["$CAM_OP_BASE/cam_core/cam_hw.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_hw.h"
-HEADER_FILES["$CAM_OP_BASE/cam_core/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_cdm_intf_api.h"
-HEADER_FILES["$CAM_OP_BASE/cam_core/cam_cpas_api.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_cpas_api.h"
+HEADER_FILES["$CAM_OP_BASE/cam_core/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_intf_api.h"
+HEADER_FILES["$CAM_OP_BASE/cam_core/cam_cpas_api.h"]="$REPO_BASE/$CAM_BASE/cam_cpas/include/cam_cpas_api.h"
 
 HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_cdm.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm.h"
 HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_cdm_soc.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_soc.h"
 HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_cdm_core_common.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_core_common.h"
 HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_cdm_virtual.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_virtual.h"
 HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_hw_cdm170_reg.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_hw_cdm170_reg.h"
-HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_core/cam_cdm_intf_api.h"
+HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_cdm_intf_api.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_intf_api.h"
+HEADER_FILES["$CAM_OP_BASE/cam_cdm/cam_cdm_util.h"]="$REPO_BASE/$CAM_BASE/cam_cdm/cam_cdm_util.h"
 
 HEADER_FILES["$CAM_OP_BASE/cam_req_mgr/cam_req_mgr_interface.h"]="$REPO_BASE/$CAM_BASE/cam_req_mgr/cam_req_mgr_interface.h"
 HEADER_FILES["$CAM_OP_BASE/cam_req_mgr/cam_req_mgr_core.h"]="$REPO_BASE/$CAM_BASE/cam_req_mgr/cam_req_mgr_core.h"
@@ -308,9 +312,17 @@ for output_path in "${!HEADER_FILES[@]}"; do
  url="${HEADER_FILES[$output_path]}"
  
  # 只下载不存在的文件，避免覆盖已有的原始文件
+ # 但如果文件是回退空文件（只有 #include <linux/types.h>），强制重新下载
  if [ -f "$output_path" ] && [ -s "$output_path" ]; then
-   # 文件已存在且非空，跳过
-   continue
+ # 检测回退空文件：只有 #include <linux/types.h> 而没有实质定义
+ if grep -q '#include <linux/types.h>' "$output_path" 2>/dev/null && \
+    ! grep -q 'struct \|enum \|define CAM_\|void \|#define _CAM_TRACE_MINIMAL' "$output_path" 2>/dev/null; then
+ echo " 检测到回退空文件，强制重新下载: $(basename "$output_path")"
+ rm -f "$output_path"
+ else
+ # 文件已存在且含有实质内容，跳过
+ continue
+ fi
  fi
  
  mkdir -p "$(dirname "$output_path")"
@@ -444,6 +456,15 @@ fi
 # 同时在 include/ 根目录创建 cam_sensor_cmn_header.h（某些文件用 #include <cam_sensor_cmn_header.h> 搜索根目录）
 cp include/media/cam_sensor_cmn_header.h include/cam_sensor_cmn_header.h 2>/dev/null || true
 
+# 确保 include/media/cam_defs.h 存在（被 cam_cdm_intf_api.h 用 #include <media/cam_defs.h> 引用）
+if [ ! -f "include/media/cam_defs.h" ] || [ ! -s "include/media/cam_defs.h" ]; then
+ # 尝试从 include/uapi/media/ 复制
+ if [ -f "include/uapi/media/cam_defs.h" ]; then
+ cp include/uapi/media/cam_defs.h include/media/cam_defs.h
+ echo " 已从 include/uapi/media/ 复制 cam_defs.h"
+ fi
+fi
+
 echo " include/media/ 头文件就绪"
 
 # ========== 第5步：修复 cam_trace.h（覆盖为最小化版本） ==========
@@ -475,21 +496,32 @@ TRACEEOF
  fi
 done
 
-# ========== 第6步：复制 cam_cdm_intf_api.h 到 cam_cdm/ 目录 ==========
+# ========== 第6步：确保 cam_cdm_intf_api.h 在 cam_core/ 和 cam_cdm/ 都有 ==========
 echo ""
-echo "6. 复制 cam_cdm_intf_api.h 到 cam_cdm/ 目录..."
+echo "6. 确保 cam_cdm_intf_api.h 在 cam_core/ 和 cam_cdm/ 都有..."
 
 # cam_cdm.h 使用 #include "cam_cdm_intf_api.h"
-# 但该文件在 cam_core/ 目录，ccflags-y 已添加 cam_core/ 到搜索路径
-# 额外复制一份到 cam_cdm/ 目录作为双重保障
-for cdm_dir in $CAM_BASE/cam_cdm $CAM_OP_BASE/cam_cdm; do
- if [ -f "$cdm_dir/../cam_core/cam_cdm_intf_api.h" ]; then
-   cp "$cdm_dir/../cam_core/cam_cdm_intf_api.h" "$cdm_dir/cam_cdm_intf_api.h"
-   echo " 已复制 cam_cdm_intf_api.h 到 $cdm_dir/"
- elif [ -f "drivers/media/platform/msm/camera/cam_core/cam_cdm_intf_api.h" ]; then
-   mkdir -p "$cdm_dir"
-   cp "drivers/media/platform/msm/camera/cam_core/cam_cdm_intf_api.h" "$cdm_dir/cam_cdm_intf_api.h"
-   echo " 已从 camera/cam_core 复制 cam_cdm_intf_api.h 到 $cdm_dir/"
+# 该文件原始位置在 cam_cdm/ 目录，但 cam_core/ 也需要一份（ccflags-y 搜索路径）
+# 第3步已经下载到 cam_cdm/cam_cdm_intf_api.h，这里额外复制到 cam_core/
+for cam_base in $CAM_BASE $CAM_OP_BASE; do
+ cdm_dir="$cam_base/cam_cdm"
+ core_dir="$cam_base/cam_core"
+ mkdir -p "$core_dir"
+ 
+ # 如果 cam_cdm/ 下有，复制到 cam_core/
+ if [ -f "$cdm_dir/cam_cdm_intf_api.h" ] && [ -s "$cdm_dir/cam_cdm_intf_api.h" ]; then
+ if [ ! -f "$core_dir/cam_cdm_intf_api.h" ] || [ ! -s "$core_dir/cam_cdm_intf_api.h" ]; then
+ cp "$cdm_dir/cam_cdm_intf_api.h" "$core_dir/cam_cdm_intf_api.h"
+ echo " 已复制 cam_cdm_intf_api.h: $cdm_dir/ -> $core_dir/"
+ fi
+ fi
+ 
+ # 反之，如果 cam_core/ 下有而 cam_cdm/ 没有
+ if [ -f "$core_dir/cam_cdm_intf_api.h" ] && [ -s "$core_dir/cam_cdm_intf_api.h" ]; then
+ if [ ! -f "$cdm_dir/cam_cdm_intf_api.h" ] || [ ! -s "$cdm_dir/cam_cdm_intf_api.h" ]; then
+ cp "$core_dir/cam_cdm_intf_api.h" "$cdm_dir/cam_cdm_intf_api.h"
+ echo " 已复制 cam_cdm_intf_api.h: $core_dir/ -> $cdm_dir/"
+ fi
  fi
 done
 
