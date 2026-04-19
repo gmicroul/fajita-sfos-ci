@@ -132,6 +132,10 @@ files["drivers/media/platform/msm/camera_oneplus/cam_common_util.h"]="${REPO_BAS
 files["drivers/media/platform/msm/camera/cam_cdm_intf_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm_intf_api.h"
 files["drivers/media/platform/msm/camera_oneplus/cam_cdm_intf_api.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm_intf_api.h"
 
+# cam_cdm_soc 相关头文件
+files["drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.h"
+files["drivers/media/platform/msm/camera_oneplus/cam_cdm/cam_cdm_soc.h"]="${REPO_BASE}/drivers/media/platform/msm/camera/cam_cdm/cam_cdm_soc.h"
+
 # media 目录下的头文件 (使用尖括号包含)
 files["include/media/cam_defs.h"]="${REPO_BASE}/include/media/cam_defs.h"
 files["include/media/cam_fd.h"]="${REPO_BASE}/include/media/cam_fd.h"
