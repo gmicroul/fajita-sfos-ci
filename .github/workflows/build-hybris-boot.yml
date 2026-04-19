@@ -199,8 +199,32 @@ jobs:
         sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
         sed -i 's/CONFIG_CC_STACKPROTECTOR_REGULAR=y/CONFIG_CC_STACKPROTECTOR_REGULAR=n/g' .config || true
 
-        # Build kernel with stack protector disabled and appropriate ARM64 flags
-        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -mcmodel=large" WERROR=0 HOSTCFLAGS="-Wno-error"
+ # Build kernel with stack protector disabled and appropriate ARM64 flags
+ # Add verbose output to capture detailed error messages
+ echo "Starting kernel compilation..."
+ make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -mcmodel=large" WERROR=0 HOSTCFLAGS="-Wno-error" 2>&1 | tee /tmp/build_output.log
+ BUILD_STATUS=${PIPESTATUS[0]}
+ 
+ # If build fails, show detailed error information
+ if [ $BUILD_STATUS -ne 0 ]; then
+ echo "=========================================="
+ echo "BUILD FAILED! Detailed error information:"
+ echo "=========================================="
+ echo ""
+ echo "Last 200 lines of build output:"
+ tail -200 /tmp/build_output.log
+ echo ""
+ echo "Searching for 'error:' in build output:"
+ grep -n "error:" /tmp/build_output.log | tail -50 || true
+ echo ""
+ echo "Searching for 'cam_cdm' in build output:"
+ grep -n "cam_cdm" /tmp/build_output.log | tail -50 || true
+ echo ""
+ echo "Full error context:"
+ grep -B 5 -A 5 "error:" /tmp/build_output.log | tail -100 || true
+ echo "=========================================="
+ exit 1
+ fi
 
         # Build device tree
         # Skip device tree compilation (use dtb from original boot.img)
