@@ -497,35 +497,69 @@ done
 echo ""
 echo "7. 修复 MDSS PLL trace 头文件..."
 
+# 必须无条件覆盖原始文件！原始 mdss_pll_trace.h 包含完整的 trace 框架，
+# #include <trace/define_trace.h> 会触发循环引用和路径错误：
+# define_trace.h 使用 TRACE_INCLUDE_PATH/TRACE_INCLUDE_FILE 回头查找原始文件，
+# 但路径解析不正确导致 fatal error: ./mdss_pll_trace.h: No such file or directory
+
+# 7a. 创建 include/trace/events/mdss_pll.h（空文件，被 define_trace.h 引用）
 mkdir -p include/trace/events
-if [ ! -f "include/trace/events/mdss_pll.h" ]; then
- cat > include/trace/events/mdss_pll.h << 'EOF'
+cat > include/trace/events/mdss_pll.h << 'EOF'
 #ifndef _TRACE_MDSS_PLL_H
 #define _TRACE_MDSS_PLL_H
-#define TRACE_INCLUDE_PATH ../../..
-#define TRACE_INCLUDE_FILE drivers/clk/qcom/mdss/mdss_pll_trace
-#if 0
-#include <trace/define_trace.h>
-#endif
-#endif
-EOF
- echo " 已创建 include/trace/events/mdss_pll.h"
-fi
 
-if [ ! -f "drivers/clk/qcom/mdss/mdss_pll_trace.h" ]; then
- mkdir -p drivers/clk/qcom/mdss
- cat > drivers/clk/qcom/mdss/mdss_pll_trace.h << 'EOF'
+/* Empty mdss_pll trace header - trace points disabled for compilation */
+
+#endif /* _TRACE_MDSS_PLL_H */
+EOF
+echo " 已覆盖 include/trace/events/mdss_pll.h"
+
+# 7b. 无条件覆盖 drivers/clk/qcom/mdss/mdss_pll_trace.h
+# 原始文件底部有：
+#   #undef TRACE_INCLUDE_PATH
+#   #define TRACE_INCLUDE_PATH .
+#   #include <trace/define_trace.h>
+# 这会导致 define_trace.h 尝试用 TRACE_INCLUDE(TRACE_INCLUDE_FILE) 回头包含
+# ./mdss_pll_trace.h，但编译时当前目录是内核根目录，找不到该文件。
+# 解决方案：用不调用 define_trace.h 的空壳文件覆盖原始文件，
+# 同时提供内联空函数以满足 .c 文件中的 trace_xxx() 调用。
+mkdir -p drivers/clk/qcom/mdss
+cat > drivers/clk/qcom/mdss/mdss_pll_trace.h << 'EOF'
 #ifndef _MDSS_PLL_TRACE_H
 #define _MDSS_PLL_TRACE_H
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mdss_pll
-#if 0
-#include <trace/define_trace.h>
-#endif
-#endif
+
+/* Stub mdss_pll_trace.h - replaces original that uses define_trace.h
+ * Original causes: fatal error: ./mdss_pll_trace.h: No such file or directory
+ * because TRACE_INCLUDE_PATH resolves to kernel root, not this directory.
+ * This stub provides no-op inline functions for all trace calls. */
+
+/* No-op trace function stubs - satisfy all trace_mdss_pll_xxx() calls */
+#define trace_mdss_pll_lock(name, val) do {} while (0)
+#define trace_mdss_pll_unlock(name, val) do {} while (0)
+#define trace_mdss_pll_vote(name, val) do {} while (0)
+#define trace_mdss_pll_unvote(name, val) do {} while (0)
+#define trace_mdss_pll_wakeoff(name, val) do {} while (0)
+#define trace_mdss_pll_dump(name, val) do {} while (0)
+
+#endif /* _MDSS_PLL_TRACE_H */
 EOF
- echo " 已创建 drivers/clk/qcom/mdss/mdss_pll_trace.h"
-fi
+echo " 已覆盖 drivers/clk/qcom/mdss/mdss_pll_trace.h（用宏stub替代define_trace.h框架）"
+
+# 7c. 禁用 .c 文件中的 CREATE_TRACE_POINTS
+# CREATE_TRACE_POINTS 会导致编译器展开 trace 事件定义，
+# 触发 define_trace.h 中的 #include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
+# 路径解析错误。必须注释掉，否则即使头文件是空的也会报错。
+for pll_file in drivers/clk/qcom/mdss/mdss-dsi-pll-10nm.c \
+ drivers/clk/qcom/mdss/mdss-dp-pll-10nm.c; do
+ if [ -f "$pll_file" ]; then
+ if grep -q "^#define CREATE_TRACE_POINTS" "$pll_file"; then
+ sed -i 's/^#define CREATE_TRACE_POINTS/\/\/#define CREATE_TRACE_POINTS/' "$pll_file"
+ echo " 已注释掉 CREATE_TRACE_POINTS: $pll_file"
+ else
+ echo " CREATE_TRACE_POINTS 已被注释: $pll_file"
+ fi
+ fi
+done
 
 # ========== 第8步：禁用 WERROR 和 stack protector ==========
 echo ""

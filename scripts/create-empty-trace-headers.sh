@@ -30,27 +30,27 @@ echo ""
 
 echo "创建空的 trace 头文件..."
 
-# 创建 mdss_pll_trace.h
+# 创建 mdss_pll_trace.h（无条件覆盖，原始文件会导致 define_trace.h 路径错误）
 mkdir -p "$KERNEL_DIR/drivers/clk/qcom/mdss"
-echo " - 创建 drivers/clk/qcom/mdss/mdss_pll_trace.h"
+echo " - 覆盖 drivers/clk/qcom/mdss/mdss_pll_trace.h"
 cat > "$KERNEL_DIR/drivers/clk/qcom/mdss/mdss_pll_trace.h" << 'EOF'
-/* Empty trace header file to fix compilation error */
-/* This file is needed for mdss-dsi-pll-10nm.c compilation */
-
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mdss_pll
-
-#if !defined(_MDSS_PLL_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#ifndef _MDSS_PLL_TRACE_H
 #define _MDSS_PLL_TRACE_H
 
-#include <linux/tracepoint.h>
+/* Stub mdss_pll_trace.h - replaces original that uses define_trace.h
+ * Original causes: fatal error: ./mdss_pll_trace.h: No such file or directory
+ * because TRACE_INCLUDE_PATH resolves to kernel root, not this directory.
+ * This stub provides no-op inline macros for all trace calls. */
+
+/* No-op trace function stubs - satisfy all trace_mdss_pll_xxx() calls */
+#define trace_mdss_pll_lock(name, val) do {} while (0)
+#define trace_mdss_pll_unlock(name, val) do {} while (0)
+#define trace_mdss_pll_vote(name, val) do {} while (0)
+#define trace_mdss_pll_unvote(name, val) do {} while (0)
+#define trace_mdss_pll_wakeoff(name, val) do {} while (0)
+#define trace_mdss_pll_dump(name, val) do {} while (0)
 
 #endif /* _MDSS_PLL_TRACE_H */
-
-/* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../..  /* Go up 3 levels from drivers/clk/qcom/mdss/ to root, then to include/trace/events */
-#include <trace/define_trace.h>
 EOF
 
 # 创建 kgsl_trace.h (GPU)
