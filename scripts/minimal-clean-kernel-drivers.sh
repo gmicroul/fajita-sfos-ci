@@ -188,8 +188,6 @@ cat > include/cam_sensor_cmn_header.h << 'CAMHEADER'
 #include <linux/timer.h>
 #include <linux/delay.h>
 #include <linux/list.h>
-#include <media/cam_sensor.h>
-#include <media/cam_req_mgr.h>
 
 #define MAX_REGULATOR 5
 #define MAX_POWER_CONFIG 12

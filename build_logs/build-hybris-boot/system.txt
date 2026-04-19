@@ -1,0 +1,8 @@
+2026-04-16T06:31:16.2750000Z Requested labels: ubuntu-latest
+2026-04-16T06:31:16.2750000Z Job defined at: gmicroul/fajita-sfos-ci/.github/workflows/build-hybris-boot.yml@refs/heads/master
+2026-04-16T06:31:16.2750000Z Waiting for a runner to pick up this job...
+2026-04-16T06:31:16.2740000Z Evaluating build-hybris-boot.if
+2026-04-16T06:31:16.2740000Z Evaluating: success()
+2026-04-16T06:31:16.2740000Z Result: true
+2026-04-16T06:31:16.6090000Z Job is waiting for a hosted runner to come online.
+2026-04-16T06:31:16.6100000Z Job is about to start running on the hosted runner: GitHub Actions 1000006480

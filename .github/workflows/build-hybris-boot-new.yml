@@ -13,10 +13,14 @@ on:
         default: '5.0.0.73'
   push:
     branches: [ main, master ]
-    paths:
-      - '.github/workflows/build-hybris-boot-new.yml'
-      - 'scripts/apply-docker-kernel-patch-v2.sh'
-      - 'scripts/clean-kernel-drivers.sh'
+ paths:
+ - '.github/workflows/build-hybris-boot-new.yml'
+ - 'scripts/apply-docker-kernel-patch-v2.sh'
+ - 'scripts/minimal-clean-kernel-drivers.sh'
+ - 'scripts/real-camera-headers-fix.sh'
+ - 'scripts/fix-camera-trace-paths.sh'
+ - 'scripts/fix-mdss-pll-trace.sh'
+ - 'scripts/create-empty-trace-headers.sh'
 
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}
@@ -168,9 +172,9 @@ jobs:
 
         echo "Building with defconfig: $DEFCONFIG"
 
-        # Clean problematic drivers to avoid compilation errors
-        # IMPORTANT: This must run BEFORE make defconfig, because make defconfig reads Kconfig files
-        bash $GITHUB_WORKSPACE/scripts/clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+ # Fix kernel compilation errors (minimal approach: patch headers, preserve drivers)
+ # IMPORTANT: This must run BEFORE make defconfig, because make defconfig reads Kconfig files
+ bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
         # Build kernel
         make $DEFCONFIG
@@ -180,8 +184,13 @@ jobs:
         sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
         sed -i 's/CONFIG_CC_STACKPROTECTOR_REGULAR=y/CONFIG_CC_STACKPROTECTOR_REGULAR=n/g' .config || true
 
-        # Build kernel with stack protector disabled
-        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector" WERROR=0 HOSTCFLAGS="-Wno-error"
+ # Build kernel with stack protector disabled and ARM64 large model
+ make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -mcmodel=large" WERROR=0 HOSTCFLAGS="-Wno-error" 2>&1 | tee build.log || {
+ echo "=== BUILD FAILED ==="
+ echo "=== Last 200 lines of build log ==="
+ tail -200 build.log
+ exit 1
+ }
 
         # Check if kernel image was built
         if [ ! -f arch/arm64/boot/Image.gz ]; then
