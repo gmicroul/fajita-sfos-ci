@@ -1,24 +1,23 @@
 name: Build Hybris Boot Image (New)
 
 on:
-  workflow_dispatch:
-    inputs:
-      device:
-        description: 'Device codename'
-        required: true
-        default: 'fajita'
-      release:
-        description: 'SailfishOS release version'
-        required: true
-        default: '5.0.0.73'
-  push:
-    branches: [ main, master ]
+ workflow_dispatch:
+ inputs:
+ device:
+ description: 'Device codename'
+ required: true
+ default: 'fajita'
+ release:
+ description: 'SailfishOS release version'
+ required: true
+ default: '5.0.0.73'
+ push:
+ branches: [ main, master ]
  paths:
  - '.github/workflows/build-hybris-boot-new.yml'
  - 'scripts/apply-docker-kernel-patch-v2.sh'
  - 'scripts/minimal-clean-kernel-drivers.sh'
  - 'scripts/fix-camera-build.sh'
- - 'scripts/apply-docker-kernel-patch-v2.sh'
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}
   RELEASE: ${{ github.event.inputs.release || '5.0.0.73' }}
