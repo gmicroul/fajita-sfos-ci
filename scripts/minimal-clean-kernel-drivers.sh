@@ -154,9 +154,9 @@ echo "  创建 include/media/cam_sync_private.h"
 
 # 重要：保留所有关键驱动，只修复编译错误
 
-# 1. 修复摄像头驱动头文件（使用真实头文件）
-echo "1. 修复摄像头驱动头文件..."
-bash $GITHUB_WORKSPACE/scripts/real-camera-headers-fix.sh "$KERNEL_DIR"
+# 1. 修复摄像头驱动编译错误（v3：保留原始 #include，确保 Makefile ccflags-y 正确）
+echo "1. 修复摄像头驱动编译错误..."
+bash $GITHUB_WORKSPACE/scripts/fix-camera-build.sh "$KERNEL_DIR"
 
 # 1b. 确保 cam_sensor_cmn_header.h 存在于 include/ 和 include/media/ 目录
 # 这是双重保障，防止 real-camera-headers-fix.sh 下载失败或复制失败
@@ -350,17 +350,14 @@ struct cam_sync_device {
 CAMSYNCPRIV
 echo "  已创建 include/media/cam_sync_private.h"
 
-# 2. 修复 cam_trace.h 中的路径问题
-echo "2. 修复摄像头trace头文件路径..."
-bash $GITHUB_WORKSPACE/scripts/fix-camera-trace-paths.sh "$KERNEL_DIR"
+# 2. cam_trace.h 路径修复（已在 fix-camera-build.sh 中处理）
+echo "2. cam_trace.h 修复已由 fix-camera-build.sh 处理，跳过"
 
-# 3. 修复MDSS PLL编译错误（创建include/trace/events/mdss_pll.h）
-echo "3. 修复MDSS PLL编译错误..."
-bash $GITHUB_WORKSPACE/scripts/fix-mdss-pll-trace.sh "$KERNEL_DIR"
+# 3. MDSS PLL 修复（已在 fix-camera-build.sh 中处理）
+echo "3. MDSS PLL 修复已由 fix-camera-build.sh 处理，跳过"
 
-# 4. 创建空的trace头文件（创建drivers/clk/qcom/mdss/mdss_pll_trace.h）
-echo "4. 创建空的trace头文件..."
-bash $GITHUB_WORKSPACE/scripts/create-empty-trace-headers.sh "$KERNEL_DIR"
+# 4. 空 trace 头文件（已在 fix-camera-build.sh 中处理）
+echo "4. 空 trace 头文件已由 fix-camera-build.sh 处理，跳过"
 
 cd "$KERNEL_DIR"
 

@@ -17,11 +17,8 @@ on:
  - '.github/workflows/build-hybris-boot-new.yml'
  - 'scripts/apply-docker-kernel-patch-v2.sh'
  - 'scripts/minimal-clean-kernel-drivers.sh'
- - 'scripts/real-camera-headers-fix.sh'
- - 'scripts/fix-camera-trace-paths.sh'
- - 'scripts/fix-mdss-pll-trace.sh'
- - 'scripts/create-empty-trace-headers.sh'
-
+ - 'scripts/fix-camera-build.sh'
+ - 'scripts/apply-docker-kernel-patch-v2.sh'
 env:
   DEVICE: ${{ github.event.inputs.device || 'fajita' }}
   RELEASE: ${{ github.event.inputs.release || '5.0.0.73' }}
@@ -189,6 +186,15 @@ jobs:
  echo "=== BUILD FAILED ==="
  echo "=== Last 200 lines of build log ==="
  tail -200 build.log
+ echo ""
+ echo "=== Actual compilation errors ==="
+ grep -n "error:" build.log | tail -50 || true
+ echo ""
+ echo "=== Missing header files ==="
+ grep -n "No such file or directory" build.log | tail -30 || true
+ echo ""
+ echo "=== Implicit function declarations ==="
+ grep -n "implicit declaration" build.log | tail -30 || true
  exit 1
  }
 
