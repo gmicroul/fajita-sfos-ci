@@ -176,6 +176,16 @@ else
 	echo " 警告: include/media/cam_sensor_cmn_header.h 不存在，跳过复制"
 fi
 
+# 复制 cam_sync_api.h 和 cam_sync_private.h 到 include/ 根目录
+if [ -f "include/media/cam_sync_api.h" ]; then
+	cp include/media/cam_sync_api.h include/cam_sync_api.h
+	echo " 已从 include/media/ 复制 cam_sync_api.h 到 include/"
+fi
+if [ -f "include/media/cam_sync_private.h" ]; then
+	cp include/media/cam_sync_private.h include/cam_sync_private.h
+	echo " 已从 include/media/ 复制 cam_sync_private.h 到 include/"
+fi
+
 # 1c. 确保 cam_sync_api.h 和 cam_sync_private.h 存在于 include/media/ 目录
 # cam_sync.c 使用 #include <cam_sync_api.h>（尖括号）
 echo "1c. 确保 cam_sync 头文件存在于 include/media/..."
@@ -304,8 +314,46 @@ fi
 # 8. 修复coresight驱动编译错误
 echo "8. 修复coresight驱动编译错误..."
 if [ -f "drivers/hwtracing/coresight/Makefile" ]; then
-    # 只删除有问题的文件，保留核心功能
-    rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
+	# 只删除有问题的文件，保留核心功能
+	rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
+fi
+
+# 8b. 修复IPA trace文件缺失
+echo "8b. 修复IPA trace文件..."
+mkdir -p include/trace/events/ipa
+if [ ! -f "include/trace/events/ipa/ipa_trace.h" ]; then
+	cat > include/trace/events/ipa/ipa_trace.h << 'IPATRACE'
+#ifndef _IPA_TRACE_H
+#define _IPA_TRACE_H
+#include <linux/types.h>
+#define CREATE_TRACE_POINTS
+#include <trace/define_trace.h>
+#endif
+IPATRACE
+fi
+if [ ! -f "drivers/platform/msm/ipa/ipa_v3/ipa_trace.h" ]; then
+	mkdir -p drivers/platform/msm/ipa/ipa_v3
+	cat > drivers/platform/msm/ipa/ipa_v3/ipa_trace.h << 'IPATRACEDRV'
+#ifndef _IPA_V3_TRACE_H
+#define _IPA_V3_TRACE_H
+#include <linux/types.h>
+#undef CREATE_TRACE_POINTS
+#define TRACE_INCLUDE_FILE ipa_trace
+#include <trace/define_trace.h>
+#endif
+IPATRACEDRV
+fi
+if [ ! -f "drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h" ]; then
+	mkdir -p drivers/platform/msm/ipa/ipa_clients
+	cat > drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h << 'RNDISIPATRACE'
+#ifndef _RNDIS_IPA_TRACE_H
+#define _RNDIS_IPA_TRACE_H
+#include <linux/types.h>
+#undef CREATE_TRACE_POINTS
+#define TRACE_INCLUDE_FILE rndis_ipa_trace
+#include <trace/define_trace.h>
+#endif
+RNDISIPATRACE
 fi
 
 # 9. 禁用WERROR避免编译失败
