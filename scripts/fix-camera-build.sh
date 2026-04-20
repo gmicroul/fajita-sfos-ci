@@ -91,18 +91,24 @@ fix_makefile_ccflags() {
  
  if [ -f "$mkfile" ]; then
    # 检查是否已有 ccflags-y
-   if ! grep -q "ccflags-y.*cam_utils" "$mkfile"; then
-     echo " 修复 $mkfile 的 ccflags-y"
-     # 在文件开头插入 ccflags-y
-     sed -i "1i\\
-ccflags-y += -I${base_dir}cam_smmu\\
-ccflags-y += -I${base_dir}cam_utils\\
-ccflags-y += -I${base_dir}cam_core\\
-ccflags-y += -I${base_dir}cam_cpas/include\\
-ccflags-y += -I${base_dir}cam_req_mgr\\
+ if ! grep -q "ccflags-y.*cam_utils" "$mkfile"; then
+ echo " 修复 $mkfile 的 ccflags-y"
+ # 在文件开头插入 ccflags-y
+ sed -i "1i\\\
+ccflags-y += -I${base_dir}cam_smmu\\\
+ccflags-y += -I${base_dir}cam_utils\\\
+ccflags-y += -I${base_dir}cam_core\\\
+ccflags-y += -I${base_dir}cam_cpas/include\\\
+ccflags-y += -I${base_dir}cam_req_mgr\\\
+ccflags-y += -Iinclude/\\\
 " "$mkfile"
-   else
-     echo " $mkfile 的 ccflags-y 已存在，跳过"
+ else
+ # ccflags已存在但可能缺少 -Iinclude/，确保添加
+ if ! grep -q "ccflags-y.*-Iinclude" "$mkfile"; then
+ echo " 追加 -Iinclude/ 到 $mkfile"
+ echo "ccflags-y += -Iinclude/" >> "$mkfile"
+ fi
+ echo " $mkfile 的 ccflags-y 已存在，跳过"
    fi
  fi
 }
@@ -155,19 +161,26 @@ fix_sensor_subdir_ccflags() {
  local base_dir="$2"
  
  if [ -f "$mkfile" ]; then
-   if ! grep -q "ccflags-y.*cam_sensor_module" "$mkfile"; then
-     echo " 修复 $mkfile 添加 sensor_module ccflags"
-     sed -i "1i\\
-ccflags-y += -I${base_dir}cam_utils\\
-ccflags-y += -I${base_dir}cam_cpas/include\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_io\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_utils\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_cci\\
-ccflags-y += -I${base_dir}cam_req_mgr\\
-ccflags-y += -I${base_dir}cam_smmu/\\
-ccflags-y += -I${base_dir}cam_core\\
+ if ! grep -q "ccflags-y.*cam_sensor_module" "$mkfile"; then
+ echo " 修复 $mkfile 添加 sensor_module ccflags"
+ sed -i "1i\\\
+ccflags-y += -I${base_dir}cam_utils\\\
+ccflags-y += -I${base_dir}cam_cpas/include\\\
+ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_io\\\
+ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_utils\\\
+ccflags-y += -I${base_dir}cam_sensor_module/cam_cci\\\
+ccflags-y += -I${base_dir}cam_req_mgr\\\
+ccflags-y += -I${base_dir}cam_smmu/\\\
+ccflags-y += -I${base_dir}cam_core\\\
+ccflags-y += -Iinclude/\\\
 " "$mkfile"
-   fi
+ else
+ # ccflags已存在但可能缺少 -Iinclude/
+ if ! grep -q "ccflags-y.*-Iinclude" "$mkfile"; then
+ echo " 追加 -Iinclude/ 到 $mkfile"
+ echo "ccflags-y += -Iinclude/" >> "$mkfile"
+ fi
+ fi
  fi
 }
 
