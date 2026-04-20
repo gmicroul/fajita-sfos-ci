@@ -158,162 +158,23 @@ echo "  创建 include/media/cam_sync_private.h"
 echo "1. 修复摄像头驱动编译错误..."
 bash $GITHUB_WORKSPACE/scripts/fix-camera-build.sh "$KERNEL_DIR"
 
-# 1b. 确保 cam_sensor_cmn_header.h 存在于 include/ 和 include/media/ 目录
-# 这是双重保障，防止 real-camera-headers-fix.sh 下载失败或复制失败
-# cam_sensor_util.h 使用 #include <cam_sensor_cmn_header.h>（尖括号，在 include/ 根目录搜索）
-echo "1b. 确保 cam_sensor_cmn_header.h 存在于 include/ 和 include/media/..."
+# 1b. cam_sensor_cmn_header.h 已由 fix-camera-build.sh 处理（下载真实版本或回退版本）
+# 不再创建简化版覆盖，因为简化版缺少关键结构体定义导致编译失败：
+# - msm_pinctrl_info (简化版用了 cci_pinctrl 代替，名字不对)
+# - i2c_data_settings (完全缺失)
+# - cam_sensor_power_ctrl_t.dev/gpio_num_info/pinctrl_info (缺失)
+# 只确保 include/cam_sensor_cmn_header.h 存在（从 include/media/ 复制）
+echo "1b. 确保 cam_sensor_cmn_header.h 存在于 include/ 根目录..."
 cd "$KERNEL_DIR"
 mkdir -p include/media
-# 同时在 include/ 根目录创建（因为 #include <cam_sensor_cmn_header.h> 在根目录搜索）
-cat > include/cam_sensor_cmn_header.h << 'CAMHEADER'
-#ifndef _CAM_SENSOR_CMN_HEADER_H_
-#define _CAM_SENSOR_CMN_HEADER_H_
 
-#include <linux/i2c.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/pinctrl/consumer.h>
-
-#define MAX_REGULATOR 5
-#define MAX_POWER_CONFIG 12
-#define MAX_PER_FRAME_ARRAY 32
-#define BATCH_SIZE_MAX 16
-
-#define CAM_SENSOR_NAME "cam-sensor"
-#define CAM_ACTUATOR_NAME "cam-actuator"
-#define CAM_CSIPHY_NAME "cam-csiphy"
-#define CAM_FLASH_NAME "cam-flash"
-#define CAM_EEPROM_NAME "cam-eeprom"
-#define CAM_OIS_NAME "cam-ois"
-
-enum camera_sensor_cmd_type {
-	CAMERA_SENSOR_CMD_TYPE_INVALID,
-	CAMERA_SENSOR_CMD_TYPE_PROBE,
-	CAMERA_SENSOR_CMD_TYPE_PWR_UP,
-	CAMERA_SENSOR_CMD_TYPE_PWR_DOWN,
-	CAMERA_SENSOR_CMD_TYPE_I2C_INFO,
-	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_WR,
-	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_RD,
-};
-
-enum camera_sensor_i2c_type {
-	CAMERA_SENSOR_I2C_TYPE_U8,
-	CAMERA_SENSOR_I2C_TYPE_U16,
-	CAMERA_SENSOR_I2C_TYPE_U32,
-};
-
-enum i2c_freq_mode {
-	I2C_FREQ_MODE_INVALID,
-	I2C_FREQ_MODE_STANDARD,
-	I2C_FREQ_MODE_FAST,
-	I2C_FREQ_MODE_HIGH,
-	I2C_MAX_MODES,
-};
-
-enum cci_i2c_master_t {
-	MASTER_0,
-	MASTER_1,
-	MASTER_MAX,
-};
-
-enum camera_master_type {
-	CCI_MASTER = 0,
-	I2C_MASTER = 1,
-};
-
-struct cam_sensor_i2c_reg_setting {
-	struct cam_sensor_i2c_reg_array *reg_setting;
-	unsigned short size;
-	unsigned short addr_type;
-	unsigned short data_type;
-	unsigned short delay;
-};
-
-struct i2c_settings_array {
-	struct list_head list;
-	struct cam_sensor_i2c_reg_setting settings;
-	int is_settings_valid;
-};
-
-struct cam_sensor_power_setting {
-	u16 seq_val;
-	u16 seq_type;
-	u32 config_val;
-	u32 delay;
-};
-
-struct cam_sensor_power_setting_array {
-	struct cam_sensor_power_setting *power_setting;
-	u16 size;
-};
-
-struct cam_sensor_power_ctrl_t {
-	struct cam_sensor_power_setting_array power_setting;
-	struct cam_sensor_power_setting_array power_down_setting;
-	struct mutex *mutex;
-};
-
-struct cci_pinctrl {
-	struct pinctrl *pinctrl;
-	struct pinctrl_state *gpio_state_active;
-	struct pinctrl_state *gpio_state_suspend;
-};
-
-struct cci_i2c_master {
-	struct i2c_adapter adapter;
-	u16 master_queue;
-	u16 status;
-};
-
-struct cci_i2c_write_cfg {
-	unsigned short addr_type;
-	unsigned short data_type;
-	unsigned short addr;
-	unsigned short data;
-};
-
-struct cam_sensor_cfg_data {
-	u32 def_type;
-};
-
-struct cam_sensor_dev_config {
-	u32 csid_params;
-	u32 csid_minor;
-	u32 lane_cnt;
-	u32 mode;
-};
-
-enum cam_sensor_mode_type {
-	CAMERA_SENSOR_CUSTOM_MODE,
-	CAMERA_SENSOR_AUTO_MODE,
-};
-
-enum cam_sensor_power_setting_type {
-	CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
-	CAM_SENSOR_POWER_SETTING_TYPE_I2C,
-};
-
-#endif /* _CAM_SENSOR_CMN_HEADER_H_ */
-CAMHEADER
-echo " 已创建 include/cam_sensor_cmn_header.h（完整自包含版本）"
-# 同时复制到 include/media/ 目录，供其他可能的引用
-cp include/cam_sensor_cmn_header.h include/media/cam_sensor_cmn_header.h
-echo " 已复制到 include/media/cam_sensor_cmn_header.h"
-
-# 关键：也覆盖 cam_sensor_utils/ 下的真实版本
-# 编译 cam_cci 时 ccflags 包含 -I...cam_sensor_utils/，必须确保那里也是自包含版本
-CAM_BASE="drivers/media/platform/msm/camera"
-CAM_OP_BASE="drivers/media/platform/msm/camera_oneplus"
-for d in "$CAM_BASE/cam_sensor_module/cam_sensor_utils" "$CAM_OP_BASE/cam_sensor_module/cam_sensor_utils"; do
-	if [ -d "$d" ]; then
-		cp include/cam_sensor_cmn_header.h "$d/cam_sensor_cmn_header.h"
-		echo " 覆盖 $d/cam_sensor_cmn_header.h 为自包含版本"
-	fi
-done
+# 从 include/media/ 复制到 include/ 根目录（fix-camera-build.sh 已下载真实版本到 include/media/）
+if [ -f "include/media/cam_sensor_cmn_header.h" ]; then
+	cp include/media/cam_sensor_cmn_header.h include/cam_sensor_cmn_header.h
+	echo " 已从 include/media/ 复制 cam_sensor_cmn_header.h 到 include/"
+else
+	echo " 警告: include/media/cam_sensor_cmn_header.h 不存在，跳过复制"
+fi
 
 # 1c. 确保 cam_sync_api.h 和 cam_sync_private.h 存在于 include/media/ 目录
 # cam_sync.c 使用 #include <cam_sync_api.h>（尖括号）

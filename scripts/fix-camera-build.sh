@@ -442,9 +442,8 @@ CMN_DOWNLOADED=0
 for retry in 1 2 3; do
  if curl -sL --connect-timeout 15 --max-time 30 "$CURL_CMN_HEADER" -o include/media/cam_sensor_cmn_header.h 2>/dev/null && [ -s include/media/cam_sensor_cmn_header.h ]; then
  CMN_DOWNLOADED=1
- # 修复 #include 路径：media/ -> uapi/media/，确保编译器能找到
- sed -i 's|#include <media/cam_sensor.h>|#include <uapi/media/cam_sensor.h>|g' include/media/cam_sensor_cmn_header.h
- sed -i 's|#include <media/cam_req_mgr.h>|#include <uapi/media/cam_req_mgr.h>|g' include/media/cam_sensor_cmn_header.h
+ # 保留原始 #include <media/cam_sensor.h> 和 <media/cam_req_mgr.h>
+ # 因为脚本后面会从 include/uapi/media/ 复制到 include/media/ 确保引用有效
  break
  fi
  echo " 下载 cam_sensor_cmn_header.h 重试 $retry..."
@@ -465,8 +464,8 @@ cat > include/media/cam_sensor_cmn_header.h << 'FALLBACK_EOF'
 #include <linux/delay.h>
 #include <linux/list.h>
 #include <linux/pinctrl/consumer.h>
-#include <uapi/media/cam_sensor.h>
-#include <uapi/media/cam_req_mgr.h>
+#include <media/cam_sensor.h>
+#include <media/cam_req_mgr.h>
 #define MAX_REGULATOR 5
 #define MAX_POWER_CONFIG 12
 #define MAX_PER_FRAME_ARRAY 32
@@ -852,31 +851,27 @@ for d in "$CAM_BASE/cam_sensor_module/cam_sensor_utils" "$CAM_OP_BASE/cam_sensor
 done
 
 # 确保 include/media/cam_defs.h 存在（被 cam_cdm_intf_api.h 用 #include <media/cam_defs.h> 引用）
-if [ ! -f "include/media/cam_defs.h" ] || [ ! -s "include/media/cam_defs.h" ]; then
- # 尝试从 include/uapi/media/ 复制
- if [ -f "include/uapi/media/cam_defs.h" ]; then
+# 无条件从 uapi 复制，确保内容正确
+if [ -f "include/uapi/media/cam_defs.h" ]; then
  cp include/uapi/media/cam_defs.h include/media/cam_defs.h
  echo " 已从 include/uapi/media/ 复制 cam_defs.h"
- fi
 fi
 
 # 确保 include/media/cam_sensor.h 存在
 # cam_cci_dev.h 和 cam_sensor_cmn_header.h 都用 #include <media/cam_sensor.h> 引用
 # 包含 enum i2c_freq_mode, I2C_MAX_MODES, MASTER_MAX, struct cam_sensor_power_ctrl_t 等关键定义
-if [ ! -f "include/media/cam_sensor.h" ] || [ ! -s "include/media/cam_sensor.h" ]; then
- if [ -f "include/uapi/media/cam_sensor.h" ]; then
+# 无条件从 uapi 复制，确保内容正确
+if [ -f "include/uapi/media/cam_sensor.h" ]; then
  cp include/uapi/media/cam_sensor.h include/media/cam_sensor.h
  echo " 已从 include/uapi/media/ 复制 cam_sensor.h"
- fi
 fi
 
 # 确保 include/media/cam_req_mgr.h 存在
 # cam_sensor_cmn_header.h 用 #include <media/cam_req_mgr.h> 引用
-if [ ! -f "include/media/cam_req_mgr.h" ] || [ ! -s "include/media/cam_req_mgr.h" ]; then
- if [ -f "include/uapi/media/cam_req_mgr.h" ]; then
+# 无条件从 uapi 复制，确保内容正确
+if [ -f "include/uapi/media/cam_req_mgr.h" ]; then
  cp include/uapi/media/cam_req_mgr.h include/media/cam_req_mgr.h
  echo " 已从 include/uapi/media/ 复制 cam_req_mgr.h"
- fi
 fi
 
 echo " include/media/ 头文件就绪"
