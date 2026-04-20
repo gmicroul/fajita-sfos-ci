@@ -376,14 +376,23 @@ TRACE_EVENT(rndis_ipa_trace_rx, TP_PROTO(unsigned long a), TP_ARGS(a),
 RNDISIPATRACE
 fi
 
-# ipa_trace.h wrapper - 被ipa.c引用，指向include/trace/events/ipa/ipa_trace.h
+# ipa_trace.h wrapper - 直接禁用trace（避免循环include问题）
 cat > drivers/platform/msm/ipa/ipa_v3/ipa_trace.h << 'IPAWRAPPER'
-/* trace wrapper - see include/trace/events/ipa/ipa_trace.h for definitions */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM ipa
-#define TRACE_INCLUDE_PATH ../../include/trace/events/ipa
-#include <trace/define_trace.h>
+/* trace disabled */
+#ifndef _IPA_V3_TRACE_H
+#define _IPA_V3_TRACE_H
+#include <linux/types.h>
+#endif
 IPAWRAPPER
+
+# rndis_ipa_trace.h 同样处理
+cat > drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h << 'RNDISWRAPPER'
+/* trace disabled */
+#ifndef _RNDIS_IPA_TRACE_H
+#define _RNDIS_IPA_TRACE_H
+#include <linux/types.h>
+#endif
+RNDISWRAPPER
 
 # 9. 禁用WERROR避免编译失败
 echo "9. 禁用WERROR..."
