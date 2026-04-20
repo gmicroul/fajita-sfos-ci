@@ -94,14 +94,16 @@ fix_makefile_ccflags() {
  if ! grep -q "\-I.*cam_utils" "$mkfile"; then
  echo " 修复 $mkfile 的 ccflags-y"
  # 在文件开头插入 ccflags-y
- sed -i "1i\\
-ccflags-y += -I${base_dir}cam_smmu\\
-ccflags-y += -I${base_dir}cam_utils\\
-ccflags-y += -I${base_dir}cam_core\\
-ccflags-y += -I${base_dir}cam_cpas/include\\
-ccflags-y += -I${base_dir}cam_req_mgr\\
-ccflags-y += -Iinclude/\\
-" "$mkfile"
+ cat > /tmp/ccflags_insert.txt << EOF
+ccflags-y += -I${base_dir}cam_smmu
+ccflags-y += -I${base_dir}cam_utils
+ccflags-y += -I${base_dir}cam_core
+ccflags-y += -I${base_dir}cam_cpas/include
+ccflags-y += -I${base_dir}cam_req_mgr
+ccflags-y += -Iinclude/
+EOF
+ sed -i "1r /tmp/ccflags_insert.txt" "$mkfile"
+ rm -f /tmp/ccflags_insert.txt
  else
  # ccflags已存在但可能缺少 -Iinclude/ 或其他路径，确保添加
  if ! grep -q "\-Iinclude" "$mkfile"; then
@@ -171,17 +173,19 @@ fix_sensor_subdir_ccflags() {
  if [ -f "$mkfile" ]; then
  if ! grep -q "\-I.*cam_sensor" "$mkfile"; then
  echo " 修复 $mkfile 添加 sensor_module ccflags"
- sed -i "1i\\
-ccflags-y += -I${base_dir}cam_utils\\
-ccflags-y += -I${base_dir}cam_cpas/include\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_io\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_utils\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_cci\\
-ccflags-y += -I${base_dir}cam_req_mgr\\
-ccflags-y += -I${base_dir}cam_smmu/\\
-ccflags-y += -I${base_dir}cam_core\\
-ccflags-y += -Iinclude/\\
-" "$mkfile"
+ cat > /tmp/ccflags_insert.txt << EOF
+ccflags-y += -I${base_dir}cam_utils
+ccflags-y += -I${base_dir}cam_cpas/include
+ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_io
+ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_utils
+ccflags-y += -I${base_dir}cam_sensor_module/cam_cci
+ccflags-y += -I${base_dir}cam_req_mgr
+ccflags-y += -I${base_dir}cam_smmu/
+ccflags-y += -I${base_dir}cam_core
+ccflags-y += -Iinclude/
+EOF
+ sed -i "1r /tmp/ccflags_insert.txt" "$mkfile"
+ rm -f /tmp/ccflags_insert.txt
 	else
 	# ccflags已存在但可能缺少 -Iinclude/ 或 -I...cam_sensor_utils 或 -I...cam_cci
 	if ! grep -q "\-Iinclude" "$mkfile"; then
