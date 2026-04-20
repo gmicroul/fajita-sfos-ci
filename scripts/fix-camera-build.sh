@@ -464,8 +464,8 @@ cat > include/media/cam_sensor_cmn_header.h << 'FALLBACK_EOF'
 #include <linux/delay.h>
 #include <linux/list.h>
 #include <linux/pinctrl/consumer.h>
-#include <media/cam_sensor.h>
-#include <media/cam_req_mgr.h>
+#include <uapi/media/cam_sensor.h>
+#include <uapi/media/cam_req_mgr.h>
 #define MAX_REGULATOR 5
 #define MAX_POWER_CONFIG 12
 #define MAX_PER_FRAME_ARRAY 32
