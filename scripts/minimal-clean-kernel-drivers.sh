@@ -319,42 +319,71 @@ if [ -f "drivers/hwtracing/coresight/Makefile" ]; then
 fi
 
 # 8b. 修复IPA trace文件缺失
+# 需要两个文件：
+# 1. include/trace/events/ipa/ipa_trace.h - 真正的trace定义
+# 2. drivers/platform/msm/ipa/ipa_v3/ipa_trace.h - wrapper被ipa.c引用
 echo "8b. 修复IPA trace文件..."
+
+# 创建trace events目录
 mkdir -p include/trace/events/ipa
-if [ ! -f "include/trace/events/ipa/ipa_trace.h" ]; then
+mkdir -p drivers/platform/msm/ipa/ipa_v3
+mkdir -p drivers/platform/msm/ipa/ipa_clients
+
+# 下载真实的ipa_trace.h到include/trace/events/ipa/
+curl -sL --connect-timeout 15 --max-time 60 \
+	"https://raw.githubusercontent.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable/lineage-16.0/drivers/platform/msm/ipa/ipa_v3/ipa_trace.h" \
+	-o include/trace/events/ipa/ipa_trace.h 2>/dev/null || true
+
+# 如果下载失败，使用最小化版本
+if [ ! -s "include/trace/events/ipa/ipa_trace.h" ]; then
 	cat > include/trace/events/ipa/ipa_trace.h << 'IPATRACE'
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM ipa
+#define TRACE_INCLUDE_FILE ipa_trace
 #ifndef _IPA_TRACE_H
 #define _IPA_TRACE_H
-#include <linux/types.h>
-#define CREATE_TRACE_POINTS
-#include <trace/define_trace.h>
+#include <linux/tracepoint.h>
+TRACE_EVENT(ipa_trace_intr, TP_PROTO(unsigned long a), TP_ARGS(a),
+	TP_STRUCT__entry(__field(unsigned long, a)),
+	TP_fast_assign(__entry->a = a;),
+	TP_printk("a=%lu", __entry->a));
 #endif
 IPATRACE
 fi
-if [ ! -f "drivers/platform/msm/ipa/ipa_v3/ipa_trace.h" ]; then
-	mkdir -p drivers/platform/msm/ipa/ipa_v3
-	cat > drivers/platform/msm/ipa/ipa_v3/ipa_trace.h << 'IPATRACEDRV'
-#ifndef _IPA_V3_TRACE_H
-#define _IPA_V3_TRACE_H
-#include <linux/types.h>
-#undef CREATE_TRACE_POINTS
-#define TRACE_INCLUDE_FILE ipa_trace
-#include <trace/define_trace.h>
-#endif
-IPATRACEDRV
-fi
-if [ ! -f "drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h" ]; then
-	mkdir -p drivers/platform/msm/ipa/ipa_clients
+
+# 下载真实的rndis_ipa_trace.h
+curl -sL --connect-timeout 15 --max-time 60 \
+	"https://raw.githubusercontent.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable/lineage-16.0/drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h" \
+	-o drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h 2>/dev/null || true
+
+if [ ! -s "drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h" ]; then
 	cat > drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h << 'RNDISIPATRACE'
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM ipa
+#define TRACE_INCLUDE_FILE rndis_ipa_trace
 #ifndef _RNDIS_IPA_TRACE_H
 #define _RNDIS_IPA_TRACE_H
-#include <linux/types.h>
-#undef CREATE_TRACE_POINTS
-#define TRACE_INCLUDE_FILE rndis_ipa_trace
-#include <trace/define_trace.h>
+#include <linux/tracepoint.h>
+TRACE_EVENT(rndis_ipa_trace_tx, TP_PROTO(unsigned long a), TP_ARGS(a),
+	TP_STRUCT__entry(__field(unsigned long, a)),
+	TP_fast_assign(__entry->a = a;),
+	TP_printk("tx=%lu", __entry->a));
+TRACE_EVENT(rndis_ipa_trace_rx, TP_PROTO(unsigned long a), TP_ARGS(a),
+	TP_STRUCT__entry(__field(unsigned long, a)),
+	TP_fast_assign(__entry->a = a;),
+	TP_printk("rx=%lu", __entry->a));
 #endif
 RNDISIPATRACE
 fi
+
+# ipa_trace.h wrapper - 被ipa.c引用，指向include/trace/events/ipa/ipa_trace.h
+cat > drivers/platform/msm/ipa/ipa_v3/ipa_trace.h << 'IPAWRAPPER'
+/* trace wrapper - see include/trace/events/ipa/ipa_trace.h for definitions */
+#undef TRACE_SYSTEM
+#define TRACE_SYSTEM ipa
+#define TRACE_INCLUDE_PATH ../../include/trace/events/ipa
+#include <trace/define_trace.h>
+IPAWRAPPER
 
 # 9. 禁用WERROR避免编译失败
 echo "9. 禁用WERROR..."
