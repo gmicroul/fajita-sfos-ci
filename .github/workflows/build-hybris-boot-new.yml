@@ -168,9 +168,9 @@ jobs:
 
         echo "Building with defconfig: $DEFCONFIG"
 
- # Fix kernel compilation errors (minimal approach: patch headers, preserve drivers)
- # IMPORTANT: This must run BEFORE make defconfig, because make defconfig reads Kconfig files
- bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+        # Fix kernel compilation errors (minimal approach: patch headers, preserve drivers)
+        # IMPORTANT: This must run BEFORE make defconfig, because make defconfig reads Kconfig files
+        bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
 
         # Build kernel
         make $DEFCONFIG
@@ -180,22 +180,22 @@ jobs:
         sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
         sed -i 's/CONFIG_CC_STACKPROTECTOR_REGULAR=y/CONFIG_CC_STACKPROTECTOR_REGULAR=n/g' .config || true
 
- # Build kernel with stack protector disabled and ARM64 large model
- make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -mcmodel=large" WERROR=0 HOSTCFLAGS="-Wno-error" 2>&1 | tee build.log || {
- echo "=== BUILD FAILED ==="
- echo "=== Last 200 lines of build log ==="
- tail -200 build.log
- echo ""
- echo "=== Actual compilation errors ==="
- grep -n "error:" build.log | tail -50 || true
- echo ""
- echo "=== Missing header files ==="
- grep -n "No such file or directory" build.log | tail -30 || true
- echo ""
- echo "=== Implicit function declarations ==="
- grep -n "implicit declaration" build.log | tail -30 || true
- exit 1
- }
+        # Build kernel with stack protector disabled and ARM64 large model
+        make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector -mcmodel=large" WERROR=0 HOSTCFLAGS="-Wno-error" 2>&1 | tee build.log || {
+        echo "=== BUILD FAILED ==="
+        echo "=== Last 200 lines of build log ==="
+        tail -200 build.log
+        echo ""
+        echo "=== Actual compilation errors ==="
+        grep -n "error:" build.log | tail -50 || true
+        echo ""
+        echo "=== Missing header files ==="
+        grep -n "No such file or directory" build.log | tail -30 || true
+        echo ""
+        echo "=== Implicit function declarations ==="
+        grep -n "implicit declaration" build.log | tail -30 || true
+        exit 1
+        }
 
         # Check if kernel image was built
         if [ ! -f arch/arm64/boot/Image.gz ]; then
