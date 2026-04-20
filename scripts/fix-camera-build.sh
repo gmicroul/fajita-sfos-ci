@@ -90,8 +90,8 @@ fix_makefile_ccflags() {
  local base_dir="$2" # camera/ or camera_oneplus/
  
  if [ -f "$mkfile" ]; then
- # 检查是否已有 ccflags-y
- if ! grep -q "ccflags-y.*cam_utils" "$mkfile"; then
+ # 检查是否已有 -I...cam_utils 路径
+ if ! grep -q "\-I.*cam_utils" "$mkfile"; then
  echo " 修复 $mkfile 的 ccflags-y"
  # 在文件开头插入 ccflags-y
  sed -i "1i\\
@@ -104,15 +104,15 @@ ccflags-y += -Iinclude/\\
 " "$mkfile"
  else
  # ccflags已存在但可能缺少 -Iinclude/ 或其他路径，确保添加
- if ! grep -q "ccflags-y.*-Iinclude" "$mkfile"; then
+ if ! grep -q "\-Iinclude" "$mkfile"; then
  echo " 追加 -Iinclude/ 到 $mkfile"
  echo "ccflags-y += -Iinclude/" >> "$mkfile"
  fi
- if ! grep -q "ccflags-y.*cam_utils" "$mkfile"; then
+ if ! grep -q "\-I.*cam_utils" "$mkfile"; then
  echo " 追加 -I${base_dir}cam_utils 到 $mkfile"
  echo "ccflags-y += -I${base_dir}cam_utils" >> "$mkfile"
  fi
- if ! grep -q "ccflags-y.*cam_smmu" "$mkfile"; then
+ if ! grep -q "\-I.*cam_smmu" "$mkfile"; then
  echo " 追加 -I${base_dir}cam_smmu 到 $mkfile"
  echo "ccflags-y += -I${base_dir}cam_smmu" >> "$mkfile"
  fi
@@ -169,32 +169,32 @@ fix_sensor_subdir_ccflags() {
  local base_dir="$2"
  
  if [ -f "$mkfile" ]; then
- if ! grep -q "ccflags-y.*cam_sensor_module" "$mkfile"; then
+ if ! grep -q "\-I.*cam_sensor" "$mkfile"; then
  echo " 修复 $mkfile 添加 sensor_module ccflags"
- sed -i "1i\\\
-ccflags-y += -I${base_dir}cam_utils\\\
-ccflags-y += -I${base_dir}cam_cpas/include\\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_io\\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_utils\\\
-ccflags-y += -I${base_dir}cam_sensor_module/cam_cci\\\
-ccflags-y += -I${base_dir}cam_req_mgr\\\
-ccflags-y += -I${base_dir}cam_smmu/\\\
-ccflags-y += -I${base_dir}cam_core\\\
-ccflags-y += -Iinclude/\\\
+ sed -i "1i\\
+ccflags-y += -I${base_dir}cam_utils\\
+ccflags-y += -I${base_dir}cam_cpas/include\\
+ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_io\\
+ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_utils\\
+ccflags-y += -I${base_dir}cam_sensor_module/cam_cci\\
+ccflags-y += -I${base_dir}cam_req_mgr\\
+ccflags-y += -I${base_dir}cam_smmu/\\
+ccflags-y += -I${base_dir}cam_core\\
+ccflags-y += -Iinclude/\\
 " "$mkfile"
 	else
 	# ccflags已存在但可能缺少 -Iinclude/ 或 -I...cam_sensor_utils 或 -I...cam_cci
-	if ! grep -q "ccflags-y.*-Iinclude" "$mkfile"; then
+	if ! grep -q "\-Iinclude" "$mkfile"; then
 		echo " 追加 -Iinclude/ 到 $mkfile"
 		echo "ccflags-y += -Iinclude/" >> "$mkfile"
 	fi
 	# cam_sensor_utils 路径：cam_cci_dev.h 用 #include <cam_sensor_util.h> 引用
-	if ! grep -q "ccflags-y.*cam_sensor_utils" "$mkfile"; then
+	if ! grep -q "\-I.*cam_sensor_utils" "$mkfile"; then
 		echo " 追加 -I${base_dir}cam_sensor_module/cam_sensor_utils 到 $mkfile"
 		echo "ccflags-y += -I${base_dir}cam_sensor_module/cam_sensor_utils" >> "$mkfile"
 	fi
 	# cam_cci/Makefile 缺少自身目录 -I...cam_cci，导致 cam_sensor_i2c.h 找不到 cam_cci_dev.h
-	if ! grep -q "ccflags-y.*cam_sensor_module/cam_cci" "$mkfile"; then
+	if ! grep -q "\-I.*cam_sensor_module/cam_cci" "$mkfile"; then
 		echo " 追加 -I${base_dir}cam_sensor_module/cam_cci 到 $mkfile"
 		echo "ccflags-y += -I${base_dir}cam_sensor_module/cam_cci" >> "$mkfile"
 	fi
