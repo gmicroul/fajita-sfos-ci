@@ -464,10 +464,28 @@ enum i2c_freq_mode {
  I2C_FREQ_MODE_STANDARD,
  I2C_FREQ_MODE_FAST,
  I2C_FREQ_MODE_HIGH,
+ I2C_MAX_MODES,
+};
+enum cci_i2c_master_t {
+ MASTER_0,
+ MASTER_1,
+ MASTER_MAX,
 };
 enum camera_master_type {
  CCI_MASTER = 0,
  I2C_MASTER = 1,
+};
+struct cam_sensor_i2c_reg_setting {
+ struct cam_sensor_i2c_reg_array *reg_setting;
+ unsigned short size;
+ unsigned short addr_type;
+ unsigned short data_type;
+ unsigned short delay;
+};
+struct i2c_settings_array {
+ struct list_head list;
+ struct cam_sensor_i2c_reg_setting settings;
+ int is_settings_valid;
 };
 struct cam_sensor_power_setting {
  u16 seq_val;
@@ -478,6 +496,27 @@ struct cam_sensor_power_setting {
 struct cam_sensor_power_setting_array {
  struct cam_sensor_power_setting *power_setting;
  u16 size;
+};
+struct cam_sensor_power_ctrl_t {
+ struct cam_sensor_power_setting_array power_setting;
+ struct cam_sensor_power_setting_array power_down_setting;
+ struct mutex *mutex;
+};
+struct cci_pinctrl {
+ struct pinctrl *pinctrl;
+ struct pinctrl_state *gpio_state_active;
+ struct pinctrl_state *gpio_state_suspend;
+};
+struct cci_i2c_master {
+ struct i2c_adapter adapter;
+ u16 master_queue;
+ u16 status;
+};
+struct cci_i2c_write_cfg {
+ unsigned short addr_type;
+ unsigned short data_type;
+ unsigned short addr;
+ unsigned short data;
 };
 #endif
 EOF
