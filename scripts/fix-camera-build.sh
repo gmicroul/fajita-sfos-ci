@@ -112,6 +112,17 @@ CAM_BASE="drivers/media/platform/msm/camera"
 fix_makefile_ccflags "$CAM_BASE/cam_cdm/Makefile" "$CAM_BASE/"
 fix_makefile_ccflags "$CAM_BASE/cam_req_mgr/Makefile" "$CAM_BASE/"
 fix_makefile_ccflags "$CAM_BASE/cam_isp/Makefile" "$CAM_BASE/"
+fix_makefile_ccflags "$CAM_BASE/cam_isp/isp_hw_mgr/Makefile" "$CAM_BASE/"
+
+# 额外修复: cam_isp_packet_parser.h 在 hw_utils/include/ 下，
+# 用 #include "cam_ife_hw_mgr.h" 引用 isp_hw_mgr/ 目录的头文件，
+# 必须在 isp_hw_mgr/Makefile 中添加 -I 指向 isp_hw_mgr 自身目录
+if [ -f "$CAM_BASE/cam_isp/isp_hw_mgr/Makefile" ]; then
+	if ! grep -q "ccflags-y.*cam_isp/isp_hw_mgr\" *$" "$CAM_BASE/cam_isp/isp_hw_mgr/Makefile"; then
+		echo " 添加 isp_hw_mgr 自身路径到 ccflags-y"
+		echo 'ccflags-y += -Idrivers/media/platform/msm/camera/cam_isp/isp_hw_mgr' >> "$CAM_BASE/cam_isp/isp_hw_mgr/Makefile"
+	fi
+fi
 fix_makefile_ccflags "$CAM_BASE/cam_sync/Makefile" "$CAM_BASE/"
 fix_makefile_ccflags "$CAM_BASE/cam_fd/Makefile" "$CAM_BASE/"
 fix_makefile_ccflags "$CAM_BASE/cam_sensor_module/cam_sensor/Makefile" "$CAM_BASE/"
@@ -123,6 +134,15 @@ CAM_OP_BASE="drivers/media/platform/msm/camera_oneplus"
 fix_makefile_ccflags "$CAM_OP_BASE/cam_cdm/Makefile" "$CAM_OP_BASE/"
 fix_makefile_ccflags "$CAM_OP_BASE/cam_req_mgr/Makefile" "$CAM_OP_BASE/"
 fix_makefile_ccflags "$CAM_OP_BASE/cam_isp/Makefile" "$CAM_OP_BASE/"
+fix_makefile_ccflags "$CAM_OP_BASE/cam_isp/isp_hw_mgr/Makefile" "$CAM_OP_BASE/"
+
+# 额外修复: camera_oneplus 目录同样需要 isp_hw_mgr 自身路径
+if [ -f "$CAM_OP_BASE/cam_isp/isp_hw_mgr/Makefile" ]; then
+	if ! grep -q "ccflags-y.*cam_isp/isp_hw_mgr\" *$" "$CAM_OP_BASE/cam_isp/isp_hw_mgr/Makefile"; then
+		echo " 添加 camera_oneplus isp_hw_mgr 自身路径到 ccflags-y"
+		echo 'ccflags-y += -Idrivers/media/platform/msm/camera_oneplus/cam_isp/isp_hw_mgr' >> "$CAM_OP_BASE/cam_isp/isp_hw_mgr/Makefile"
+	fi
+fi
 fix_makefile_ccflags "$CAM_OP_BASE/cam_sync/Makefile" "$CAM_OP_BASE/"
 fix_makefile_ccflags "$CAM_OP_BASE/cam_fd/Makefile" "$CAM_OP_BASE/"
 fix_makefile_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_sensor/Makefile" "$CAM_OP_BASE/"
@@ -342,6 +362,49 @@ HEREDOC
 done
 
 echo " 头文件下载完成: 成功=$success, 失败(回退)=$fail"
+
+# ========== 第3b步：复制 cam_ife_hw_mgr.h 到 hw_utils/include/ 目录 ==========
+# cam_isp_packet_parser.h 在 hw_utils/include/ 下用 #include "cam_ife_hw_mgr.h"
+# 即使 isp_hw_mgr/Makefile 添加了 -I...isp_hw_mgr，双保险在这里也放一份
+echo ""
+echo "3b. 复制 cam_ife_hw_mgr.h 到 hw_utils/include/ (双保险)..."
+
+for cam_base in $CAM_BASE $CAM_OP_BASE; do
+	isp_hw_mgr_dir="$cam_base/cam_isp/isp_hw_mgr"
+	hw_utils_inc_dir="$cam_base/cam_isp/isp_hw_mgr/hw_utils/include"
+	mkdir -p "$hw_utils_inc_dir"
+	if [ -f "$isp_hw_mgr_dir/cam_ife_hw_mgr.h" ] && [ -s "$isp_hw_mgr_dir/cam_ife_hw_mgr.h" ]; then
+		cp "$isp_hw_mgr_dir/cam_ife_hw_mgr.h" "$hw_utils_inc_dir/cam_ife_hw_mgr.h"
+		echo " 已复制 cam_ife_hw_mgr.h -> $hw_utils_inc_dir/"
+	else
+		echo " 警告: $isp_hw_mgr_dir/cam_ife_hw_mgr.h 不存在或为空"
+		# 创建最小回退头文件
+		cat > "$hw_utils_inc_dir/cam_ife_hw_mgr.h" << 'EOF'
+#ifndef _CAM_IFE_HW_MGR_H
+#define _CAM_IFE_HW_MGR_H
+#include <linux/types.h>
+#include <linux/completion.h>
+#include <linux/mutex.h>
+/* Minimal stub - satisfies cam_isp_packet_parser.h inclusion */
+struct cam_ife_hw_mgr_ctx {
+	int ctx_index;
+	u32 acquire_done;
+};
+struct cam_ife_hw_mgr_res {
+	u32 resource_id;
+	void *res_priv;
+};
+#endif
+EOF
+		echo " 已创建回退 cam_ife_hw_mgr.h"
+	fi
+
+	# 同样复制 cam_isp_hw_mgr.h (也可能被 hw_utils/ 下的文件引用)
+	if [ -f "$isp_hw_mgr_dir/cam_isp_hw_mgr.h" ] && [ -s "$isp_hw_mgr_dir/cam_isp_hw_mgr.h" ]; then
+		cp "$isp_hw_mgr_dir/cam_isp_hw_mgr.h" "$hw_utils_inc_dir/cam_isp_hw_mgr.h"
+		echo " 已复制 cam_isp_hw_mgr.h -> $hw_utils_inc_dir/"
+	fi
+done
 
 # ========== 第4步：确保 include/media/ 下有尖括号引用的头文件 ==========
 echo ""
