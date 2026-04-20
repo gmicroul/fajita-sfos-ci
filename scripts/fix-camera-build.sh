@@ -174,13 +174,18 @@ ccflags-y += -I${base_dir}cam_smmu/\\\
 ccflags-y += -I${base_dir}cam_core\\\
 ccflags-y += -Iinclude/\\\
 " "$mkfile"
- else
- # ccflags已存在但可能缺少 -Iinclude/
- if ! grep -q "ccflags-y.*-Iinclude" "$mkfile"; then
- echo " 追加 -Iinclude/ 到 $mkfile"
- echo "ccflags-y += -Iinclude/" >> "$mkfile"
- fi
- fi
+	else
+	# ccflags已存在但可能缺少 -Iinclude/ 或 -I...cam_cci
+	if ! grep -q "ccflags-y.*-Iinclude" "$mkfile"; then
+		echo " 追加 -Iinclude/ 到 $mkfile"
+		echo "ccflags-y += -Iinclude/" >> "$mkfile"
+	fi
+	# cam_cci/Makefile 缺少自身目录 -I...cam_cci，导致 cam_sensor_i2c.h 找不到 cam_cci_dev.h
+	if ! grep -q "ccflags-y.*cam_cci" "$mkfile"; then
+		echo " 追加 -I${base_dir}cam_sensor_module/cam_cci 到 $mkfile"
+		echo "ccflags-y += -I${base_dir}cam_sensor_module/cam_cci" >> "$mkfile"
+	fi
+	fi
  fi
 }
 
