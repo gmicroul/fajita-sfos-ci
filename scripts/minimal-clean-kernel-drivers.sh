@@ -306,9 +306,37 @@ fi
 
 # 7. 修复USB gadget驱动编译错误
 echo "7. 修复USB gadget驱动编译错误..."
+if [ -d "drivers/usb/gadget" ]; then
+	# 添加function目录到include路径，使 #include <function/u_ncm.h> 能找到
+	if [ -f "drivers/usb/gadget/Makefile" ]; then
+		if ! grep -q "ccflags-y.*function" drivers/usb/gadget/Makefile; then
+			echo "ccflags-y += -I\$(src)/function" >> drivers/usb/gadget/Makefile
+		fi
+	fi
+fi
 if [ -d "drivers/usb/gadget/function" ]; then
-    # 创建必要的空头文件
-    touch drivers/usb/gadget/function/u_ncm.h || true
+	# 创建必要的空头文件
+	mkdir -p drivers/usb/gadget/function
+	cat > drivers/usb/gadget/function/u_ncm.h << 'UNCMHEADER'
+#ifndef _U_NCM_H
+#define _NCM_H
+#include <linux/types.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/cdc_ncm.h>
+/* Minimal NCM header stub */
+#endif
+UNCMHEADER
+fi
+
+# 7b. 创建usb_trace.h（如果缺失）
+mkdir -p drivers/usb/gadget/composite
+if [ ! -f "drivers/usb/gadget/composite/usb_trace.h" ]; then
+	cat > drivers/usb/gadget/composite/usb_trace.h << 'USBTRACE'
+#ifndef _USB_TRACE_H
+#define _USB_TRACE_H
+#include <linux/types.h>
+#endif
+USBTRACE
 fi
 
 # 8. 修复coresight驱动编译错误
