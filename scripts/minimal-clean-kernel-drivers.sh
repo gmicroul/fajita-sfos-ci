@@ -166,18 +166,6 @@ cd "$KERNEL_DIR"
 mkdir -p include/media
 # 同时在 include/ 根目录创建（因为 #include <cam_sensor_cmn_header.h> 在根目录搜索）
 cat > include/cam_sensor_cmn_header.h << 'CAMHEADER'
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
-
 #ifndef _CAM_SENSOR_CMN_HEADER_H_
 #define _CAM_SENSOR_CMN_HEADER_H_
 
@@ -188,6 +176,7 @@ cat > include/cam_sensor_cmn_header.h << 'CAMHEADER'
 #include <linux/timer.h>
 #include <linux/delay.h>
 #include <linux/list.h>
+#include <linux/pinctrl/consumer.h>
 
 #define MAX_REGULATOR 5
 #define MAX_POWER_CONFIG 12
@@ -217,9 +206,37 @@ enum camera_sensor_i2c_type {
 	CAMERA_SENSOR_I2C_TYPE_U32,
 };
 
+enum i2c_freq_mode {
+	I2C_FREQ_MODE_INVALID,
+	I2C_FREQ_MODE_STANDARD,
+	I2C_FREQ_MODE_FAST,
+	I2C_FREQ_MODE_HIGH,
+	I2C_MAX_MODES,
+};
+
+enum cci_i2c_master_t {
+	MASTER_0,
+	MASTER_1,
+	MASTER_MAX,
+};
+
 enum camera_master_type {
 	CCI_MASTER = 0,
 	I2C_MASTER = 1,
+};
+
+struct cam_sensor_i2c_reg_setting {
+	struct cam_sensor_i2c_reg_array *reg_setting;
+	unsigned short size;
+	unsigned short addr_type;
+	unsigned short data_type;
+	unsigned short delay;
+};
+
+struct i2c_settings_array {
+	struct list_head list;
+	struct cam_sensor_i2c_reg_setting settings;
+	int is_settings_valid;
 };
 
 struct cam_sensor_power_setting {
@@ -234,14 +251,29 @@ struct cam_sensor_power_setting_array {
 	u16 size;
 };
 
-enum cam_sensor_mode_type {
-	CAMERA_SENSOR_CUSTOM_MODE,
-	CAMERA_SENSOR_AUTO_MODE,
+struct cam_sensor_power_ctrl_t {
+	struct cam_sensor_power_setting_array power_setting;
+	struct cam_sensor_power_setting_array power_down_setting;
+	struct mutex *mutex;
 };
 
-enum cam_sensor_power_setting_type {
-	CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
-	CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+struct cci_pinctrl {
+	struct pinctrl *pinctrl;
+	struct pinctrl_state *gpio_state_active;
+	struct pinctrl_state *gpio_state_suspend;
+};
+
+struct cci_i2c_master {
+	struct i2c_adapter adapter;
+	u16 master_queue;
+	u16 status;
+};
+
+struct cci_i2c_write_cfg {
+	unsigned short addr_type;
+	unsigned short data_type;
+	unsigned short addr;
+	unsigned short data;
 };
 
 struct cam_sensor_cfg_data {
@@ -255,12 +287,33 @@ struct cam_sensor_dev_config {
 	u32 mode;
 };
 
+enum cam_sensor_mode_type {
+	CAMERA_SENSOR_CUSTOM_MODE,
+	CAMERA_SENSOR_AUTO_MODE,
+};
+
+enum cam_sensor_power_setting_type {
+	CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
+	CAM_SENSOR_POWER_SETTING_TYPE_I2C,
+};
+
 #endif /* _CAM_SENSOR_CMN_HEADER_H_ */
 CAMHEADER
-echo " 已创建 include/cam_sensor_cmn_header.h"
+echo " 已创建 include/cam_sensor_cmn_header.h（完整自包含版本）"
 # 同时复制到 include/media/ 目录，供其他可能的引用
 cp include/cam_sensor_cmn_header.h include/media/cam_sensor_cmn_header.h
 echo " 已复制到 include/media/cam_sensor_cmn_header.h"
+
+# 关键：也覆盖 cam_sensor_utils/ 下的真实版本
+# 编译 cam_cci 时 ccflags 包含 -I...cam_sensor_utils/，必须确保那里也是自包含版本
+CAM_BASE="drivers/media/platform/msm/camera"
+CAM_OP_BASE="drivers/media/platform/msm/camera_oneplus"
+for d in "$CAM_BASE/cam_sensor_module/cam_sensor_utils" "$CAM_OP_BASE/cam_sensor_module/cam_sensor_utils"; do
+	if [ -d "$d" ]; then
+		cp include/cam_sensor_cmn_header.h "$d/cam_sensor_cmn_header.h"
+		echo " 覆盖 $d/cam_sensor_cmn_header.h 为自包含版本"
+	fi
+done
 
 # 1c. 确保 cam_sync_api.h 和 cam_sync_private.h 存在于 include/media/ 目录
 # cam_sync.c 使用 #include <cam_sync_api.h>（尖括号）
