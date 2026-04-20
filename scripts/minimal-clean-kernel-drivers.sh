@@ -394,6 +394,16 @@ cat > drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h << 'RNDISWRAPPER'
 #endif
 RNDISWRAPPER
 
+# 禁用 tracer_pkt trace
+mkdir -p drivers/soc/qcom
+cat > drivers/soc/qcom/tracer_pkt_private.h << 'TRACERPKT'
+/* trace disabled */
+#ifndef _TRACER_PKT_PRIVATE_H
+#define _TRACER_PKT_PRIVATE_H
+#include <linux/types.h>
+#endif
+TRACERPKT
+
 # 9. 禁用WERROR避免编译失败
 echo "9. 禁用WERROR..."
 if [ -f "Makefile" ]; then
