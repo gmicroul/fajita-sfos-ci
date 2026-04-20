@@ -194,11 +194,13 @@ ccflags-y += -Iinclude/\\\
  fi
 }
 
+fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_sensor_utils/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_sensor/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_cci/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_csiphy/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_sensor_io/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_actuator/Makefile" "$CAM_BASE/"
+fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_sensor_utils/Makefile" "$CAM_OP_BASE/"
 fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_sensor/Makefile" "$CAM_OP_BASE/"
 fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_cci/Makefile" "$CAM_OP_BASE/"
 fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_csiphy/Makefile" "$CAM_OP_BASE/"
