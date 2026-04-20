@@ -174,9 +174,13 @@ ccflags-y += -I${base_dir}cam_core\\
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_sensor/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_cci/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_csiphy/Makefile" "$CAM_BASE/"
+fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_sensor_io/Makefile" "$CAM_BASE/"
+fix_sensor_subdir_ccflags "$CAM_BASE/cam_sensor_module/cam_actuator/Makefile" "$CAM_BASE/"
 fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_sensor/Makefile" "$CAM_OP_BASE/"
 fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_cci/Makefile" "$CAM_OP_BASE/"
 fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_csiphy/Makefile" "$CAM_OP_BASE/"
+fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_sensor_io/Makefile" "$CAM_OP_BASE/"
+fix_sensor_subdir_ccflags "$CAM_OP_BASE/cam_sensor_module/cam_actuator/Makefile" "$CAM_OP_BASE/"
 
 echo " Makefile ccflags-y 修复完成"
 
@@ -268,7 +272,12 @@ HEADER_FILES["$CAM_BASE/cam_isp/isp_hw_mgr/include/cam_isp_hw_mgr_intf.h"]="$REP
 HEADER_FILES["$CAM_BASE/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"]="$REPO_BASE/$CAM_BASE/cam_isp/isp_hw_mgr/hw_utils/include/cam_isp_packet_parser.h"
 
 # include/uapi/media/ 下的头文件（尖括号引用）
+# 关键：cam_cci_dev.h 用 #include <media/cam_sensor.h> 引用 cam_sensor.h
+# cam_sensor_cmn_header.h 用 #include <media/cam_sensor.h> 和 #include <media/cam_req_mgr.h>
+# 这些 UAPI 头文件必须放在 include/media/ 目录下
 HEADER_FILES["include/media/cam_defs.h"]="$REPO_BASE/include/uapi/media/cam_defs.h"
+HEADER_FILES["include/media/cam_sensor.h"]="$REPO_BASE/include/uapi/media/cam_sensor.h"
+HEADER_FILES["include/media/cam_req_mgr.h"]="$REPO_BASE/include/uapi/media/cam_req_mgr.h"
 HEADER_FILES["include/media/cam_fd.h"]="$REPO_BASE/include/uapi/media/cam_fd.h"
 
 # ========== camera_oneplus 目录的相同头文件 ==========
@@ -525,6 +534,25 @@ if [ ! -f "include/media/cam_defs.h" ] || [ ! -s "include/media/cam_defs.h" ]; t
  if [ -f "include/uapi/media/cam_defs.h" ]; then
  cp include/uapi/media/cam_defs.h include/media/cam_defs.h
  echo " 已从 include/uapi/media/ 复制 cam_defs.h"
+ fi
+fi
+
+# 确保 include/media/cam_sensor.h 存在
+# cam_cci_dev.h 和 cam_sensor_cmn_header.h 都用 #include <media/cam_sensor.h> 引用
+# 包含 enum i2c_freq_mode, I2C_MAX_MODES, MASTER_MAX, struct cam_sensor_power_ctrl_t 等关键定义
+if [ ! -f "include/media/cam_sensor.h" ] || [ ! -s "include/media/cam_sensor.h" ]; then
+ if [ -f "include/uapi/media/cam_sensor.h" ]; then
+ cp include/uapi/media/cam_sensor.h include/media/cam_sensor.h
+ echo " 已从 include/uapi/media/ 复制 cam_sensor.h"
+ fi
+fi
+
+# 确保 include/media/cam_req_mgr.h 存在
+# cam_sensor_cmn_header.h 用 #include <media/cam_req_mgr.h> 引用
+if [ ! -f "include/media/cam_req_mgr.h" ] || [ ! -s "include/media/cam_req_mgr.h" ]; then
+ if [ -f "include/uapi/media/cam_req_mgr.h" ]; then
+ cp include/uapi/media/cam_req_mgr.h include/media/cam_req_mgr.h
+ echo " 已从 include/uapi/media/ 复制 cam_req_mgr.h"
  fi
 fi
 
