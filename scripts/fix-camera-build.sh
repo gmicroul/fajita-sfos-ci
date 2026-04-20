@@ -422,12 +422,10 @@ echo "4. 确保 include/media/ 头文件存在..."
 mkdir -p include/media
 
 # cam_sensor_cmn_header.h 被 cam_sensor_util.h 用 #include <cam_sensor_cmn_header.h> 引用
-if [ -f "$CAM_BASE/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h" ]; then
- cp "$CAM_BASE/cam_sensor_module/cam_sensor_utils/cam_sensor_cmn_header.h" include/media/cam_sensor_cmn_header.h
- echo " 已复制 cam_sensor_cmn_header.h 到 include/media/"
-fi
-if [ ! -f "include/media/cam_sensor_cmn_header.h" ]; then
- cat > include/media/cam_sensor_cmn_header.h << 'EOF'
+# 关键：必须强制用完整回退版本覆盖，因为真实版本依赖 #include <media/cam_sensor.h>
+# 而 cam_cci 编译时 -I 搜索路径不包含 include/media/，导致找不到关键定义
+# 回退版本直接内联所有定义，不依赖外部头文件
+cat > include/media/cam_sensor_cmn_header.h << 'EOF'
 #ifndef _CAM_SENSOR_CMN_HEADER_H_
 #define _CAM_SENSOR_CMN_HEADER_H_
 #include <linux/i2c.h>
@@ -437,6 +435,7 @@ if [ ! -f "include/media/cam_sensor_cmn_header.h" ]; then
 #include <linux/timer.h>
 #include <linux/delay.h>
 #include <linux/list.h>
+#include <linux/pinctrl/consumer.h>
 #define MAX_REGULATOR 5
 #define MAX_POWER_CONFIG 12
 #define MAX_PER_FRAME_ARRAY 32
@@ -520,7 +519,7 @@ struct cci_i2c_write_cfg {
 };
 #endif
 EOF
-fi
+echo " 强制写入完整回退版 cam_sensor_cmn_header.h 到 include/media/"
 
 # cam_sync_api.h
 if [ -f "$CAM_BASE/cam_sync/cam_sync_api.h" ]; then
@@ -566,6 +565,16 @@ fi
 
 # 同时在 include/ 根目录创建 cam_sensor_cmn_header.h（某些文件用 #include <cam_sensor_cmn_header.h> 搜索根目录）
 cp include/media/cam_sensor_cmn_header.h include/cam_sensor_cmn_header.h 2>/dev/null || true
+
+# 关键：也覆盖 cam_sensor_utils/ 下的真实版本
+# 真实版本用 #include <media/cam_sensor.h> 引用，但编译器 -I 路径不包含 include/media/
+# 所以必须用自包含的回退版本替换，否则 cam_cci_dev.h 编译失败
+for d in "$CAM_BASE/cam_sensor_module/cam_sensor_utils" "$CAM_OP_BASE/cam_sensor_module/cam_sensor_utils"; do
+ if [ -d "$d" ]; then
+  cp include/media/cam_sensor_cmn_header.h "$d/cam_sensor_cmn_header.h"
+  echo " 覆盖 $d/cam_sensor_cmn_header.h 为自包含版本"
+ fi
+done
 
 # 确保 include/media/cam_defs.h 存在（被 cam_cdm_intf_api.h 用 #include <media/cam_defs.h> 引用）
 if [ ! -f "include/media/cam_defs.h" ] || [ ! -s "include/media/cam_defs.h" ]; then
