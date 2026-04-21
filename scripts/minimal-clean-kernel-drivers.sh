@@ -321,9 +321,10 @@ if [ -d "drivers/usb/gadget/function" ]; then
 #ifndef _U_NCM_H
 #define _U_NCM_H
 #include <linux/types.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/cdc_ncm.h>
-/* Minimal NCM header stub */
+/* Minimal NCM header stub - no complex dependencies */
+struct usb_composite_dev;
+struct usb_ctrlrequest;
+int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl);
 #endif
 UNCMHEADER
 fi
@@ -334,9 +335,9 @@ cat > include/function/u_ncm.h << 'INCFUNCNCM'
 #ifndef _U_NCM_H
 #define _U_NCM_H
 #include <linux/types.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/cdc_ncm.h>
-/* Minimal NCM header stub - mirror of drivers/usb/gadget/function/u_ncm.h */
+/* Minimal NCM header stub - no complex dependencies */
+struct usb_composite_dev;
+struct usb_ctrlrequest;
 int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl);
 #endif
 INCFUNCNCM
