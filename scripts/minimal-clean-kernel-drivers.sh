@@ -538,6 +538,40 @@ echo " make $DEFCONFIG"
 echo " make -j\$(nproc) Image.gz KCFLAGS=\"-Wno-error -fno-stack-protector\""
 echo ""
 
+# 11. 修复smb-lib.c中缺失的GPIO函数
+echo "11. 修复smb-lib.c GPIO函数..."
+mkdir -p drivers/power/supply/qcom
+if [ -f "drivers/power/supply/qcom/smb-lib.c" ]; then
+	# 在文件末尾添加GPIO stub函数
+	cat >> drivers/power/supply/qcom/smb-lib.c << 'GPIOSTUBS'
+
+/* GPIO stub functions for compilation */
+int set_mcu_en_gpio_value(int value)
+{
+	return 0;
+}
+EXPORT_SYMBOL(set_mcu_en_gpio_value);
+
+int usb_sw_gpio_set(int value)
+{
+	return 0;
+}
+EXPORT_SYMBOL(usb_sw_gpio_set);
+
+int mcu_en_gpio_set(int value)
+{
+	return 0;
+}
+EXPORT_SYMBOL(mcu_en_gpio_set);
+
+int switch_mode_to_normal(void)
+{
+	return 0;
+}
+EXPORT_SYMBOL(switch_mode_to_normal);
+GPIOSTUBS
+fi
+
 # 恢复原始目录
 cd "$ORIGINAL_DIR"
 echo "已返回原始目录：$ORIGINAL_DIR"
