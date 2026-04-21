@@ -1,9 +1,10 @@
 name: Build Hybris Docker Kernel
 # 从原厂 droid-boot.img 提取 ramdisk/dtbo，重组 hybris-boot.img
 on:
- push:
- branches: [master]
- workflow_dispatch:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
     inputs:
       device:
         description: 'Device codename'
