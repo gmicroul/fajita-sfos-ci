@@ -638,7 +638,9 @@ int get_prop_pre_shutdown_soc(void) { return 0; }
 EXPORT_SYMBOL(get_prop_pre_shutdown_soc);
 
 struct notify_dash_event;
-int notify_dash_unplug_register(struct notify_dash_event *func) { return 0; }
+void notify_dash_unplug_register(struct notify_dash_event *event)
+{
+}
 EXPORT_SYMBOL(notify_dash_unplug_register);
 
 void notify_dash_unplug_unregister(struct notify_dash_event *event)
