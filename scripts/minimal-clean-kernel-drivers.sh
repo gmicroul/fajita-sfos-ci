@@ -565,6 +565,86 @@ void switch_mode_to_normal(void)
 {
 }
 EXPORT_SYMBOL(switch_mode_to_normal);
+
+/* ncm_ctrlrequest stub - used by configfs.c */
+void ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl)
+{
+}
+EXPORT_SYMBOL(ncm_ctrlrequest);
+
+/* Trace stub functions - these are called by tracepoints when disabled */
+void trace_cam_apply_req(unsigned long a, unsigned long b) {}
+void trace_cam_context_state(unsigned long a, const char *b) {}
+void trace_cam_req_mgr_apply_request(unsigned long a) {}
+void trace_cam_flush_req(unsigned long a) {}
+void trace_cam_req_mgr_add_req(unsigned long a) {}
+void trace_cam_req_mgr_connect_device(unsigned long a, unsigned long b, unsigned long c) {}
+void trace_cam_isp_activated_irq(unsigned long a, unsigned long b) {}
+void trace_cam_icp_fw_dbg(unsigned long a, const void *b) {}
+void trace_cam_cdm_cb(unsigned long a) {}
+void trace_cam_irq_activated(unsigned long a) {}
+void trace_cam_submit_to_hw(unsigned long a) {}
+void trace_cam_irq_handled(unsigned long a) {}
+void trace_tracer_pkt_event(unsigned long a, unsigned long b) {}
+void trace_mdss_pll_lock_start(void) {}
+void trace_idle_sleep_enter3(unsigned long a) {}
+void trace_idle_sleep_exit3(unsigned long a) {}
+void trace_poll_to_intr3(unsigned long a) {}
+void trace_rmnet_ipa_netifni3(unsigned long a, unsigned long b) {}
+void trace_rmnet_ipa_netifrx3(unsigned long a, unsigned long b) {}
+void trace_rmnet_ipa_netif_rcv_skb3(unsigned long a, unsigned long b, unsigned long c) {}
+void trace_rndis_status_rcvd(unsigned long a) {}
+void trace_rndis_netif_ni(unsigned long a) {}
+void trace_rndis_tx_dp(unsigned long a, unsigned long b) {}
+
+EXPORT_SYMBOL(trace_cam_apply_req);
+EXPORT_SYMBOL(trace_cam_context_state);
+EXPORT_SYMBOL(trace_cam_req_mgr_apply_request);
+EXPORT_SYMBOL(trace_cam_flush_req);
+EXPORT_SYMBOL(trace_cam_req_mgr_add_req);
+EXPORT_SYMBOL(trace_cam_req_mgr_connect_device);
+EXPORT_SYMBOL(trace_cam_isp_activated_irq);
+EXPORT_SYMBOL(trace_cam_icp_fw_dbg);
+EXPORT_SYMBOL(trace_cam_cdm_cb);
+EXPORT_SYMBOL(trace_cam_irq_activated);
+EXPORT_SYMBOL(trace_cam_submit_to_hw);
+EXPORT_SYMBOL(trace_cam_irq_handled);
+EXPORT_SYMBOL(trace_tracer_pkt_event);
+EXPORT_SYMBOL(trace_mdss_pll_lock_start);
+EXPORT_SYMBOL(trace_idle_sleep_enter3);
+EXPORT_SYMBOL(trace_idle_sleep_exit3);
+EXPORT_SYMBOL(trace_poll_to_intr3);
+EXPORT_SYMBOL(trace_rmnet_ipa_netifni3);
+EXPORT_SYMBOL(trace_rmnet_ipa_netifrx3);
+EXPORT_SYMBOL(trace_rmnet_ipa_netif_rcv_skb3);
+EXPORT_SYMBOL(trace_rndis_status_rcvd);
+EXPORT_SYMBOL(trace_rndis_netif_ni);
+EXPORT_SYMBOL(trace_rndis_tx_dp);
+
+/* MDSS PLL trace stubs */
+void MDSS_PLL_ATRACE_BEGIN(void) {}
+void MDSS_PLL_ATRACE_END(void) {}
+EXPORT_SYMBOL(MDSS_PLL_ATRACE_BEGIN);
+EXPORT_SYMBOL(MDSS_PLL_ATRACE_END);
+
+/* Power management stubs */
+int get_extern_fg_regist_done(void) { return 0; }
+EXPORT_SYMBOL(get_extern_fg_regist_done);
+
+int get_extern_bq_present(void) { return 0; }
+EXPORT_SYMBOL(get_extern_bq_present);
+
+int get_prop_pre_shutdown_soc(void) { return 0; }
+EXPORT_SYMBOL(get_prop_pre_shutdown_soc);
+
+int notify_dash_unplug_register(void *func) { return 0; }
+EXPORT_SYMBOL(notify_dash_unplug_register);
+
+void notify_dash_unplug_unregister(int handle)
+{
+}
+EXPORT_SYMBOL(notify_dash_unplug_unregister);
+
 GPIOSTUBS
 fi
 
