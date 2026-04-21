@@ -319,9 +319,26 @@ fi
 if [ -f "drivers/usb/gadget/function/f_ncm.c" ]; then
 	# f_ncm.c有复杂的结构体依赖，最好移除
 	rm -f drivers/usb/gadget/function/f_ncm.c
-	# 同时从Makefile中移除
-	sed -i '/f_ncm\.c/d' drivers/usb/gadget/function/Makefile 2>/dev/null || true
+	rm -f drivers/usb/gadget/function/u_ncm.h
+	rm -f include/function/u_ncm.h
+	# 同时从Makefile中移除f_ncm相关的obj
+	sed -i '/f_ncm/d' drivers/usb/gadget/function/Makefile 2>/dev/null || true
+	sed -i '/usb_f_ncm/d' drivers/usb/gadget/function/Makefile 2>/dev/null || true
+	# 注意：ccflags-y的function路径保留，因为configfs.c还用到u_ncm.h
 fi
+
+# 7b. 重建u_ncm.h（因为configfs.c还需要它）
+mkdir -p include/function
+cat > include/function/u_ncm.h << 'INCFUNCNCM'
+#ifndef _U_NCM_H
+#define _U_NCM_H
+#include <linux/types.h>
+/* Minimal NCM header stub - no complex dependencies */
+struct usb_composite_dev;
+struct usb_ctrlrequest;
+int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl);
+#endif
+INCFUNCNCM
 
 if [ -d "drivers/usb/gadget/function" ]; then
 	# 创建必要的空头文件
@@ -337,19 +354,6 @@ int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest
 #endif
 UNCMHEADER
 fi
-
-# 7b. 在include/创建function/u_ncm.h（使 #include <function/u_ncm.h> 能找到）
-mkdir -p include/function
-cat > include/function/u_ncm.h << 'INCFUNCNCM'
-#ifndef _U_NCM_H
-#define _U_NCM_H
-#include <linux/types.h>
-/* Minimal NCM header stub - no complex dependencies */
-struct usb_composite_dev;
-struct usb_ctrlrequest;
-int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl);
-#endif
-INCFUNCNCM
 
 # 7c. 创建usb_trace.h（如果缺失）
 mkdir -p drivers/usb/gadget/composite
