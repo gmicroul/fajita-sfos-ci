@@ -637,10 +637,11 @@ EXPORT_SYMBOL(get_extern_bq_present);
 int get_prop_pre_shutdown_soc(void) { return 0; }
 EXPORT_SYMBOL(get_prop_pre_shutdown_soc);
 
-int notify_dash_unplug_register(void *func) { return 0; }
+struct notify_dash_event;
+int notify_dash_unplug_register(struct notify_dash_event *func) { return 0; }
 EXPORT_SYMBOL(notify_dash_unplug_register);
 
-void notify_dash_unplug_unregister(int handle)
+void notify_dash_unplug_unregister(struct notify_dash_event *event)
 {
 }
 EXPORT_SYMBOL(notify_dash_unplug_unregister);
