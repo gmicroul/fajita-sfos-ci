@@ -628,10 +628,10 @@ EXPORT_SYMBOL(MDSS_PLL_ATRACE_BEGIN);
 EXPORT_SYMBOL(MDSS_PLL_ATRACE_END);
 
 /* Power management stubs */
-int get_extern_fg_regist_done(void) { return 0; }
+bool get_extern_fg_regist_done(void) { return false; }
 EXPORT_SYMBOL(get_extern_fg_regist_done);
 
-int get_extern_bq_present(void) { return 0; }
+bool get_extern_bq_present(void) { return false; }
 EXPORT_SYMBOL(get_extern_bq_present);
 
 int get_prop_pre_shutdown_soc(void) { return 0; }
