@@ -317,10 +317,10 @@ fi
 
 # 修复f_ncm.c中ncm_alloc_inst函数缺少返回值的问题
 if [ -f "drivers/usb/gadget/function/f_ncm.c" ]; then
-	# 在函数末尾添加return ERR_PTR(-ENOMEM);
-	sed -i '/^static int ncm_alloc_inst/,/^}$/{/^}$/a\
-	return ERR_PTR(-ENOMEM);
-}' drivers/usb/gadget/function/f_ncm.c 2>/dev/null || true
+	# f_ncm.c有复杂的结构体依赖，最好移除
+	rm -f drivers/usb/gadget/function/f_ncm.c
+	# 同时从Makefile中移除
+	sed -i '/f_ncm\.c/d' drivers/usb/gadget/function/Makefile 2>/dev/null || true
 fi
 
 if [ -d "drivers/usb/gadget/function" ]; then
