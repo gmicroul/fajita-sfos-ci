@@ -314,6 +314,15 @@ if [ -d "drivers/usb/gadget" ]; then
 		fi
 	fi
 fi
+
+# 修复f_ncm.c中ncm_alloc_inst函数缺少返回值的问题
+if [ -f "drivers/usb/gadget/function/f_ncm.c" ]; then
+	# 在函数末尾添加return ERR_PTR(-ENOMEM);
+	sed -i '/^static int ncm_alloc_inst/,/^}$/{/^}$/a\
+	return ERR_PTR(-ENOMEM);
+}' drivers/usb/gadget/function/f_ncm.c 2>/dev/null || true
+fi
+
 if [ -d "drivers/usb/gadget/function" ]; then
 	# 创建必要的空头文件
 	mkdir -p drivers/usb/gadget/function
