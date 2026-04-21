@@ -1,0 +1,307 @@
+name: Build Hybris Docker Kernel
+# 从原厂 droid-boot.img 提取 ramdisk/dtbo，重组 hybris-boot.img
+on:
+  workflow_dispatch:
+    inputs:
+      device:
+        description: 'Device codename'
+        required: true
+        default: 'fajita'
+      release:
+        description: 'SailfishOS release version'
+        required: true
+        default: '5.0.0.73'
+
+env:
+  DEVICE: fajita
+  RELEASE: 5.0.0.73
+  ANDROID_ROOT: /home/runner/work/android
+  KERNEL_REPO: https://github.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable.git
+  KERNEL_BRANCH: lineage-16.0
+
+jobs:
+  build-hybris-boot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git wget curl unzip build-essential ccache python3 \
+            bc bison flex lib32ncurses-dev lib32z1-dev libssl-dev \
+            zip gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu \
+            android-tools-adb android-tools-fastboot abootimg
+
+      - name: Clone kernel source
+        env:
+          GIT_TERMINAL_PROMPT: 0
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p $ANDROID_ROOT
+          cd $ANDROID_ROOT
+
+          if [ -d "kernel/oneplus/sdm845" ]; then
+            rm -rf kernel/oneplus/sdm845
+          fi
+
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global credential.helper store
+          echo "https://x-access-token:${GITHUB_TOKEN}@github.com" > ~/.git-credentials
+
+          git clone --depth 1 --single-branch --branch $KERNEL_BRANCH \
+            $KERNEL_REPO kernel/oneplus/sdm845
+
+      - name: Apply Docker kernel patches
+        env:
+          CI: true
+        run: |
+          cd $ANDROID_ROOT/kernel/oneplus/sdm845/
+
+          # Find defconfig
+          if [ -f arch/arm64/configs/fajita_defconfig ]; then
+            DEFCONFIG=fajita_defconfig
+          elif [ -f arch/arm64/configs/lineage_fajita_defconfig ]; then
+            DEFCONFIG=lineage_fajita_defconfig
+          elif [ -f arch/arm64/configs/sdm845_defconfig ]; then
+            DEFCONFIG=sdm845_defconfig
+          else
+            echo "Error: No defconfig found"
+            exit 1
+          fi
+          echo "Using defconfig: $DEFCONFIG"
+
+          # Apply Docker patch (只添加配置，不删除任何驱动)
+          # Use yes to auto-answer interactive prompts
+          yes | bash $GITHUB_WORKSPACE/scripts/apply-docker-kernel-patch-v2.sh || true
+
+          tail -30 arch/arm64/configs/$DEFCONFIG
+
+      - name: Build kernel
+        run: |
+          cd $ANDROID_ROOT/kernel/oneplus/sdm845/
+
+          # Create symlinks for cross-compilers
+          sudo ln -sf /usr/bin/aarch64-linux-gnu-gcc-12 /usr/bin/aarch64-linux-gnu-gcc
+          sudo ln -sf /usr/bin/aarch64-linux-gnu-g++-12 /usr/bin/aarch64-linux-gnu-g++
+
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export CC=aarch64-linux-gnu-gcc
+          export PATH=/usr/bin:$PATH
+
+          # Find defconfig
+          if [ -f arch/arm64/configs/fajita_defconfig ]; then
+            DEFCONFIG=fajita_defconfig
+          elif [ -f arch/arm64/configs/lineage_fajita_defconfig ]; then
+            DEFCONFIG=lineage_fajita_defconfig
+          else
+            DEFCONFIG=sdm845_defconfig
+          fi
+
+          echo "Building with defconfig: $DEFCONFIG"
+
+          # 只运行 fix 脚本，不删除任何驱动
+          bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
+
+          cd $ANDROID_ROOT/kernel/oneplus/sdm845/
+
+          # 生成配置
+          make $DEFCONFIG
+
+          # 禁用 stack protector
+          sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_STRONG=n/g' .config || true
+          sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
+
+          # 编译内核
+          echo "Starting kernel compilation..."
+          make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector" WERROR=0 2>&1 | tee /tmp/build_output.log
+
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "BUILD FAILED!"
+            tail -100 /tmp/build_output.log
+            exit 1
+          fi
+
+          if [ ! -f arch/arm64/boot/Image.gz ]; then
+            echo "Error: Kernel image not found"
+            exit 1
+          fi
+
+          ls -lh arch/arm64/boot/Image.gz
+
+      - name: Download original droid-boot.img
+        run: |
+          cd $ANDROID_ROOT
+          mkdir -p boot-repack
+
+          # 从 GitHub Release 下载原始的 droid-boot.img (64M)
+          echo "Downloading original droid-boot.img..."
+          wget -q -O boot-repack/droid-boot.img \
+            "https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img"
+
+          if [ ! -s boot-repack/droid-boot.img ]; then
+            echo "Error: Failed to download droid-boot.img"
+            exit 1
+          fi
+
+          ls -lh boot-repack/droid-boot.img
+
+          # 验证文件大小（应该接近 64M）
+          SIZE=$(stat -c%s boot-repack/droid-boot.img)
+          echo "droid-boot.img size: $SIZE bytes"
+          if [ $SIZE -lt 50000000 ]; then
+            echo "Warning: droid-boot.img is smaller than expected (${SIZE} bytes)"
+          fi
+
+      - name: Extract and repack boot.img
+        run: |
+          cd $ANDROID_ROOT/boot-repack
+
+          # 解包原始 boot.img
+          echo "Unpacking original boot.img..."
+          abootimg -x droid-boot.img bootimg.cfg zImage initrd.img dtb 2>/dev/null || true
+
+          # 检查文件
+          echo "Unpacked files:"
+          ls -lh
+
+          if [ -f "bootimg.cfg" ]; then
+            echo "Original bootimg.cfg:"
+            cat bootimg.cfg
+          fi
+
+          # 保存原始 cmdline
+          ORIGINAL_CMDLINE=$(grep "^cmdline" bootimg.cfg | cut -d'=' -f2-)
+          echo "Original cmdline: $ORIGINAL_CMDLINE"
+
+      - name: Replace kernel and repack
+        run: |
+          cd $ANDROID_ROOT/boot-repack
+
+          # 确认有新的内核
+          if [ ! -f "$ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz" ]; then
+            echo "Error: New kernel not found"
+            exit 1
+          fi
+
+          # 替换内核（保持压缩格式）
+          echo "Replacing kernel..."
+          cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz zImage
+          ls -lh zImage
+
+          # 检查 dtb 是否存在
+          if [ ! -f "dtb" ] || [ ! -s "dtb" ]; then
+            echo "Warning: dtb is missing or empty, creating empty dtb"
+            # 从 dtbo.img 提取 dtb（如果有）
+            if [ -f "dtbo.img" ]; then
+              echo "dtbo.img found, using it as dtb"
+              cp dtbo.img dtb
+            else
+              touch dtb
+            fi
+          fi
+
+          # 解析原始 bootimg.cfg 获取参数
+          if [ -f "bootimg.cfg" ]; then
+            BOOT_SIZE=$(grep "^bootsize" bootimg.cfg | cut -d'=' -f2)
+            KERNEL_SIZE=$(grep "^kernelsize" bootimg.cfg | cut -d'=' -f2)
+            RAMDISK_SIZE=$(grep "^ramdisksize" bootimg.cfg | cut -d'=' -f2)
+            PAGESIZE=$(grep "^pagesize" bootimg.cfg | cut -d'=' -f2)
+            BASE=$(grep "^base" bootimg.cfg | cut -d'=' -f2)
+            KERNEL_OFFSET=$(grep "^kernel_offset" bootimg.cfg | cut -d'=' -f2)
+            RAMDISK_OFFSET=$(grep "^ramdisk_offset" bootimg.cfg | cut -d'=' -f2)
+            TAGS_OFFSET=$(grep "^tags_offset" bootimg.cfg | cut -d'=' -f2)
+            CMDLINE=$(grep "^cmdline" bootimg.cfg | cut -d'=' -f2-)
+          fi
+
+          # 使用默认值
+          BOOT_SIZE=${BOOT_SIZE:-0x04000000}
+          PAGESIZE=${PAGESIZE:-4096}
+          BASE=${BASE:-0x80000000}
+          KERNEL_OFFSET=${KERNEL_OFFSET:-0x00008000}
+          RAMDISK_OFFSET=${RAMDISK_OFFSET:-0x01000000}
+          TAGS_OFFSET=${TAGS_OFFSET:-0x00000100}
+          CMDLINE=${CMDLINE:-"androidboot.hardware=qcom androidboot.console=ttyMSM0 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 service_locator.enable=1 swiotlb=2048 androidboot.configfs=true androidboot.usbcontroller=a600000.dwc3 firmware_class.path=/vendor/firmware_mnt/image loop.max_part=7 buildvariant=userdebug"}
+
+          echo "Repacking boot.img with parameters:"
+          echo "  boot_size: $BOOT_SIZE"
+          echo "  pagesize: $PAGESIZE"
+          echo "  base: $BASE"
+          echo "  kernel_offset: $KERNEL_OFFSET"
+          echo "  ramdisk_offset: $RAMDISK_OFFSET"
+          echo "  tags_offset: $TAGS_OFFSET"
+          echo "  cmdline: $CMDLINE"
+
+          # 使用 abootimg 重新打包
+          abootimg --create hybris-boot.img \
+            -f bootimg.cfg \
+            -k zImage \
+            -r initrd.img \
+            -s dtb
+
+          if [ ! -f "hybris-boot.img" ]; then
+            echo "Error: Failed to create hybris-boot.img"
+            exit 1
+          fi
+
+          ls -lh hybris-boot.img
+          abootimg -i hybris-boot.img
+
+      - name: Verify kernel size
+        run: |
+          cd $ANDROID_ROOT/boot-repack
+
+          echo "=== Final verification ==="
+          echo "Original kernel size:"
+          ls -lh droid-boot.img zImage initrd.img dtb hybris-boot.img
+
+          # 检查内核大小差异
+          echo ""
+          echo "Kernel comparison:"
+          echo "  Original (from droid-boot.img):"
+          file zImage
+          echo "  New (compiled):"
+          ls -lh $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz
+
+      - name: Upload boot image
+        uses: actions/upload-artifact@v4
+        with:
+          name: hybris-boot-${{ env.DEVICE }}-${{ env.RELEASE }}
+          path: ${{ env.ANDROID_ROOT }}/boot-repack/hybris-boot.img
+          retention-days: 30
+
+      - name: Generate build summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Device**: ${{ env.DEVICE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release**: ${{ env.RELEASE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Kernel**: sdm845 (Docker enabled)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source**: Original droid-boot.img + compiled kernel" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Key Points" >> $GITHUB_STEP_SUMMARY
+          echo "1. Used **original droid-boot.img** ramdisk (NOT LineageOS ramdisk)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Used **original DTB** from droid-boot.img" >> $GITHUB_STEP_SUMMARY
+          echo "3. Used **original kernel load address** (0x00008000)" >> $GITHUB_STEP_SUMMARY
+          echo "4. Only replaced the **kernel Image.gz** with Docker-enabled version" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Flash Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download hybris-boot.img from artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Boot to fastboot: \`adb reboot bootloader\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. Flash: \`fastboot flash boot hybris-boot.img\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Reboot: \`fastboot reboot\`" >> $GITHUB_STEP_SUMMARY
