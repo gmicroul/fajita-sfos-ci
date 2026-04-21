@@ -330,17 +330,16 @@ fi
 
 # 7b. 在include/创建function/u_ncm.h（使 #include <function/u_ncm.h> 能找到）
 mkdir -p include/function
-if [ ! -f "include/function/u_ncm.h" ]; then
-	cat > include/function/u_ncm.h << 'INCFUNCNCM'
+cat > include/function/u_ncm.h << 'INCFUNCNCM'
 #ifndef _U_NCM_H
 #define _U_NCM_H
 #include <linux/types.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/cdc_ncm.h>
 /* Minimal NCM header stub - mirror of drivers/usb/gadget/function/u_ncm.h */
+int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl);
 #endif
 INCFUNCNCM
-fi
 
 # 7c. 创建usb_trace.h（如果缺失）
 mkdir -p drivers/usb/gadget/composite
