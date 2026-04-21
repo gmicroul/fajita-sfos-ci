@@ -546,27 +546,23 @@ if [ -f "drivers/power/supply/qcom/smb-lib.c" ]; then
 	cat >> drivers/power/supply/qcom/smb-lib.c << 'GPIOSTUBS'
 
 /* GPIO stub functions for compilation */
-int set_mcu_en_gpio_value(int value)
+void set_mcu_en_gpio_value(int value)
 {
-	return 0;
 }
 EXPORT_SYMBOL(set_mcu_en_gpio_value);
 
-int usb_sw_gpio_set(int value)
+void usb_sw_gpio_set(int value)
 {
-	return 0;
 }
 EXPORT_SYMBOL(usb_sw_gpio_set);
 
-int mcu_en_gpio_set(int value)
+void mcu_en_gpio_set(int value)
 {
-	return 0;
 }
 EXPORT_SYMBOL(mcu_en_gpio_set);
 
-int switch_mode_to_normal(void)
+void switch_mode_to_normal(void)
 {
-	return 0;
 }
 EXPORT_SYMBOL(switch_mode_to_normal);
 GPIOSTUBS
