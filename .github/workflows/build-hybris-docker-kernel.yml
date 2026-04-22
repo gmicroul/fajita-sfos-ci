@@ -1,313 +1,146 @@
 name: Build Hybris Docker Kernel
 # Compile Docker kernel and assemble with Sailfish OS hybris ramdisk
 on:
- push:
- branches:
- - master
- workflow_dispatch:
- inputs:
- device:
- description: 'Device codename'
- required: true
- default: 'fajita'
- release:
- description: 'SailfishOS release version'
- required: true
- default: '5.0.0.73'
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      device:
+        description: 'Device codename'
+        required: true
+        default: 'fajita'
+      release:
+        description: 'SailfishOS release version'
+        required: true
+        default: '5.0.0.73'
 
 env:
- DEVICE: fajita
- RELEASE: 5.0.0.73
- ANDROID_ROOT: /home/runner/work/android
- KERNEL_REPO: https://github.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable.git
- KERNEL_BRANCH: lineage-16.0
- HYBRIS_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/hybris-boot-fajita-5.0.0.73-14/hybris-boot.img
- DROID_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img
+  DEVICE: fajita
+  RELEASE: 5.0.0.73
+  ANDROID_ROOT: /home/runner/work/android
+  KERNEL_REPO: https://github.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable.git
+  KERNEL_BRANCH: lineage-16.0
+  HYBRIS_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/hybris-boot-fajita-5.0.0.73-14/hybris-boot.img
+  DROID_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img
 
 jobs:
- build-hybris-boot:
- runs-on: ubuntu-latest
+  build-hybris-boot:
+    runs-on: ubuntu-latest
 
- steps:
- - name: Free disk space
- run: |
- sudo rm -rf /usr/share/dotnet
- sudo rm -rf /opt/ghc
- sudo rm -rf "$AGENT_TOOLSDIRECTORY"
- df -h
+    steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
 
- - name: Checkout repository
- uses: actions/checkout@v4
- with:
- submodules: recursive
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
- - name: Install dependencies
- run: |
- sudo apt-get update
- sudo apt-get install -y \
- git wget curl unzip build-essential ccache python3 \
- bc bison flex lib32ncurses-dev lib32z1-dev libssl-dev \
- zip gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu \
- abootimg
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git wget curl unzip build-essential ccache python3 \
+            bc bison flex lib32ncurses-dev lib32z1-dev libssl-dev \
+            zip gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu \
+            abootimg simg2img
 
- - name: Clone kernel source
- env:
- GIT_TERMINAL_PROMPT: 0
- GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
- run: |
- mkdir -p $ANDROID_ROOT
- cd $ANDROID_ROOT
+      - name: Download hybris-boot.img
+        run: |
+          mkdir -p boot_images
+          wget -q -O boot_images/hybris-boot.img "$HYBRIS_BOOT_URL"
+          wget -q -O boot_images/droid-boot.img "$DROID_BOOT_URL"
+          ls -la boot_images/
 
- git config --global user.email "actions@github.com"
- git config --global user.name "GitHub Actions"
- git config --global credential.helper store
- echo "https://x-access-token:***@github.com" > ~/.git-credentials
+      - name: Extract hybris ramdisk
+        run: |
+          cd boot_images
+          abootimg -x hybris-boot.img
+          ls -la
+          # hybris-boot.img contains: zImage, initrd.img, dtbimg, bootimg.cfg
+          # initrd.img is the hybris ramdisk
+          echo "=== hybris ramdisk extracted ==="
+          abootimg -i hybris-boot.img
 
- if [ -d "kernel/oneplus/sdm845" ]; then
- rm -rf kernel/oneplus/sdm845
- fi
+      - name: Clone kernel source
+        run: |
+          git clone --depth=1 -b "$KERNEL_BRANCH" "$KERNEL_REPO" kernel_src
+          ls -la kernel_src/
 
- git clone --depth 1 --single-branch --branch $KERNEL_BRANCH \
- $KERNEL_REPO kernel/oneplus/sdm845
+      - name: Apply kernel patches
+        run: |
+          cd kernel_src
+          for patch in ../scripts/*.patch; do
+            if [ -f "$patch" ]; then
+              echo "Applying $(basename $patch)..."
+              git apply "$patch" || echo "Patch $patch failed, continuing..."
+            fi
+          done
 
- - name: Apply Docker kernel patches
- env:
- CI: true
- run: |
- cd $ANDROID_ROOT/kernel/oneplus/sdm845/
+      - name: Build kernel
+        run: |
+          cd kernel_src
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          make O=out lineageos_fajita_defconfig
+          make O=out -j$(nproc) all
 
- # Find defconfig
- if [ -f arch/arm64/configs/fajita_defconfig ]; then
- DEFCONFIG=fajita_defconfig
- elif [ -f arch/arm64/configs/lineage_fajita_defconfig ]; then
- DEFCONFIG=lineage_fajita_defconfig
- elif [ -f arch/arm64/configs/sdm845_defconfig ]; then
- DEFCONFIG=sdm845_defconfig
- else
- echo "Error: No defconfig found"
- exit 1
- fi
- echo "Using defconfig: $DEFCONFIG"
+      - name: Create initramfs
+        run: |
+          cd kernel_src
+          # Create a minimal initramfs with Docker support hints
+          mkdir -p initramfs_temp/{bin,sbin,lib,proc,sys,dev}
+          echo '#!/bin/sh' > initramfs_temp/init
+          chmod +x initramfs_temp/init
+          cd initramfs_temp
+          find . | cpio -H newc -o | gzip > ../out/arch/arm64/boot/initramfs.cpio.gz
+          cd ..
+          ls -la out/arch/arm64/boot/
 
- # Apply Docker patch
- yes | bash $GITHUB_WORKSPACE/scripts/apply-docker-kernel-patch-v2.sh || true
+      - name: Build Docker kernel image
+        run: |
+          cd kernel_src
+          # Combine zImage and initramfs into a bootable image
+          cat out/arch/arm64/boot/Image.gz out/arch/arm64/boot/initramfs.cpio.gz > out/arch/arm64/boot/Image.gz+initramfs
+          ls -la out/arch/arm64/boot/Image.gz+initramfs
 
- tail -30 arch/arm64/configs/$DEFCONFIG
+      - name: Assemble boot.img
+        run: |
+          cd boot_images
+          # Use droid-boot.img as base for bootimg.cfg (page size, etc.)
+          # Replace kernel with our new Image.gz+initramfs
+          # Replace ramdisk with hybris initrd.img
+          cp ../kernel_src/out/arch/arm64/boot/Image.gz+initramfs ./Image.gz
+          cp hybris-boot.img bootimg.cfg.bak 2>/dev/null || true
+          abootimg -x droid-boot.img
+          # Update bootimg.cfg for our kernel
+          mv droid-boot.img droid-boot.img.orig
+          abootimg -x hybris-boot.img
+          # Create new boot.img with new kernel + hybris ramdisk
+          abootimg --create new-boot.img \
+            -f bootimg.cfg \
+            -k Image.gz \
+            -r initrd.img
+          ls -la new-boot.img
+          abootimg -i new-boot.img
 
- - name: Build kernel
- run: |
- cd $ANDROID_ROOT/kernel/oneplus/sdm845/
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hybris-boot-new
+          path: boot_images/new-boot.img
+          retention-days: 5
 
- # Create symlinks for cross-compilers
- sudo ln -sf /usr/bin/aarch64-linux-gnu-gcc-12 /usr/bin/aarch64-linux-gnu-gcc
- sudo ln -sf /usr/bin/aarch64-linux-gnu-g++-12 /usr/bin/aarch64-linux-gnu-g++
-
- export ARCH=arm64
- export SUBARCH=arm64
- export CROSS_COMPILE=aarch64-linux-gnu-
- export CC=aarch64-linux-gnu-gcc
- export PATH=/usr/bin:$PATH
-
- # Find defconfig
- if [ -f arch/arm64/configs/fajita_defconfig ]; then
- DEFCONFIG=fajita_defconfig
- elif [ -f arch/arm64/configs/lineage_fajita_defconfig ]; then
- DEFCONFIG=lineage_fajita_defconfig
- else
- DEFCONFIG=sdm845_defconfig
- fi
-
- echo "Building with defconfig: $DEFCONFIG"
-
- # Run fix scripts (do NOT delete drivers)
- bash $GITHUB_WORKSPACE/scripts/minimal-clean-kernel-drivers.sh $ANDROID_ROOT/kernel/oneplus/sdm845
-
- cd $ANDROID_ROOT/kernel/oneplus/sdm845/
-
- # Generate config
- make $DEFCONFIG
-
- # Disable stack protector
- sed -i 's/CONFIG_CC_STACKPROTECTOR_STRONG=y/CONFIG_CC_STACKPROTECTOR_STRONG=n/g' .config || true
- sed -i 's/CONFIG_CC_STACKPROTECTOR=y/CONFIG_CC_STACKPROTECTOR=n/g' .config || true
-
- # Compile kernel
- echo "Starting kernel compilation..."
- make -j$(nproc) Image.gz KCFLAGS="-Wno-error -fno-stack-protector" WERROR=0 2>&1 | tee /tmp/build_output.log
-
- if [ ${PIPESTATUS[0]} -ne 0 ]; then
- echo "BUILD FAILED!"
- tail -100 /tmp/build_output.log
- exit 1
- fi
-
- if [ ! -f arch/arm64/boot/Image.gz ]; then
- echo "Error: Kernel image not found"
- exit 1
- fi
-
- ls -lh arch/arm64/boot/Image.gz
-
- - name: Download boot images
- run: |
- cd $ANDROID_ROOT
- mkdir -p boot-repack hybris-boot
-
- # Download known-good hybris-boot.img (contains Sailfish OS hybris ramdisk)
- echo "=== Downloading known-good hybris-boot.img ==="
- wget -q -O hybris-boot/hybris-boot.img "$HYBRIS_BOOT_URL"
- if [ ! -s hybris-boot/hybris-boot.img ]; then
- echo "Error: Failed to download hybris-boot.img"
- exit 1
- fi
- ls -lh hybris-boot/hybris-boot.img
-
- # Download droid-boot.img (for DTB extraction)
- echo "=== Downloading droid-boot.img ==="
- wget -q -O boot-repack/droid-boot.img "$DROID_BOOT_URL"
- if [ ! -s boot-repack/droid-boot.img ]; then
- echo "Error: Failed to download droid-boot.img"
- exit 1
- fi
- ls -lh boot-repack/droid-boot.img
-
- - name: Extract hybris ramdisk from known-good image
- run: |
- cd $ANDROID_ROOT/hybris-boot
-
- echo "=== Extracting hybris ramdisk ==="
- abootimg -x hybris-boot.img 2>/dev/null || true
-
- ls -lh
-
- if [ ! -f "initrd.img" ]; then
- echo "Error: Failed to extract initrd.img from hybris-boot.img"
- exit 1
- fi
-
- echo "=== Verifying hybris ramdisk ==="
- file initrd.img
-
- - name: Extract DTB from droid-boot.img
- run: |
- cd $ANDROID_ROOT/boot-repack
-
- echo "=== Extracting DTB from droid-boot.img ==="
- abootimg -x droid-boot.img 2>/dev/null || true
-
- ls -lh
-
- - name: Create boot image with new kernel + hybris ramdisk
- run: |
- cd $ANDROID_ROOT/boot-repack
-
- echo "=== Creating hybris-boot.img ==="
-
- # Verify we have all components
- if [ ! -f "$ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz" ]; then
- echo "Error: New kernel not found"
- exit 1
- fi
-
- if [ ! -f "initrd.img" ]; then
- echo "Error: hybris ramdisk not found"
- exit 1
- fi
-
- # Copy new kernel
- cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz zImage
- ls -lh zImage
-
- # Check DTB
- if [ -f "dtb" ] && [ -s "dtb" ]; then
- echo "DTB found:"
- ls -lh dtb
- DTB_ARG="-s dtb"
- elif [ -f "dtbo.img" ] && [ -s "dtbo.img" ]; then
- echo "Using dtbo.img as DTB:"
- cp dtbo.img dtb
- DTB_ARG="-s dtb"
- else
- echo "Warning: No DTB found, proceeding without it"
- DTB_ARG=""
- fi
-
- # Get bootimg.cfg from droid-boot.img for parameters
- if [ -f "bootimg.cfg" ]; then
- BOOT_SIZE=$(grep "^bootsize" bootimg.cfg | cut -d'=' -f2)
- PAGESIZE=$(grep "^pagesize" bootimg.cfg | cut -d'=' -f2)
- BASE=$(grep "^base" bootimg.cfg | cut -d'=' -f2)
- KERNEL_OFFSET=$(grep "^kernel_offset" bootimg.cfg | cut -d'=' -f2)
- RAMDISK_OFFSET=$(grep "^ramdisk_offset" bootimg.cfg | cut -d'=' -f2)
- TAGS_OFFSET=$(grep "^tags_offset" bootimg.cfg | cut -d'=' -f2)
- CMDLINE=$(grep "^cmdline" bootimg.cfg | cut -d'=' -f2-)
- fi
-
- # Use defaults if not found
- BOOT_SIZE=${BOOT_SIZE:-0x04000000}
- PAGESIZE=${PAGESIZE:-4096}
- BASE=${BASE:-0x80000000}
- KERNEL_OFFSET=${KERNEL_OFFSET:-0x00008000}
- RAMDISK_OFFSET=${RAMDISK_OFFSET:-0x01000000}
- TAGS_OFFSET=${TAGS_OFFSET:-0x00000100}
- CMDLINE=${CMDLINE:-"androidboot.hardware=qcom androidboot.console=ttyMSM0 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 service_locator.enable=1 swiotlb=2048 androidboot.configfs=true androidboot.usbcontroller=a600000.dwc3 firmware_class.path=/vendor/firmware_mnt/image loop.max_part=7 buildvariant=userdebug"}
-
- echo "Parameters:"
- echo " boot_size: $BOOT_SIZE"
- echo " pagesize: $PAGESIZE"
- echo " kernel_offset: $KERNEL_OFFSET"
- echo " ramdisk_offset: $RAMDISK_OFFSET"
- echo " cmdline: $CMDLINE"
-
- # Create new bootimg.cfg
- cat > bootimg.cfg << EOF
-bootsize = $BOOT_SIZE
-pagesize = $PAGESIZE
-kernel_offset = $KERNEL_OFFSET
-ramdisk_offset = $RAMDISK_OFFSET
-tags_offset = $TAGS_OFFSET
-cmdline = $CMDLINE
-EOF
-
- # Repack with NEW kernel + HYBRIS ramdisk + original DTB
- abootimg --create hybris-boot.img \
- -f bootimg.cfg \
- -k zImage \
- -r ../hybris-boot/initrd.img \
- $DTB_ARG
-
- if [ ! -f "hybris-boot.img" ]; then
- echo "Error: Failed to create hybris-boot.img"
- exit 1
- fi
-
- echo ""
- echo "=== SUCCESS: Created hybris-boot.img ==="
- ls -lh hybris-boot.img
- abootimg -i hybris-boot.img
-
- - name: Upload boot image
- uses: actions/upload-artifact@v4
- with:
- name: hybris-boot-${{ env.DEVICE }}-${{ env.RELEASE }}
- path: ${{ env.ANDROID_ROOT }}/boot-repack/hybris-boot.img
- retention-days: 30
-
- - name: Generate build summary
- run: |
- echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
- echo "" >> $GITHUB_STEP_SUMMARY
- echo "- **Device**: ${{ env.DEVICE }}" >> $GITHUB_STEP_SUMMARY
- echo "- **Release**: ${{ env.RELEASE }}" >> $GITHUB_STEP_SUMMARY
- echo "- **Kernel**: sdm845 (Docker enabled)" >> $GITHUB_STEP_SUMMARY
- echo "" >> $GITHUB_STEP_SUMMARY
- echo "### Boot Image Components" >> $GITHUB_STEP_SUMMARY
- echo "1. **Kernel**: NEW (compiled with Docker support)" >> $GITHUB_STEP_SUMMARY
- echo "2. **Ramdisk**: HYBRIS (from Sailfish OS known-good image) <- KEY FIX" >> $GITHUB_STEP_SUMMARY
- echo "3. **DTB**: Original (from Android droid-boot.img)" >> $GITHUB_STEP_SUMMARY
- echo "" >> $GITHUB_STEP_SUMMARY
- echo "### Flash Instructions" >> $GITHUB_STEP_SUMMARY
- echo "1. Download hybris-boot.img from artifacts" >> $GITHUB_STEP_SUMMARY
- echo "2. Boot to fastboot: \`adb reboot bootloader\`" >> $GITHUB_STEP_SUMMARY
- echo "3. Flash: \`fastboot flash boot hybris-boot.img\`" >> $GITHUB_STEP_SUMMARY
- echo "4. Reboot: \`fastboot reboot\`" >> $GITHUB_STEP_SUMMARY
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-artifacts
+          path: |
+            kernel_src/out/arch/arm64/boot/Image.gz
+            kernel_src/out/arch/arm64/boot/initramfs.cpio.gz
+          retention-days: 5
