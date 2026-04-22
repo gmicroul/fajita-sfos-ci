@@ -62,8 +62,6 @@ jobs:
           cd boot_images
           abootimg -x hybris-boot.img
           ls -la
-          # hybris-boot.img contains: zImage, initrd.img, dtbimg, bootimg.cfg
-          # initrd.img is the hybris ramdisk
           echo "=== hybris ramdisk extracted ==="
           abootimg -i hybris-boot.img
 
@@ -82,27 +80,32 @@ jobs:
             fi
           done
 
-      - name: Find available defconfig
+      - name: Prepare defconfig and apply Docker patches
         run: |
           cd kernel_src
           # Check what defconfig files are available
           echo "Available defconfig files:"
           ls -la arch/arm64/configs/*defconfig 2>/dev/null || echo "No defconfigs found"
 
-          # Try to find a suitable defconfig - check in order of preference
-          for config in "lineageos_fajita_defconfig" "fajita_defconfig" "lineage_fajita_defconfig" "sdm845_defconfig" "vendor/sdm845_defconfig"; do
-            if [ -f "arch/arm64/configs/$config" ]; then
-              echo "Found defconfig: $config"
-              echo "DEFCONFIG=$config" >> $GITHUB_ENV
-              break
+          # For fajita/enchilada (same SDM845 platform), use enchilada_defconfig as base
+          if [ ! -f "arch/arm64/configs/fajita_defconfig" ]; then
+            if [ -f "arch/arm64/configs/enchilada_defconfig" ]; then
+              echo "Creating fajita_defconfig from enchilada_defconfig..."
+              cp arch/arm64/configs/enchilada_defconfig arch/arm64/configs/fajita_defconfig
+            else
+              echo "ERROR: Neither fajita_defconfig nor enchilada_defconfig found"
+              exit 1
             fi
-          done
-
-          if [ -z "$DEFCONFIG" ]; then
-            echo "ERROR: No suitable defconfig found"
-            exit 1
           fi
-          echo "Using defconfig: $DEFCONFIG"
+
+          # Apply Docker kernel patches to fajita_defconfig
+          echo "Applying Docker kernel patches..."
+          cd ..
+          bash scripts/apply-docker-kernel-patch-v2.sh || true
+          cd kernel_src
+
+          echo "Using defconfig: fajita_defconfig"
+          echo "DEFCONFIG=fajita_defconfig" >> $GITHUB_ENV
 
       - name: Build kernel
         run: |
@@ -116,7 +119,6 @@ jobs:
       - name: Create initramfs
         run: |
           cd kernel_src
-          # Create a minimal initramfs with Docker support hints
           mkdir -p initramfs_temp/{bin,sbin,lib,proc,sys,dev}
           echo '#!/bin/sh' > initramfs_temp/init
           chmod +x initramfs_temp/init
@@ -128,23 +130,17 @@ jobs:
       - name: Build Docker kernel image
         run: |
           cd kernel_src
-          # Combine zImage and initramfs into a bootable image
           cat out/arch/arm64/boot/Image.gz out/arch/arm64/boot/initramfs.cpio.gz > out/arch/arm64/boot/Image.gz+initramfs
           ls -la out/arch/arm64/boot/Image.gz+initramfs
 
       - name: Assemble boot.img
         run: |
           cd boot_images
-          # Use droid-boot.img as base for bootimg.cfg (page size, etc.)
-          # Replace kernel with our new Image.gz+initramfs
-          # Replace ramdisk with hybris initrd.img
           cp ../kernel_src/out/arch/arm64/boot/Image.gz+initramfs ./Image.gz
           cp hybris-boot.img bootimg.cfg.bak 2>/dev/null || true
           abootimg -x droid-boot.img
-          # Update bootimg.cfg for our kernel
           mv droid-boot.img droid-boot.img.orig
           abootimg -x hybris-boot.img
-          # Create new boot.img with new kernel + hybris ramdisk
           abootimg --create new-boot.img \
             -f bootimg.cfg \
             -k Image.gz \
