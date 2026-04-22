@@ -82,13 +82,36 @@ jobs:
             fi
           done
 
-      - name: Build kernel
-        run: |
-          cd kernel_src
-          export ARCH=arm64
-          export CROSS_COMPILE=aarch64-linux-gnu-
-          make O=out lineageos_fajita_defconfig
-          make O=out -j$(nproc) all
+- name: Find available defconfig
+  run: |
+    cd kernel_src
+    # Check what defconfig files are available
+    echo "Available defconfig files:"
+    ls -la arch/arm64/configs/*defconfig 2>/dev/null || echo "No defconfigs found"
+    
+    # Try to find a suitable defconfig - check in order of preference
+    for config in "lineageos_fajita_defconfig" "fajita_defconfig" "lineage_fajita_defconfig" "sdm845_defconfig" "vendor/sdm845_defconfig"; do
+      if [ -f "arch/arm64/configs/$config" ]; then
+        echo "Found defconfig: $config"
+        echo "DEFCONFIG=$config" >> $GITHUB_ENV
+        break
+      fi
+    done
+    
+    if [ -z "$DEFCONFIG" ]; then
+      echo "ERROR: No suitable defconfig found"
+      exit 1
+    fi
+    echo "Using defconfig: $DEFCONFIG"
+
+ - name: Build kernel
+  run: |
+    cd kernel_src
+    export ARCH=arm64
+    export CROSS_COMPILE=aarch64-linux-gnu-
+    echo "Building with defconfig: $DEFCONFIG"
+    make O=out "$DEFCONFIG"
+    make O=out -j$(nproc) all
 
       - name: Create initramfs
         run: |
