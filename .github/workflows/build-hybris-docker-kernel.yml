@@ -1,5 +1,5 @@
 name: Build Hybris Docker Kernel
-# 编译 Docker 内核并与 Sailfish OS hybris ramdisk 组装
+# Compile Docker kernel and assemble with Sailfish OS hybris ramdisk
 on:
  push:
  branches:
