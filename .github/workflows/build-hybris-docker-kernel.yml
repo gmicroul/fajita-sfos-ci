@@ -48,7 +48,7 @@ jobs:
             git wget curl unzip build-essential ccache python3 \
             bc bison flex lib32ncurses-dev lib32z1-dev libssl-dev \
             zip gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu \
-            abootimg simg2img
+            abootimg android-sdk-libsparse-utils
 
       - name: Download hybris-boot.img
         run: |
