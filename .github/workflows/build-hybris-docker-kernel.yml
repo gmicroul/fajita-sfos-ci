@@ -138,17 +138,17 @@ jobs:
           ls -la out/arch/arm64/boot/Image.gz+initramfs
 
       - name: Assemble boot.img
-      run: |
-      cd boot_images
-      # 只解压hybris-boot.img，使用它的配置和ramdisk
-      abootimg -x hybris-boot.img
-      cp ../kernel_src/out/arch/arm64/boot/Image.gz+initramfs ./Image.gz
-      abootimg --create new-boot.img \
-        -f bootimg.cfg \
-        -k Image.gz \
-        -r initrd.img
-      ls -la new-boot.img
-      abootimg -i new-boot.img
+        run: |
+          cd boot_images
+          # 只解压hybris-boot.img，使用它的配置和ramdisk
+          abootimg -x hybris-boot.img
+          cp ../kernel_src/out/arch/arm64/boot/Image.gz+initramfs ./Image.gz
+          abootimg --create new-boot.img \
+          -f bootimg.cfg \
+          -k Image.gz \
+          -r initrd.img
+          ls -la new-boot.img
+          abootimg -i new-boot.img
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
