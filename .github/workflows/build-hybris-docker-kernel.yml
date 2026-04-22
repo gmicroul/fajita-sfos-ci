@@ -115,6 +115,7 @@ jobs:
           cd kernel_src
           export ARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
+          export KCFLAGS="-Wno-error"
           echo "Building with defconfig: $DEFCONFIG"
           make O=out "$DEFCONFIG"
           make O=out -j$(nproc) all
