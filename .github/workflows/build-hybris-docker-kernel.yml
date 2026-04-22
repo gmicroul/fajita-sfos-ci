@@ -49,6 +49,10 @@ jobs:
             bc bison flex lib32ncurses-dev lib32z1-dev libssl-dev \
             zip gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu \
             abootimg android-sdk-libsparse-utils
+          # Create symlinks for aarch64-linux-gnu-gcc
+          sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-gcc aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-gcc-12 100 || true
+          sudo update-alternatives --install /usr/bin/aarch64-linux-gnu-g++ aarch64-linux-gnu-g++ /usr/bin/aarch64-linux-gnu-g++-12 100 || true
+          which aarch64-linux-gnu-gcc && aarch64-linux-gnu-gcc --version
 
       - name: Download hybris-boot.img
         run: |
@@ -83,7 +87,6 @@ jobs:
       - name: Prepare defconfig and apply Docker patches
         run: |
           cd kernel_src
-          # Check what defconfig files are available
           echo "Available defconfig files:"
           ls -la arch/arm64/configs/*defconfig 2>/dev/null || echo "No defconfigs found"
 
