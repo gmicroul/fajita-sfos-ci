@@ -1,397 +1,72 @@
 #!/bin/bash
 
-# 最小化内核清理脚本
-# 只删除真正导致编译错误的驱动，保留关键功能驱动
+# 最小化内核清理脚本 v4
+# 策略：完全不删除任何驱动文件，只创建必要的stub头文件来修复编译错误
+# 保留所有驱动，确保kernel与官方一致
 
 set -e
 
-# 保存当前目录（为了脚本结束后能恢复）
 ORIGINAL_DIR="$(pwd)"
-
-# 从参数或环境变量获取内核目录
 KERNEL_DIR="${1:-$ANDROID_ROOT/kernel/oneplus/sdm845}"
 GITHUB_WORKSPACE="${GITHUB_WORKSPACE:-$(pwd)}"
 
 echo "=========================================="
-echo "最小化内核清理脚本"
+echo "最小化内核清理脚本 v4 (保留所有驱动)"
 echo "=========================================="
 echo ""
 
-# 检查内核目录是否存在
 if [ ! -d "$KERNEL_DIR" ]; then
  echo "错误：内核目录不存在: $KERNEL_DIR"
- echo "请确保内核目录存在，或使用参数指定正确的路径"
- echo ""
- echo "使用方法："
- echo " bash minimal-clean-kernel-drivers.sh <kernel-directory>"
- echo ""
- echo "示例："
- echo " bash minimal-clean-kernel-drivers.sh /home/runner/work/android/kernel/oneplus/sdm845"
  exit 1
 fi
 
 echo "内核目录：$KERNEL_DIR"
 echo ""
 
-# 0. 在任何操作之前，先创建所有必需的头文件
-# 这样可以确保即使后续脚本失败，编译也能找到头文件
-echo "0. 创建必需的头文件..."
 cd "$KERNEL_DIR"
-mkdir -p include/media
 
-# 0a. cam_sensor_cmn_header.h
-cat > include/media/cam_sensor_cmn_header.h << 'CAMSENSORHEADER'
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved. */
-#ifndef _CAM_SENSOR_CMN_HEADER_H_
-#define _CAM_SENSOR_CMN_HEADER_H_
-#include <linux/i2c.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#define MAX_REGULATOR 5
-#define MAX_POWER_CONFIG 12
-#define MAX_PER_FRAME_ARRAY 32
-#define BATCH_SIZE_MAX 16
-enum camera_sensor_cmd_type {
-	CAMERA_SENSOR_CMD_TYPE_INVALID,
-	CAMERA_SENSOR_CMD_TYPE_PROBE,
-	CAMERA_SENSOR_CMD_TYPE_PWR_UP,
-	CAMERA_SENSOR_CMD_TYPE_PWR_DOWN,
-	CAMERA_SENSOR_CMD_TYPE_I2C_INFO,
-	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_WR,
-	CAMERA_SENSOR_CMD_TYPE_I2C_RNDM_RD,
-};
-enum camera_sensor_i2c_type {
-	CAMERA_SENSOR_I2C_TYPE_U8,
-	CAMERA_SENSOR_I2C_TYPE_U16,
-	CAMERA_SENSOR_I2C_TYPE_U32,
-};
-enum camera_master_type {
-	CCI_MASTER = 0,
-	I2C_MASTER = 1,
-};
-struct cam_sensor_power_setting {
-	u16 seq_val;
-	u16 seq_type;
-	u32 config_val;
-	u32 delay;
-};
-struct cam_sensor_power_setting_array {
-	struct cam_sensor_power_setting *power_setting;
-	u16 size;
-};
-enum cam_sensor_mode_type {
-	CAMERA_SENSOR_CUSTOM_MODE,
-	CAMERA_SENSOR_AUTO_MODE,
-};
-enum cam_sensor_power_setting_type {
-	CAM_SENSOR_POWER_SETTING_TYPE_SEQ,
-	CAM_SENSOR_POWER_SETTING_TYPE_I2C,
-};
-struct cam_sensor_cfg_data {
-	u32 def_type;
-};
-struct cam_sensor_dev_config {
-	u32 csid_params;
-	u32 csid_minor;
-	u32 lane_cnt;
-	u32 mode;
-};
-#endif
-CAMSENSORHEADER
-echo "  创建 include/media/cam_sensor_cmn_header.h"
-
-# 0b. cam_sync_api.h
-cat > include/media/cam_sync_api.h << 'CAMSYNCAPI'
-#ifndef _CAM_SYNC_API_H_
-#define _CAM_SYNC_API_H_
-#include <linux/types.h>
-#define CAM_SYNC_DEVICE_NAME "cam_sync"
-enum cam_sync_opcode {
-	CAM_SYNC_IS_MASTER,
-	CAM_SYNC_REGISTER_CALLBACK,
-	CAM_SYNC_UNREGISTER_CALLBACK,
-	CAM_SYNC_DESTROY,
-	CAM_SYNC_GET_SYNCINFO,
-	CAM_SYNC_WAIT,
-	CAM_SYNC_SIGNAL,
-	CAM_SYNC_GET_NUM_CLIENTS,
-};
-enum cam_sync_event_type {
-	CAM_SYNC_EVENT_RESET,
-	CAM_SYNC_EVENT_SIGNAL,
-};
-struct cam_sync_wait {
-	u32 syncobj;
-	u32 timeout;
-};
-struct cam_sync_info {
-	char name[64];
-	u32 id;
-	u32 state;
-};
-#endif
-CAMSYNCAPI
-echo "  创建 include/media/cam_sync_api.h"
-
-# 0c. cam_sync_private.h
-cat > include/media/cam_sync_private.h << 'CAMSYNCPRIV'
-#ifndef _CAM_SYNC_PRIVATE_H_
-#define _CAM_SYNC_PRIVATE_H_
-#include <linux/types.h>
-#include <media/cam_sync_api.h>
-struct cam_sync_device {
-	struct device *device;
-	struct mutex mutex;
-	u32 num_clients;
-};
-#endif
-CAMSYNCPRIV
-echo "  创建 include/media/cam_sync_private.h"
-
-# 重要：保留所有关键驱动，只修复编译错误
-
-# 1. 修复摄像头驱动编译错误（v3：保留原始 #include，确保 Makefile ccflags-y 正确）
-echo "1. 修复摄像头驱动编译错误..."
+# 0. 调用fix-camera-build.sh修复摄像头驱动编译错误
+echo "0. 修复摄像头驱动编译错误..."
 bash $GITHUB_WORKSPACE/scripts/fix-camera-build.sh "$KERNEL_DIR"
 
-# 1b. cam_sensor_cmn_header.h 已由 fix-camera-build.sh 处理（下载真实版本或回退版本）
-# 不再创建简化版覆盖，因为简化版缺少关键结构体定义导致编译失败：
-# - msm_pinctrl_info (简化版用了 cci_pinctrl 代替，名字不对)
-# - i2c_data_settings (完全缺失)
-# - cam_sensor_power_ctrl_t.dev/gpio_num_info/pinctrl_info (缺失)
-# 只确保 include/cam_sensor_cmn_header.h 存在（从 include/media/ 复制）
-echo "1b. 确保 cam_sensor_cmn_header.h 存在于 include/ 根目录..."
-cd "$KERNEL_DIR"
-mkdir -p include/media
+# 1. 创建stub头文件来修复其他编译错误（不删除任何.c文件）
 
-# 从 include/media/ 复制到 include/ 根目录（fix-camera-build.sh 已下载真实版本到 include/media/）
-if [ -f "include/media/cam_sensor_cmn_header.h" ]; then
-	cp include/media/cam_sensor_cmn_header.h include/cam_sensor_cmn_header.h
-	echo " 已从 include/media/ 复制 cam_sensor_cmn_header.h 到 include/"
-else
-	echo " 警告: include/media/cam_sensor_cmn_header.h 不存在，跳过复制"
-fi
-
-# 复制 cam_sync_api.h 和 cam_sync_private.h 到 include/ 根目录
-if [ -f "include/media/cam_sync_api.h" ]; then
-	cp include/media/cam_sync_api.h include/cam_sync_api.h
-	echo " 已从 include/media/ 复制 cam_sync_api.h 到 include/"
-fi
-if [ -f "include/media/cam_sync_private.h" ]; then
-	cp include/media/cam_sync_private.h include/cam_sync_private.h
-	echo " 已从 include/media/ 复制 cam_sync_private.h 到 include/"
-fi
-
-# 1c. 确保 cam_sync_api.h 和 cam_sync_private.h 存在于 include/media/ 目录
-# cam_sync.c 使用 #include <cam_sync_api.h>（尖括号）
-echo "1c. 确保 cam_sync 头文件存在于 include/media/..."
-cat > include/media/cam_sync_api.h << 'CAMSYNCAPI'
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
-
-#ifndef _CAM_SYNC_API_H_
-#define _CAM_SYNC_API_H_
-
-#include <linux/types.h>
-
-#define CAM_SYNC_DEVICE_NAME "cam_sync"
-
-enum cam_sync_opcode {
-	CAM_SYNC_IS_MASTER,
-	CAM_SYNC_REGISTER_CALLBACK,
-	CAM_SYNC_UNREGISTER_CALLBACK,
-	CAM_SYNC_DESTROY,
-	CAM_SYNC_GET_SYNCINFO,
-	CAM_SYNC_WAIT,
-	CAM_SYNC_SIGNAL,
-	CAM_SYNC_GET_NUM_CLIENTS,
-};
-
-enum cam_sync_event_type {
-	CAM_SYNC_EVENT_RESET,
-	CAM_SYNC_EVENT_SIGNAL,
-};
-
-struct cam_sync_wait {
-	u32 syncobj;
-	u32 timeout;
-};
-
-struct cam_sync_info {
-	char name[64];
-	u32 id;
-	u32 state;
-};
-
-int cam_sync_create(struct cam_sync_info *info);
-int cam_sync_destroy(u32 syncobj);
-int cam_sync_signal(u32 syncobj, enum cam_sync_event_type event);
-int cam_sync_wait(u32 syncobj, u32 timeout);
-
-#endif /* _CAM_SYNC_API_H_ */
-CAMSYNCAPI
-echo "  已创建 include/media/cam_sync_api.h"
-
-cat > include/media/cam_sync_private.h << 'CAMSYNCPRIV'
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
-
-#ifndef _CAM_SYNC_PRIVATE_H_
-#define _CAM_SYNC_PRIVATE_H_
-
-#include <linux/types.h>
-#include <media/cam_sync_api.h>
-
-struct cam_sync_device {
-	struct device *device;
-	struct mutex mutex;
-	u32 num_clients;
-};
-
-#endif /* _CAM_SYNC_PRIVATE_H_ */
-CAMSYNCPRIV
-echo "  已创建 include/media/cam_sync_private.h"
-
-# 2. cam_trace.h 路径修复（已在 fix-camera-build.sh 中处理）
-echo "2. cam_trace.h 修复已由 fix-camera-build.sh 处理，跳过"
-
-# 3. MDSS PLL 修复（已在 fix-camera-build.sh 中处理）
-echo "3. MDSS PLL 修复已由 fix-camera-build.sh 处理，跳过"
-
-# 4. 空 trace 头文件（已在 fix-camera-build.sh 中处理）
-echo "4. 空 trace 头文件已由 fix-camera-build.sh 处理，跳过"
-
-cd "$KERNEL_DIR"
-
-# 5. 修复蓝牙驱动编译错误
-echo "5. 修复蓝牙驱动编译错误..."
-if [ -f "drivers/bluetooth/Makefile" ]; then
-    # 移除导致编译错误的文件
-    rm -rf drivers/bluetooth/btfm_slim.c || true
-    rm -rf drivers/bluetooth/bluetooth-power.c || true
-    sed -i '/btfm_slim/d' drivers/bluetooth/Makefile || true
-    sed -i '/bluetooth-power/d' drivers/bluetooth/Makefile || true
-fi
-
-# 6. 修复GPU驱动编译错误
-echo "6. 修复GPU驱动编译错误..."
-if [ -f "drivers/gpu/msm/Makefile" ]; then
-    # 只删除有问题的trace文件，保留核心GPU驱动
-    rm -rf drivers/gpu/msm/kgsl_trace.c || true
-    rm -rf drivers/gpu/msm/adreno_trace.c || true
-    rm -rf drivers/gpu/msm/kgsl_events.c || true
-fi
-
-# 7. 修复USB gadget驱动编译错误
-echo "7. 修复USB gadget驱动编译错误..."
-if [ -d "drivers/usb/gadget" ]; then
-	# 添加function目录到include路径，使 #include <function/u_ncm.h> 能找到
-	if [ -f "drivers/usb/gadget/Makefile" ]; then
-		if ! grep -q "ccflags-y.*function" drivers/usb/gadget/Makefile; then
-			echo "ccflags-y += -I\$(src)/function" >> drivers/usb/gadget/Makefile
-		fi
-	fi
-fi
-
-# 修复f_ncm.c中ncm_alloc_inst函数缺少返回值的问题
-if [ -f "drivers/usb/gadget/function/f_ncm.c" ]; then
-	# f_ncm.c有复杂的结构体依赖，最好移除
-	rm -f drivers/usb/gadget/function/f_ncm.c
-	rm -f drivers/usb/gadget/function/u_ncm.h
-	rm -f include/function/u_ncm.h
-	# 同时从Makefile中移除f_ncm相关的obj
-	sed -i '/f_ncm/d' drivers/usb/gadget/function/Makefile 2>/dev/null || true
-	sed -i '/usb_f_ncm/d' drivers/usb/gadget/function/Makefile 2>/dev/null || true
-	# 注意：ccflags-y的function路径保留，因为configfs.c还用到u_ncm.h
-fi
-
-# 7b. 重建u_ncm.h（因为configfs.c还需要它）
+# 1a. u_ncm.h stub（避免f_ncm.c编译错误）
 mkdir -p include/function
-cat > include/function/u_ncm.h << 'INCFUNCNCM'
+cat > include/function/u_ncm.h << 'UNCMHEADER'
 #ifndef _U_NCM_H
 #define _U_NCM_H
 #include <linux/types.h>
-/* Minimal NCM header stub - no complex dependencies */
-struct usb_composite_dev;
-struct usb_ctrlrequest;
-int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl);
-#endif
-INCFUNCNCM
-
-if [ -d "drivers/usb/gadget/function" ]; then
-	# 创建必要的空头文件
-	mkdir -p drivers/usb/gadget/function
-	cat > drivers/usb/gadget/function/u_ncm.h << 'UNCMHEADER'
-#ifndef _U_NCM_H
-#define _U_NCM_H
-#include <linux/types.h>
-/* Minimal NCM header stub - no complex dependencies */
 struct usb_composite_dev;
 struct usb_ctrlrequest;
 int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl);
 #endif
 UNCMHEADER
-fi
 
-# 7c. 创建usb_trace.h（如果缺失）
+# 1b. usb_trace.h stub
 mkdir -p drivers/usb/gadget/composite
-if [ ! -f "drivers/usb/gadget/composite/usb_trace.h" ]; then
-	cat > drivers/usb/gadget/composite/usb_trace.h << 'USBTRACE'
+cat > drivers/usb/gadget/composite/usb_trace.h << 'USBTRACE'
 #ifndef _USB_TRACE_H
 #define _USB_TRACE_H
 #include <linux/types.h>
 #endif
 USBTRACE
-fi
 
-# 8. 修复coresight驱动编译错误
-echo "8. 修复coresight驱动编译错误..."
-if [ -f "drivers/hwtracing/coresight/Makefile" ]; then
-	# 只删除有问题的文件，保留核心功能
-	rm -rf drivers/hwtracing/coresight/coresight-tmc-etr.c || true
-fi
+# 1c. tracer_pkt stub
+mkdir -p drivers/soc/qcom
+cat > drivers/soc/qcom/tracer_pkt_private.h << 'TRACERPKT'
+#ifndef _TRACER_PKT_PRIVATE_H
+#define _TRACER_PKT_PRIVATE_H
+#include <linux/types.h>
+#endif
+TRACERPKT
 
-# 8b. 修复IPA trace文件缺失
-# 需要两个文件：
-# 1. include/trace/events/ipa/ipa_trace.h - 真正的trace定义
-# 2. drivers/platform/msm/ipa/ipa_v3/ipa_trace.h - wrapper被ipa.c引用
-echo "8b. 修复IPA trace文件..."
-
-# 创建trace events目录
+# 1d. IPA trace stubs
 mkdir -p include/trace/events/ipa
 mkdir -p drivers/platform/msm/ipa/ipa_v3
 mkdir -p drivers/platform/msm/ipa/ipa_clients
 
-# 下载真实的ipa_trace.h到include/trace/events/ipa/
-curl -sL --connect-timeout 15 --max-time 60 \
-	"https://raw.githubusercontent.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable/lineage-16.0/drivers/platform/msm/ipa/ipa_v3/ipa_trace.h" \
-	-o include/trace/events/ipa/ipa_trace.h 2>/dev/null || true
-
-# 如果下载失败，使用最小化版本
-if [ ! -s "include/trace/events/ipa/ipa_trace.h" ]; then
-	cat > include/trace/events/ipa/ipa_trace.h << 'IPATRACE'
+cat > include/trace/events/ipa/ipa_trace.h << 'IPATRACE'
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM ipa
 #define TRACE_INCLUDE_FILE ipa_trace
@@ -399,258 +74,52 @@ if [ ! -s "include/trace/events/ipa/ipa_trace.h" ]; then
 #define _IPA_TRACE_H
 #include <linux/tracepoint.h>
 TRACE_EVENT(ipa_trace_intr, TP_PROTO(unsigned long a), TP_ARGS(a),
-	TP_STRUCT__entry(__field(unsigned long, a)),
-	TP_fast_assign(__entry->a = a;),
-	TP_printk("a=%lu", __entry->a));
+    TP_STRUCT__entry(__field(unsigned long, a)),
+    TP_fast_assign(__entry->a = a;),
+    TP_printk("a=%lu", __entry->a));
 #endif
 IPATRACE
-fi
 
-# 下载真实的rndis_ipa_trace.h
-curl -sL --connect-timeout 15 --max-time 60 \
-	"https://raw.githubusercontent.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable/lineage-16.0/drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h" \
-	-o drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h 2>/dev/null || true
-
-if [ ! -s "drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h" ]; then
-	cat > drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h << 'RNDISIPATRACE'
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM ipa
-#define TRACE_INCLUDE_FILE rndis_ipa_trace
-#ifndef _RNDIS_IPA_TRACE_H
-#define _RNDIS_IPA_TRACE_H
-#include <linux/tracepoint.h>
-TRACE_EVENT(rndis_ipa_trace_tx, TP_PROTO(unsigned long a), TP_ARGS(a),
-	TP_STRUCT__entry(__field(unsigned long, a)),
-	TP_fast_assign(__entry->a = a;),
-	TP_printk("tx=%lu", __entry->a));
-TRACE_EVENT(rndis_ipa_trace_rx, TP_PROTO(unsigned long a), TP_ARGS(a),
-	TP_STRUCT__entry(__field(unsigned long, a)),
-	TP_fast_assign(__entry->a = a;),
-	TP_printk("rx=%lu", __entry->a));
-#endif
-RNDISIPATRACE
-fi
-
-# ipa_trace.h wrapper - 直接禁用trace（避免循环include问题）
 cat > drivers/platform/msm/ipa/ipa_v3/ipa_trace.h << 'IPAWRAPPER'
-/* trace disabled */
 #ifndef _IPA_V3_TRACE_H
 #define _IPA_V3_TRACE_H
 #include <linux/types.h>
 #endif
 IPAWRAPPER
 
-# rndis_ipa_trace.h 同样处理
 cat > drivers/platform/msm/ipa/ipa_clients/rndis_ipa_trace.h << 'RNDISWRAPPER'
-/* trace disabled */
 #ifndef _RNDIS_IPA_TRACE_H
 #define _RNDIS_IPA_TRACE_H
 #include <linux/types.h>
 #endif
 RNDISWRAPPER
 
-# 禁用 tracer_pkt trace
-mkdir -p drivers/soc/qcom
-cat > drivers/soc/qcom/tracer_pkt_private.h << 'TRACERPKT'
-/* trace disabled */
-#ifndef _TRACER_PKT_PRIVATE_H
-#define _TRACER_PKT_PRIVATE_H
-#include <linux/types.h>
-#endif
-TRACERPKT
+# 2. 禁用WERROR避免编译警告变错误
+echo "2. 禁用WERROR..."
+sed -i 's/-Werror//g' Makefile 2>/dev/null || true
+sed -i 's/WERROR=y/WERROR=n/g' Makefile 2>/dev/null || true
+sed -i 's/-Werror//g' scripts/Makefile.build 2>/dev/null || true
+sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build 2>/dev/null || true
 
-# 9. 禁用WERROR避免编译失败
-echo "9. 禁用WERROR..."
-if [ -f "Makefile" ]; then
-    sed -i 's/-Werror//g' Makefile || true
-    sed -i 's/WERROR=y/WERROR=n/g' Makefile || true
-fi
+# 3. 禁用stack protector避免编译器不支持
+echo "3. 禁用stack protector..."
+sed -i 's/-fstack-protector-strong//g' Makefile 2>/dev/null || true
+sed -i 's/-fstack-protector//g' Makefile 2>/dev/null || true
 
-if [ -f "scripts/Makefile.build" ]; then
-    sed -i 's/-Werror//g' scripts/Makefile.build || true
-    sed -i 's/WERROR=y/WERROR=n/g' scripts/Makefile.build || true
-fi
+# 4. 移除implicit function declaration警告
+echo "4. 清理无效编译标志..."
+sed -i 's/-implicit-function-declaration//g' Makefile 2>/dev/null || true
+sed -i 's/-Wno-implicit-function-declaration//g' Makefile 2>/dev/null || true
+sed -i 's/-implicit-function-declaration//g' scripts/Makefile.build 2>/dev/null || true
+sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.build 2>/dev/null || true
 
-# 10. 禁用stack protector避免编译器不支持
-echo "10. 禁用stack protector..."
-if [ -f "Makefile" ]; then
-    sed -i 's/-fstack-protector-strong//g' Makefile || true
-    sed -i 's/-fstack-protector//g' Makefile || true
-fi
-
-echo "11. 清理无效编译标志..."
-if [ -f "Makefile" ]; then
-    # 移除可能存在的无效编译标志
-    sed -i 's/-implicit-function-declaration//g' Makefile || true
-    sed -i 's/-Wno-implicit-function-declaration//g' Makefile || true
-fi
-
-if [ -f "scripts/Makefile.build" ]; then
-    sed -i 's/-implicit-function-declaration//g' scripts/Makefile.build || true
-    sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.build || true
-fi
-
-if [ -f "scripts/Makefile.lib" ]; then
-    sed -i 's/-implicit-function-declaration//g' scripts/Makefile.lib || true
-    sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.lib || true
-fi
-
-# 同时搜索其他可能的Makefile文件
-find . -name "Makefile" -o -name "Kbuild" | while read file; do
-  sed -i 's/-implicit-function-declaration//g' "$file" || true
-  sed -i 's/-Wno-implicit-function-declaration//g' "$file" || true
-done
-
-if [ -f "drivers/video/Kconfig" ]; then
- sed -i '/source "drivers\/gpu\/msm\/Kconfig"/d' drivers/video/Kconfig || true
-fi
-
-if [ -f "arch/arm64/Kconfig.debug" ]; then
- sed -i '/source "drivers\/hwtracing\/coresight\/Kconfig"/d' arch/arm64/Kconfig.debug || true
-fi
+# 5. 关键：不要删除任何驱动文件！保留所有.c文件
+echo "5. 保留所有驱动文件（不删除任何驱动）..."
+# 不执行任何rm -rf命令
 
 echo ""
 echo "=========================================="
-echo "最小化清理完成！"
+echo "清理完成！所有驱动已保留"
 echo "=========================================="
-echo ""
-echo "保留的关键驱动："
-echo " - GPU驱动 (kgsl, adreno)"
-echo " - 显示驱动 (MDSS)"
-echo " - 摄像头驱动（使用真实头文件）"
-echo " - USB驱动"
-echo " - 音频驱动 (QDSP6v2)"
-echo " - 传感器驱动"
-echo " - 电源管理驱动"
-echo ""
-echo "修复的编译错误："
-echo " - 摄像头驱动结构体定义缺失（使用真实头文件）"
-echo " - MDSS PLL trace文件缺失（创建include/trace/events/mdss_pll.h和drivers/clk/qcom/mdss/mdss_pll_trace.h）"
-echo " - 蓝牙驱动编译错误"
-echo " - GPU trace文件缺失（创建kgsl_trace.h和adreno_trace.h）"
-echo " - USB gadget头文件缺失（创建u_ncm.h和usb_trace.h）"
-echo " - coresight驱动编译错误（创建coresight_trace.h）"
-echo " - WERROR编译选项"
-echo " - stack protector兼容性"
-echo ""
-echo "下一步："
-echo " make $DEFCONFIG"
-echo " make -j\$(nproc) Image.gz KCFLAGS=\"-Wno-error -fno-stack-protector\""
-echo ""
 
-# 11. 修复smb-lib.c中缺失的GPIO函数
-echo "11. 修复smb-lib.c GPIO函数..."
-mkdir -p drivers/power/supply/qcom
-if [ -f "drivers/power/supply/qcom/smb-lib.c" ]; then
-	# 在文件末尾添加GPIO stub函数
-	cat >> drivers/power/supply/qcom/smb-lib.c << 'GPIOSTUBS'
-
-/* GPIO stub functions for compilation */
-void set_mcu_en_gpio_value(int value)
-{
-}
-EXPORT_SYMBOL(set_mcu_en_gpio_value);
-
-void usb_sw_gpio_set(int value)
-{
-}
-EXPORT_SYMBOL(usb_sw_gpio_set);
-
-void mcu_en_gpio_set(int value)
-{
-}
-EXPORT_SYMBOL(mcu_en_gpio_set);
-
-void switch_mode_to_normal(void)
-{
-}
-EXPORT_SYMBOL(switch_mode_to_normal);
-
-/* ncm_ctrlrequest stub - used by configfs.c */
-void ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest *ctrl)
-{
-}
-EXPORT_SYMBOL(ncm_ctrlrequest);
-
-/* Trace stub functions - these are called by tracepoints when disabled */
-void trace_cam_apply_req(unsigned long a, unsigned long b) {}
-void trace_cam_context_state(unsigned long a, const char *b) {}
-void trace_cam_req_mgr_apply_request(unsigned long a) {}
-void trace_cam_flush_req(unsigned long a) {}
-void trace_cam_req_mgr_add_req(unsigned long a) {}
-void trace_cam_req_mgr_connect_device(unsigned long a, unsigned long b, unsigned long c) {}
-void trace_cam_isp_activated_irq(unsigned long a, unsigned long b) {}
-void trace_cam_icp_fw_dbg(unsigned long a, const void *b) {}
-void trace_cam_cdm_cb(unsigned long a) {}
-void trace_cam_irq_activated(unsigned long a) {}
-void trace_cam_submit_to_hw(unsigned long a) {}
-void trace_cam_irq_handled(unsigned long a) {}
-void trace_tracer_pkt_event(unsigned long a, unsigned long b) {}
-void trace_mdss_pll_lock_start(void) {}
-void trace_idle_sleep_enter3(unsigned long a) {}
-void trace_idle_sleep_exit3(unsigned long a) {}
-void trace_poll_to_intr3(unsigned long a) {}
-void trace_rmnet_ipa_netifni3(unsigned long a, unsigned long b) {}
-void trace_rmnet_ipa_netifrx3(unsigned long a, unsigned long b) {}
-void trace_rmnet_ipa_netif_rcv_skb3(unsigned long a, unsigned long b, unsigned long c) {}
-void trace_rndis_status_rcvd(unsigned long a) {}
-void trace_rndis_netif_ni(unsigned long a) {}
-void trace_rndis_tx_dp(unsigned long a, unsigned long b) {}
-
-EXPORT_SYMBOL(trace_cam_apply_req);
-EXPORT_SYMBOL(trace_cam_context_state);
-EXPORT_SYMBOL(trace_cam_req_mgr_apply_request);
-EXPORT_SYMBOL(trace_cam_flush_req);
-EXPORT_SYMBOL(trace_cam_req_mgr_add_req);
-EXPORT_SYMBOL(trace_cam_req_mgr_connect_device);
-EXPORT_SYMBOL(trace_cam_isp_activated_irq);
-EXPORT_SYMBOL(trace_cam_icp_fw_dbg);
-EXPORT_SYMBOL(trace_cam_cdm_cb);
-EXPORT_SYMBOL(trace_cam_irq_activated);
-EXPORT_SYMBOL(trace_cam_submit_to_hw);
-EXPORT_SYMBOL(trace_cam_irq_handled);
-EXPORT_SYMBOL(trace_tracer_pkt_event);
-EXPORT_SYMBOL(trace_mdss_pll_lock_start);
-EXPORT_SYMBOL(trace_idle_sleep_enter3);
-EXPORT_SYMBOL(trace_idle_sleep_exit3);
-EXPORT_SYMBOL(trace_poll_to_intr3);
-EXPORT_SYMBOL(trace_rmnet_ipa_netifni3);
-EXPORT_SYMBOL(trace_rmnet_ipa_netifrx3);
-EXPORT_SYMBOL(trace_rmnet_ipa_netif_rcv_skb3);
-EXPORT_SYMBOL(trace_rndis_status_rcvd);
-EXPORT_SYMBOL(trace_rndis_netif_ni);
-EXPORT_SYMBOL(trace_rndis_tx_dp);
-
-/* MDSS PLL trace stubs */
-void MDSS_PLL_ATRACE_BEGIN(void) {}
-void MDSS_PLL_ATRACE_END(void) {}
-EXPORT_SYMBOL(MDSS_PLL_ATRACE_BEGIN);
-EXPORT_SYMBOL(MDSS_PLL_ATRACE_END);
-
-/* Power management stubs */
-bool get_extern_fg_regist_done(void) { return false; }
-EXPORT_SYMBOL(get_extern_fg_regist_done);
-
-bool get_extern_bq_present(void) { return false; }
-EXPORT_SYMBOL(get_extern_bq_present);
-
-int get_prop_pre_shutdown_soc(void) { return 0; }
-EXPORT_SYMBOL(get_prop_pre_shutdown_soc);
-
-struct notify_dash_event;
-void notify_dash_unplug_register(struct notify_dash_event *event)
-{
-}
-EXPORT_SYMBOL(notify_dash_unplug_register);
-
-void notify_dash_unplug_unregister(struct notify_dash_event *event)
-{
-}
-EXPORT_SYMBOL(notify_dash_unplug_unregister);
-
-GPIOSTUBS
-fi
-
-# 恢复原始目录
 cd "$ORIGINAL_DIR"
-echo "已返回原始目录：$ORIGINAL_DIR"
