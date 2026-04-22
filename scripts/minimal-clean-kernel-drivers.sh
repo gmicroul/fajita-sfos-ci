@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 最小化内核清理脚本 v4
-# 策略：完全不删除任何驱动文件，只创建必要的stub头文件来修复编译错误
+# 最小化内核清理脚本 v5
+# 策略：完全不删除任何驱动文件，创建必要的stub头文件来修复编译错误
 # 保留所有驱动，确保kernel与官方一致
 
 set -e
@@ -11,7 +11,7 @@ KERNEL_DIR="${1:-$ANDROID_ROOT/kernel/oneplus/sdm845}"
 GITHUB_WORKSPACE="${GITHUB_WORKSPACE:-$(pwd)}"
 
 echo "=========================================="
-echo "最小化内核清理脚本 v4 (保留所有驱动)"
+echo "最小化内核清理脚本 v5 (保留所有驱动)"
 echo "=========================================="
 echo ""
 
@@ -31,7 +31,33 @@ bash $GITHUB_WORKSPACE/scripts/fix-camera-build.sh "$KERNEL_DIR"
 
 # 1. 创建stub头文件来修复其他编译错误（不删除任何.c文件）
 
-# 1a. u_ncm.h stub（避免f_ncm.c编译错误）
+# 1a. btfm_slim.h stub（修复drivers/bluetooth/btfm_slim.c编译错误）
+mkdir -p drivers/bluetooth
+cat > drivers/bluetooth/btfm_slim.h << 'BTFMSLIMHEADER'
+#ifndef _BTFM_SLIM_H_
+#define _BTFM_SLIM_H_
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+#include <linux/wait.h>
+#include <linux/mutex.h>
+#include <linux/list.h>
+
+struct btfm_slim_dev {
+    struct device *dev;
+    struct list_head entry;
+    struct mutex lock;
+    spinlock_t tx_lock;
+    spinlock_t rx_lock;
+    wait_queue_head_t readq;
+    struct list_head rx_list;
+    int tx_irq;
+    int rx_irq;
+};
+#endif
+BTFMSLIMHEADER
+
+# 1b. u_ncm.h stub（避免f_ncm.c编译错误）
 mkdir -p include/function
 cat > include/function/u_ncm.h << 'UNCMHEADER'
 #ifndef _U_NCM_H
@@ -43,7 +69,7 @@ int ncm_ctrlrequest(struct usb_composite_dev *cdev, const struct usb_ctrlrequest
 #endif
 UNCMHEADER
 
-# 1b. usb_trace.h stub
+# 1c. usb_trace.h stub
 mkdir -p drivers/usb/gadget/composite
 cat > drivers/usb/gadget/composite/usb_trace.h << 'USBTRACE'
 #ifndef _USB_TRACE_H
@@ -52,7 +78,7 @@ cat > drivers/usb/gadget/composite/usb_trace.h << 'USBTRACE'
 #endif
 USBTRACE
 
-# 1c. tracer_pkt stub
+# 1d. tracer_pkt stub
 mkdir -p drivers/soc/qcom
 cat > drivers/soc/qcom/tracer_pkt_private.h << 'TRACERPKT'
 #ifndef _TRACER_PKT_PRIVATE_H
@@ -61,7 +87,7 @@ cat > drivers/soc/qcom/tracer_pkt_private.h << 'TRACERPKT'
 #endif
 TRACERPKT
 
-# 1d. IPA trace stubs
+# 1e. IPA trace stubs
 mkdir -p include/trace/events/ipa
 mkdir -p drivers/platform/msm/ipa/ipa_v3
 mkdir -p drivers/platform/msm/ipa/ipa_clients
@@ -115,7 +141,6 @@ sed -i 's/-Wno-implicit-function-declaration//g' scripts/Makefile.build 2>/dev/n
 
 # 5. 关键：不要删除任何驱动文件！保留所有.c文件
 echo "5. 保留所有驱动文件（不删除任何驱动）..."
-# 不执行任何rm -rf命令
 
 echo ""
 echo "=========================================="
