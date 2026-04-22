@@ -207,17 +207,21 @@ jobs:
           cp $ANDROID_ROOT/kernel/oneplus/sdm845/arch/arm64/boot/Image.gz zImage
           ls -lh zImage
 
-          # 检查 dtb 是否存在
-          if [ ! -f "dtb" ] || [ ! -s "dtb" ]; then
-            echo "Warning: dtb is missing or empty, creating empty dtb"
-            # 从 dtbo.img 提取 dtb（如果有）
-            if [ -f "dtbo.img" ]; then
-              echo "dtbo.img found, using it as dtb"
-              cp dtbo.img dtb
-            else
-              touch dtb
-            fi
-          fi
+# 检查 dtb 是否存在且有效
+ DTB_ARG=""
+ if [ -f "dtb" ] && [ -s "dtb" ]; then
+ echo "dtb found and valid, will include it"
+ DTB_ARG="-s dtb"
+ else
+ echo "Warning: dtb is missing or empty, skipping dtb (DTB may be embedded in kernel)"
+ # 不创建空 dtb 文件，直接跳过
+ if [ -f "dtbo.img" ] && [ -s "dtbo.img" ]; then
+ echo "Using dtbo.img as dtb fallback"
+ DTB_ARG="-s dtbo.img"
+ else
+ echo "No valid dtb/dtbo found, proceeding without dtb"
+ fi
+ fi
 
           # 解析原始 bootimg.cfg 获取参数
           if [ -f "bootimg.cfg" ]; then
@@ -250,12 +254,12 @@ jobs:
           echo "  tags_offset: $TAGS_OFFSET"
           echo "  cmdline: $CMDLINE"
 
-          # 使用 abootimg 重新打包
-          abootimg --create hybris-boot.img \
-            -f bootimg.cfg \
-            -k zImage \
-            -r initrd.img \
-            -s dtb
+# 使用 abootimg 重新打包
+ abootimg --create hybris-boot.img \
+ -f bootimg.cfg \
+ -k zImage \
+ -r initrd.img \
+ $DTB_ARG
 
           if [ ! -f "hybris-boot.img" ]; then
             echo "Error: Failed to create hybris-boot.img"
