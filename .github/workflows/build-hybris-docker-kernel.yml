@@ -138,7 +138,7 @@ jobs:
           ls -la out/arch/arm64/boot/Image.gz+initramfs
 
       - name: Assemble boot.img
-    run: |
+      run: |
       cd boot_images
       # 只解压hybris-boot.img，使用它的配置和ramdisk
       abootimg -x hybris-boot.img
