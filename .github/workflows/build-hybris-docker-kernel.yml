@@ -1,169 +1,169 @@
 name: Build Hybris Docker Kernel
 # Compile Docker kernel and assemble with Sailfish OS hybris ramdisk
 on:
-  push:
-    branches:
-      - master
-  workflow_dispatch:
-    inputs:
-      device:
-        description: 'Device codename'
-        required: true
-        default: 'fajita'
-      release:
-        description: 'SailfishOS release version'
-        required: true
-        default: '5.0.0.73'
+ push:
+ branches:
+ - master
+ workflow_dispatch:
+ inputs:
+ device:
+ description: 'Device codename'
+ required: true
+ default: 'fajita'
+ release:
+ description: 'SailfishOS release version'
+ required: true
+ default: '5.0.0.73'
 
 env:
-  DEVICE: fajita
-  RELEASE: 5.0.0.73
-  ANDROID_ROOT: /home/runner/work/android
-  KERNEL_REPO: https://github.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable.git
-  KERNEL_BRANCH: lineage-16.0
-  HYBRIS_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/hybris-boot-fajita-5.0.0.73-14/hybris-boot.img
-  DROID_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img
+ DEVICE: fajita
+ RELEASE: 5.0.0.73
+ ANDROID_ROOT: /home/runner/work/android
+ KERNEL_REPO: https://github.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable.git
+ KERNEL_BRANCH: lineage-16.0
+ HYBRIS_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/hybris-boot-fajita-5.0.0.73-14/hybris-boot.img
+ DROID_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img
 
 jobs:
-  build-hybris-boot:
-    runs-on: ubuntu-latest
+ build-hybris-boot:
+ runs-on: ubuntu-latest
 
-    steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          df -h
+ steps:
+ - name: Free disk space
+ run: |
+   sudo rm -rf /usr/share/dotnet
+   sudo rm -rf /opt/ghc
+   sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+   df -h
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
+ - name: Checkout repository
+ uses: actions/checkout@v4
+ with:
+   submodules: recursive
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git wget curl unzip build-essential ccache python3 \
-            bc bison flex lib32ncurses-dev lib32z1-dev libssl-dev \
-            zip gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu \
-            abootimg android-sdk-libsparse-utils
+ - name: Install dependencies
+ run: |
+   sudo apt-get update
+   sudo apt-get install -y \
+   git wget curl unzip build-essential ccache python3 \
+   bc bison flex lib32ncurses-dev lib32z1-dev libssl-dev \
+   zip gcc-12-aarch64-linux-gnu g++-12-aarch64-linux-gnu \
+   abootimg android-sdk-libsparse-utils
 
-      - name: Download hybris-boot.img
-        run: |
-          mkdir -p boot_images
-          wget -q -O boot_images/hybris-boot.img "$HYBRIS_BOOT_URL"
-          wget -q -O boot_images/droid-boot.img "$DROID_BOOT_URL"
-          ls -la boot_images/
+ - name: Download hybris-boot.img
+ run: |
+   mkdir -p boot_images
+   wget -q -O boot_images/hybris-boot.img "$HYBRIS_BOOT_URL"
+   wget -q -O boot_images/droid-boot.img "$DROID_BOOT_URL"
+   ls -la boot_images/
 
-      - name: Extract hybris ramdisk
-        run: |
-          cd boot_images
-          abootimg -x hybris-boot.img
-          ls -la
-          # hybris-boot.img contains: zImage, initrd.img, dtbimg, bootimg.cfg
-          # initrd.img is the hybris ramdisk
-          echo "=== hybris ramdisk extracted ==="
-          abootimg -i hybris-boot.img
+ - name: Extract hybris ramdisk
+ run: |
+   cd boot_images
+   abootimg -x hybris-boot.img
+   ls -la
+   # hybris-boot.img contains: zImage, initrd.img, dtbimg, bootimg.cfg
+   # initrd.img is the hybris ramdisk
+   echo "=== hybris ramdisk extracted ==="
+   abootimg -i hybris-boot.img
 
-      - name: Clone kernel source
-        run: |
-          git clone --depth=1 -b "$KERNEL_BRANCH" "$KERNEL_REPO" kernel_src
-          ls -la kernel_src/
+ - name: Clone kernel source
+ run: |
+   git clone --depth=1 -b "$KERNEL_BRANCH" "$KERNEL_REPO" kernel_src
+   ls -la kernel_src/
 
-      - name: Apply kernel patches
-        run: |
-          cd kernel_src
-          for patch in ../scripts/*.patch; do
-            if [ -f "$patch" ]; then
-              echo "Applying $(basename $patch)..."
-              git apply "$patch" || echo "Patch $patch failed, continuing..."
-            fi
-          done
+ - name: Apply kernel patches
+ run: |
+   cd kernel_src
+   for patch in ../scripts/*.patch; do
+     if [ -f "$patch" ]; then
+       echo "Applying $(basename $patch)..."
+       git apply "$patch" || echo "Patch $patch failed, continuing."
+     fi
+   done
 
-- name: Find available defconfig
-  run: |
-    cd kernel_src
-    # Check what defconfig files are available
-    echo "Available defconfig files:"
-    ls -la arch/arm64/configs/*defconfig 2>/dev/null || echo "No defconfigs found"
-    
-    # Try to find a suitable defconfig - check in order of preference
-    for config in "lineageos_fajita_defconfig" "fajita_defconfig" "lineage_fajita_defconfig" "sdm845_defconfig" "vendor/sdm845_defconfig"; do
-      if [ -f "arch/arm64/configs/$config" ]; then
-        echo "Found defconfig: $config"
-        echo "DEFCONFIG=$config" >> $GITHUB_ENV
-        break
-      fi
-    done
-    
-    if [ -z "$DEFCONFIG" ]; then
-      echo "ERROR: No suitable defconfig found"
-      exit 1
-    fi
-    echo "Using defconfig: $DEFCONFIG"
+ - name: Find available defconfig
+ run: |
+   cd kernel_src
+   # Check what defconfig files are available
+   echo "Available defconfig files:"
+   ls -la arch/arm64/configs/*defconfig 2>/dev/null || echo "No defconfigs found"
+
+   # Try to find a suitable defconfig - check in order of preference
+   for config in "lineageos_fajita_defconfig" "fajita_defconfig" "lineage_fajita_defconfig" "sdm845_defconfig" "vendor/sdm845_defconfig"; do
+     if [ -f "arch/arm64/configs/$config" ]; then
+       echo "Found defconfig: $config"
+       echo "DEFCONFIG=$config" >> $GITHUB_ENV
+       break
+     fi
+   done
+
+   if [ -z "$DEFCONFIG" ]; then
+     echo "ERROR: No suitable defconfig found"
+     exit 1
+   fi
+   echo "Using defconfig: $DEFCONFIG"
 
  - name: Build kernel
-  run: |
-    cd kernel_src
-    export ARCH=arm64
-    export CROSS_COMPILE=aarch64-linux-gnu-
-    echo "Building with defconfig: $DEFCONFIG"
-    make O=out "$DEFCONFIG"
-    make O=out -j$(nproc) all
+ run: |
+   cd kernel_src
+   export ARCH=arm64
+   export CROSS_COMPILE=aarch64-linux-gnu-
+   echo "Building with defconfig: $DEFCONFIG"
+   make O=out "$DEFCONFIG"
+   make O=out -j$(nproc) all
 
-      - name: Create initramfs
-        run: |
-          cd kernel_src
-          # Create a minimal initramfs with Docker support hints
-          mkdir -p initramfs_temp/{bin,sbin,lib,proc,sys,dev}
-          echo '#!/bin/sh' > initramfs_temp/init
-          chmod +x initramfs_temp/init
-          cd initramfs_temp
-          find . | cpio -H newc -o | gzip > ../out/arch/arm64/boot/initramfs.cpio.gz
-          cd ..
-          ls -la out/arch/arm64/boot/
+ - name: Create initramfs
+ run: |
+   cd kernel_src
+   # Create a minimal initramfs with Docker support hints
+   mkdir -p initramfs_temp/{bin,sbin,lib,proc,sys,dev}
+   echo '#!/bin/sh' > initramfs_temp/init
+   chmod +x initramfs_temp/init
+   cd initramfs_temp
+   find . | cpio -H newc -o | gzip > ../out/arch/arm64/boot/initramfs.cpio.gz
+   cd ..
+   ls -la out/arch/arm64/boot/
 
-      - name: Build Docker kernel image
-        run: |
-          cd kernel_src
-          # Combine zImage and initramfs into a bootable image
-          cat out/arch/arm64/boot/Image.gz out/arch/arm64/boot/initramfs.cpio.gz > out/arch/arm64/boot/Image.gz+initramfs
-          ls -la out/arch/arm64/boot/Image.gz+initramfs
+ - name: Build Docker kernel image
+ run: |
+   cd kernel_src
+   # Combine zImage and initramfs into a bootable image
+   cat out/arch/arm64/boot/Image.gz out/arch/arm64/boot/initramfs.cpio.gz > out/arch/arm64/boot/Image.gz+initramfs
+   ls -la out/arch/arm64/boot/Image.gz+initramfs
 
-      - name: Assemble boot.img
-        run: |
-          cd boot_images
-          # Use droid-boot.img as base for bootimg.cfg (page size, etc.)
-          # Replace kernel with our new Image.gz+initramfs
-          # Replace ramdisk with hybris initrd.img
-          cp ../kernel_src/out/arch/arm64/boot/Image.gz+initramfs ./Image.gz
-          cp hybris-boot.img bootimg.cfg.bak 2>/dev/null || true
-          abootimg -x droid-boot.img
-          # Update bootimg.cfg for our kernel
-          mv droid-boot.img droid-boot.img.orig
-          abootimg -x hybris-boot.img
-          # Create new boot.img with new kernel + hybris ramdisk
-          abootimg --create new-boot.img \
-            -f bootimg.cfg \
-            -k Image.gz \
-            -r initrd.img
-          ls -la new-boot.img
-          abootimg -i new-boot.img
+ - name: Assemble boot.img
+ run: |
+   cd boot_images
+   # Use droid-boot.img as base for bootimg.cfg (page size, etc.)
+   # Replace kernel with our new Image.gz+initramfs
+   # Replace ramdisk with hybris initrd.img
+   cp ../kernel_src/out/arch/arm64/boot/Image.gz+initramfs ./Image.gz
+   cp hybris-boot.img bootimg.cfg.bak 2>/dev/null || true
+   abootimg -x droid-boot.img
+   # Update bootimg.cfg for our kernel
+   mv droid-boot.img droid-boot.img.orig
+   abootimg -x hybris-boot.img
+   # Create new boot.img with new kernel + hybris ramdisk
+   abootimg --create new-boot.img \
+     -f bootimg.cfg \
+     -k Image.gz \
+     -r initrd.img
+   ls -la new-boot.img
+   abootimg -i new-boot.img
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: hybris-boot-new
-          path: boot_images/new-boot.img
-          retention-days: 5
+ - name: Upload artifacts
+ uses: actions/upload-artifact@v4
+ with:
+   name: hybris-boot-new
+   path: boot_images/new-boot.img
+   retention-days: 5
 
-      - name: Upload kernel
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel-artifacts
-          path: |
-            kernel_src/out/arch/arm64/boot/Image.gz
-            kernel_src/out/arch/arm64/boot/initramfs.cpio.gz
-          retention-days: 5
+ - name: Upload kernel
+ uses: actions/upload-artifact@v4
+ with:
+   name: kernel-artifacts
+   path: |
+     kernel_src/out/arch/arm64/boot/Image.gz
+     kernel_src/out/arch/arm64/boot/initramfs.cpio.gz
+   retention-days: 5
