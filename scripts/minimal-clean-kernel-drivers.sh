@@ -32,8 +32,10 @@ bash $GITHUB_WORKSPACE/scripts/fix-camera-build.sh "$KERNEL_DIR"
 # 1. 创建stub头文件来修复其他编译错误（不删除任何.c文件）
 
 # 1a. btfm_slim.h stub（修复drivers/bluetooth/btfm_slim.c编译错误）
-mkdir -p drivers/bluetooth
-cat > drivers/bluetooth/btfm_slim.h << 'BTFMSLIMHEADER'
+# 注意：#include <btfm_slim.h> 使用尖括号，在系统include路径搜索
+# 必须放到 include/linux/ 目录，而不是 drivers/bluetooth/
+mkdir -p include/linux
+cat > include/linux/btfm_slim.h << 'BTFMSLIMHEADER'
 #ifndef _BTFM_SLIM_H_
 #define _BTFM_SLIM_H_
 #include <linux/types.h>
