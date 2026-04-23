@@ -21,7 +21,7 @@ env:
   ANDROID_ROOT: /home/runner/work/android
   KERNEL_REPO: https://github.com/VerdandiTeam/android_kernel_oneplus_sdm845-stable.git
   KERNEL_BRANCH: lineage-16.0
-  HYBRIS_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/hybris-boot-fajita-5.0.0.73-14/hybris-boot.img
+  HYBRIS_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/hybris-boot.img
   DROID_BOOT_URL: https://github.com/gmicroul/fajita-sfos-ci/releases/download/droid-boot/droid-boot.img
 
 jobs:
