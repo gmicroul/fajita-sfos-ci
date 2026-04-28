@@ -1,4 +1,4 @@
-name: Build YOLOv8 Static for Sailfish OS
+name: Build YOLOv8 Full Static for Sailfish OS
 
 on:
   push:
@@ -24,39 +24,57 @@ jobs:
           sudo apt update
           sudo apt install -y cmake git python3 python3-pip build-essential \
                               zlib1g-dev protobuf-compiler libprotobuf-dev \
-                              pkg-config libopencv-dev wget
-          sudo apt install -y g++-aarch64-linux-gnu
+                              pkg-config wget libjpeg-dev libpng-dev \
+                              g++-aarch64-linux-gnu
           pip3 install flatbuffers
 
-      - name: Clone ONNX Runtime
+      - name: Build OpenCV static for ARM64
+        run: |
+          git clone --branch 4.8.1 https://github.com/opencv/opencv.git
+          git clone --branch 4.8.1 https://github.com/opencv/opencv_contrib.git
+          mkdir -p opencv/build
+          cd opencv/build
+          cmake -DCMAKE_TOOLCHAIN_FILE=../platforms/linux/aarch64-gnu.toolchain.cmake \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DBUILD_SHARED_LIBS=OFF \
+                -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+                -DCMAKE_INSTALL_PREFIX=$PWD/install ..
+          make -j$(nproc)
+          make install
+          # 拷贝静态库
+          mkdir -p $GITHUB_WORKSPACE/deploy/opencv
+          cp install/lib/*.a $GITHUB_WORKSPACE/deploy/opencv/
+
+      - name: Clone and build ONNX Runtime static
         run: |
           git clone --recursive https://github.com/microsoft/onnxruntime
           cd onnxruntime
           export ORT_CROSS_COMPILER=/usr/bin/aarch64-linux-gnu-
           export ORT_TARGET_OS=Linux
           export ORT_TARGET_ARCH=arm64
-          # 指定 build_dir，静态库编译
-          python3 ./tools/ci_build/build.py --update --build --config Release --build_static_lib --parallel --build_dir build/Linux
+          python3 ./tools/ci_build/build.py \
+            --update --build --config Release --build_static_lib --parallel \
+            --build_dir build/Linux
+          mkdir -p $GITHUB_WORKSPACE/deploy/onnxruntime
+          cp build/Linux/Release/libonnxruntime.a $GITHUB_WORKSPACE/deploy/onnxruntime/
+          cp -r include/onnxruntime $GITHUB_WORKSPACE/deploy/onnxruntime/
 
-      - name: Prepare ONNX Runtime for Qt build
-        run: |
-          mkdir -p deploy/include/onnxruntime
-          cp -r onnxruntime/include/onnxruntime/* deploy/include/onnxruntime/
-          cp onnxruntime/build/Linux/Release/libonnxruntime.a deploy/
-
-      - name: Build Qt YOLOv8 project (static link)
+      - name: Build Qt YOLOv8 static executable
         run: |
           export PATH=$QT_DIR/bin:$PATH
+          cd $GITHUB_WORKSPACE
           qmake yolov8_app.pro -spec linux-g++ CONFIG+=release \
                 QMAKE_CXX=/usr/bin/aarch64-linux-gnu-g++ \
                 QMAKE_CC=/usr/bin/aarch64-linux-gnu-gcc \
-                QMAKE_LFLAGS+=" $PWD/deploy/libonnxruntime.a -static-libgcc -static-libstdc++"
+                QMAKE_LFLAGS+=" $PWD/deploy/onnxruntime/libonnxruntime.a \
+                                $PWD/deploy/opencv/*.a \
+                                -static-libgcc -static-libstdc++"
           make -j$(nproc)
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: yolov8-static-arm64
+          name: yolov8-full-static-arm64
           path: |
             yolov8_app
-            deploy/include/onnxruntime
+            deploy/onnxruntime/include/onnxruntime
