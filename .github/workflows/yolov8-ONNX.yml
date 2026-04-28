@@ -1,0 +1,35 @@
+name: Build ONNX Runtime ARM64
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-arm64:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake git python3 python3-pip build-essential wget zlib1g-dev
+
+      - name: Install cross compiler
+        run: |
+          sudo apt install -y g++-aarch64-linux-gnu
+
+      - name: Build ONNX Runtime
+        run: |
+          ./build.sh --config Release --build_shared_lib --parallel \
+                     --arm --arm-target-os Linux --arm-target-arch arm64 \
+                     --arm-compiler /usr/bin/aarch64-linux-gnu-g++ \
+                     --update --build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: onnxruntime-arm64
+          path: build/Linux/Release
