@@ -1,9 +1,6 @@
 name: Build Hybris Docker Kernel
 # Compile Docker kernel and assemble with Sailfish OS hybris ramdisk
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
     inputs:
       device:
