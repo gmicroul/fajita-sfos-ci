@@ -6,13 +6,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-arm64:
+  build-arm:
     runs-on: ubuntu-latest
 
     env:
       QT_DIR: /opt/Qt5.15.2
-      CMAKE_BUILD_TYPE: Release
-      ARMLIB_PATH: build/Linux/Release
+      ARMLIB_PATH: deploy
 
     steps:
       - name: Checkout repo
@@ -21,13 +20,14 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y cmake git python3 python3-pip build-essential wget \
+          sudo apt install -y cmake git python3 python3-pip build-essential \
                               zlib1g-dev protobuf-compiler libprotobuf-dev \
                               pkg-config libopencv-dev g++-aarch64-linux-gnu
 
-      - name: Build ONNX Runtime
+      - name: Clone ONNX Runtime
         run: |
-          git submodule update --init --recursive
+          git clone --recursive https://github.com/microsoft/onnxruntime
+          cd onnxruntime
           ./build.sh --config Release \
                      --build_shared_lib \
                      --parallel \
@@ -37,23 +37,22 @@ jobs:
                      --arm-compiler /usr/bin/aarch64-linux-gnu-g++ \
                      --update --build
 
-      - name: Install ONNX Runtime headers and lib for Qt build
+      - name: Prepare ONNX Runtime for Qt build
         run: |
-          mkdir -p ./deploy/include/onnxruntime
-          cp include/onnxruntime/*.h ./deploy/include/onnxruntime/
-          cp build/Linux/Release/libonnxruntime.so ./deploy/
+          mkdir -p deploy/include/onnxruntime
+          cp onnxruntime/include/onnxruntime/*.h deploy/include/onnxruntime/
+          cp onnxruntime/build/Linux/Release/libonnxruntime.so deploy/
 
-      - name: Configure Qt project for cross-compilation
+      - name: Build Qt YOLOv8 project
         run: |
           export PATH=$QT_DIR/bin:$PATH
-          # 设置交叉编译器
           qmake yolov8_app.pro -spec linux-g++ CONFIG+=release \
                 QMAKE_CXX=/usr/bin/aarch64-linux-gnu-g++ \
                 QMAKE_CC=/usr/bin/aarch64-linux-gnu-gcc \
                 QMAKE_LFLAGS+=" -L$PWD/deploy"
           make -j$(nproc)
 
-      - name: Collect artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: yolov8-arm64
