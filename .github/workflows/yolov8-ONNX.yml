@@ -29,7 +29,7 @@ jobs:
           unzip zip bison flex libprotobuf-dev protobuf-compiler \
           pkg-config g++-aarch64-linux-gnu
 
-    - name: Clone ONNX Runtime
+    - name: Clone ONNX Runtime (official main branch)
       run: |
         git clone --branch main https://github.com/microsoft/onnxruntime.git onnxruntime
         cd onnxruntime
