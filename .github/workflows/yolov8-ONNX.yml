@@ -2,9 +2,9 @@ name: Build YOLOv8 ARM64
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -31,7 +31,7 @@ jobs:
 
     - name: Clone ONNX Runtime
       run: |
-        git clone --branch master https://github.com/microsoft/onnxruntime.git onnxruntime
+        git clone --branch main https://github.com/microsoft/onnxruntime.git onnxruntime
         cd onnxruntime
         git submodule update --init --recursive
 
