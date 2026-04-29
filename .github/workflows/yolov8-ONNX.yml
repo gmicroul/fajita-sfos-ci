@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout workflow repository
+    - name: Checkout repository
       uses: actions/checkout@v3
       with:
         submodules: recursive
@@ -57,12 +57,13 @@ jobs:
 
     - name: Build YOLOv8 Application
       run: |
-        mkdir -p build_app && cd build_app
-        cmake .. -DCMAKE_PREFIX_PATH=$(pwd)/../onnxruntime/build/Linux
+        mkdir -p yolov8_app/build
+        cd yolov8_app/build
+        cmake .. -DCMAKE_PREFIX_PATH=$(pwd)/../../onnxruntime/build/Linux
         make -j$(nproc)
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: yolov8_app
-        path: build_app/yolov8_app
+        path: yolov8_app/build/yolov8_app
