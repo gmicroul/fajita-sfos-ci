@@ -11,57 +11,57 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        submodules: recursive
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          git cmake build-essential wget curl python3-pip \
-          unzip zip bison flex libprotobuf-dev protobuf-compiler \
-          pkg-config g++-aarch64-linux-gnu make
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git cmake build-essential wget curl python3-pip \
+            unzip zip bison flex libprotobuf-dev protobuf-compiler \
+            pkg-config g++-aarch64-linux-gnu make
 
-    - name: Clone ONNX Runtime official main branch
-      run: |
-        git clone https://github.com/microsoft/onnxruntime.git
-        cd onnxruntime
-        git checkout main
-        git submodule update --init --recursive
+      - name: Clone ONNX Runtime official main branch
+        run: |
+          git clone https://github.com/microsoft/onnxruntime.git
+          cd onnxruntime
+          git checkout main
+          git submodule update --init --recursive
 
-    - name: Create ARM64 CMake toolchain
-      run: |
-        cat > onnxruntime/arm64-toolchain.cmake <<EOL
+      - name: Create ARM64 CMake toolchain
+        run: |
+          cat > onnxruntime/arm64-toolchain.cmake <<EOL
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR aarch64)
 set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
 EOL
 
-    - name: Build ONNX Runtime (ARM64)
-      run: |
-        cmake -S onnxruntime/cmake -B onnxruntime/build/Linux \
-          -DCMAKE_BUILD_TYPE=Release \
-          -Donnxruntime_BUILD_SHARED_LIB=ON \
-          -DCMAKE_TOOLCHAIN_FILE=$(pwd)/onnxruntime/arm64-toolchain.cmake
-        cmake --build onnxruntime/build/Linux --parallel $(nproc)
+      - name: Build ONNX Runtime (ARM64)
+        run: |
+          cmake -S onnxruntime/cmake -B onnxruntime/build/Linux \
+            -DCMAKE_BUILD_TYPE=Release \
+            -Donnxruntime_BUILD_SHARED_LIB=ON \
+            -DCMAKE_TOOLCHAIN_FILE=$(pwd)/onnxruntime/arm64-toolchain.cmake
+          cmake --build onnxruntime/build/Linux --parallel $(nproc)
 
-    - name: Build YOLOv8 Application using ONNX Runtime CMake
-      run: |
-        mkdir -p yolov8_app/build
-        cmake -S onnxruntime/cmake -B yolov8_app/build \
-          -DCMAKE_PREFIX_PATH=$(pwd)/onnxruntime/build/Linux
-        cmake --build yolov8_app/build --parallel $(nproc)
+      - name: Build YOLOv8 Application using ONNX Runtime CMake
+        run: |
+          mkdir -p yolov8_app/build
+          cmake -S onnxruntime/cmake -B yolov8_app/build \
+            -DCMAKE_PREFIX_PATH=$(pwd)/onnxruntime/build/Linux
+          cmake --build yolov8_app/build --parallel $(nproc)
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: yolov8_app
-        path: yolov8_app/build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yolov8_app
+          path: yolov8_app/build
