@@ -39,18 +39,17 @@ jobs:
       run: |
         cd onnxruntime
         mkdir -p build/Linux
-        cd build/Linux
         cat > arm64-toolchain.cmake <<EOL
         set(CMAKE_SYSTEM_NAME Linux)
         set(CMAKE_SYSTEM_PROCESSOR aarch64)
         set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
         set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
         EOL
-        cmake ../.. \
+        cmake -S . -B build/Linux \
           -DCMAKE_BUILD_TYPE=Release \
           -Donnxruntime_BUILD_SHARED_LIB=ON \
           -DCMAKE_TOOLCHAIN_FILE=arm64-toolchain.cmake
-        make -j$(nproc)
+        cmake --build build/Linux --parallel $(nproc)
 
     - name: Build YOLOv8 Application
       run: |
