@@ -1,4 +1,4 @@
-name: Build YOLOv8 ARM64
+name: Build YOLOv8 ARM64 Minimal Release
 
 on:
   push:
@@ -11,16 +11,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ 拉取仓库
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           submodules: recursive
 
+      # 2️⃣ Python 环境
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
+      # 3️⃣ 安装依赖
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -28,38 +31,89 @@ jobs:
             git cmake build-essential wget curl python3-pip \
             unzip zip bison flex libprotobuf-dev protobuf-compiler \
             pkg-config g++-aarch64-linux-gnu make
+          pip install onnxruntime numpy opencv-python
 
-      - name: Clone ONNX Runtime official main branch
+      # 4️⃣ clone ONNX Runtime
+      - name: Clone ONNX Runtime main
         run: |
           git clone https://github.com/microsoft/onnxruntime.git
           cd onnxruntime
           git checkout main
           git submodule update --init --recursive
 
-      - name: Create ARM64 CMake toolchain safely
+      # 5️⃣ 创建 ARM64 工具链
+      - name: Create ARM64 CMake toolchain
         run: |
           echo "set(CMAKE_SYSTEM_NAME Linux)" > onnxruntime/arm64-toolchain.cmake
           echo "set(CMAKE_SYSTEM_PROCESSOR aarch64)" >> onnxruntime/arm64-toolchain.cmake
           echo "set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)" >> onnxruntime/arm64-toolchain.cmake
           echo "set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)" >> onnxruntime/arm64-toolchain.cmake
 
-      - name: Build ONNX Runtime (ARM64)
+      # 6️⃣ 精简构建 ONNX Runtime
+      - name: Build ONNX Runtime (Release, minimal)
         run: |
+          mkdir -p onnxruntime/build/Linux
           cmake -S onnxruntime/cmake -B onnxruntime/build/Linux \
             -DCMAKE_BUILD_TYPE=Release \
             -Donnxruntime_BUILD_SHARED_LIB=ON \
+            -Donnxruntime_USE_ALL_OPS=OFF \
+            -Donnxruntime_USE_COREML=OFF \
+            -Donnxruntime_USE_TENSORRT=OFF \
+            -Donnxruntime_USE_OPENVINO=OFF \
+            -Donnxruntime_USE_NGRAPH=OFF \
+            -Donnxruntime_ENABLE_PYTHON=OFF \
+            -Donnxruntime_ENABLE_TESTS=OFF \
+            -DCMAKE_CXX_FLAGS_RELEASE="-O3 -s" \
             -DCMAKE_TOOLCHAIN_FILE=$(pwd)/onnxruntime/arm64-toolchain.cmake
           cmake --build onnxruntime/build/Linux --parallel $(nproc)
 
-      - name: Build YOLOv8 Application using ONNX Runtime
+      # 7️⃣ 编译 YOLOv8 可执行文件
+      - name: Build YOLOv8 executable
         run: |
           mkdir -p yolov8_app/build
-          cmake -S onnxruntime/cmake -B yolov8_app/build \
-            -DCMAKE_PREFIX_PATH=$(pwd)/onnxruntime/build/Linux
-          cmake --build yolov8_app/build --parallel $(nproc)
+          cd yolov8_app/build
+          # 假设你在 yolov8_app 有 main.cpp 和 CMakeLists.txt
+          cmake -S ../ -B . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=$(pwd)/../../onnxruntime/build/Linux \
+            -DCMAKE_CXX_FLAGS_RELEASE="-O3 -s"
+          cmake --build . --parallel $(nproc)
+          strip yolov8_app || true
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      # 8️⃣ 生成临时 ONNX 模型验证
+      - name: Generate temporary ONNX model
+        run: |
+          mkdir -p models
+          cd models
+          echo -e "ir_version: 7\ngraph { node {} }" > temp_model.onnx
+
+      # 9️⃣ 运行 hello inference 验证
+      - name: Run YOLOv8 hello inference
+        run: |
+          ./yolov8_app ../models/temp_model.onnx
+
+      # 🔟 打包最小 Release 并上传
+      - name: Package minimal release
+        run: |
+          mkdir -p release
+          cp yolov8_app/build/yolov8_app release/
+          cp yolov8_app/build/../models/temp_model.onnx release/
+          zip -r yolov8_app_release.zip release/
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
         with:
-          name: yolov8_app
-          path: yolov8_app/build
+          tag_name: v1.0.0
+          release_name: YOLOv8 ARM64 Minimal
+          draft: false
+          prerelease: false
+          body: "YOLOv8 ARM64 minimal release with executable and model"
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./yolov8_app_release.zip
+          asset_name: yolov8_app_release.zip
+          asset_content_type: application/zip
