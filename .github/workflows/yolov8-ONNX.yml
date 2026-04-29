@@ -31,10 +31,12 @@ jobs:
 
     - name: Clone ONNX Runtime official main branch
       run: |
-        git clone --branch main https://github.com/microsoft/onnxruntime.git onnxruntime
+        git clone https://github.com/microsoft/onnxruntime.git
         cd onnxruntime
+        git checkout main
         git submodule update --init --recursive
-        ls -l CMakeLists.txt  # 确认 CMakeLists.txt 存在
+        echo "CMakeLists.txt location:"
+        ls -l cmake/CMakeLists.txt
 
     - name: Create ARM64 CMake toolchain
       run: |
@@ -48,7 +50,7 @@ jobs:
 
     - name: Build ONNX Runtime (ARM64)
       run: |
-        cmake -S onnxruntime -B onnxruntime/build/Linux \
+        cmake -S onnxruntime/cmake -B onnxruntime/build/Linux \
           -DCMAKE_BUILD_TYPE=Release \
           -Donnxruntime_BUILD_SHARED_LIB=ON \
           -DCMAKE_TOOLCHAIN_FILE=onnxruntime/arm64-toolchain.cmake
