@@ -29,13 +29,12 @@ jobs:
           unzip zip bison flex libprotobuf-dev protobuf-compiler \
           pkg-config g++-aarch64-linux-gnu
 
-    - name: Clone ONNX Runtime (official main branch)
+    - name: Clone ONNX Runtime official main branch
       run: |
         git clone --branch main https://github.com/microsoft/onnxruntime.git onnxruntime
         cd onnxruntime
         git submodule update --init --recursive
-        echo "Check CMakeLists.txt exists:"
-        ls -l CMakeLists.txt
+        ls -l CMakeLists.txt  # 确认 CMakeLists.txt 存在
 
     - name: Create ARM64 CMake toolchain
       run: |
