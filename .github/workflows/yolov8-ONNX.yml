@@ -36,14 +36,12 @@ jobs:
           git checkout main
           git submodule update --init --recursive
 
-      - name: Create ARM64 CMake toolchain
+      - name: Create ARM64 CMake toolchain safely
         run: |
-          cat <<EOL > onnxruntime/arm64-toolchain.cmake
-set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR aarch64)
-set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)
-set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)
-EOL
+          echo "set(CMAKE_SYSTEM_NAME Linux)" > onnxruntime/arm64-toolchain.cmake
+          echo "set(CMAKE_SYSTEM_PROCESSOR aarch64)" >> onnxruntime/arm64-toolchain.cmake
+          echo "set(CMAKE_C_COMPILER aarch64-linux-gnu-gcc)" >> onnxruntime/arm64-toolchain.cmake
+          echo "set(CMAKE_CXX_COMPILER aarch64-linux-gnu-g++)" >> onnxruntime/arm64-toolchain.cmake
 
       - name: Build ONNX Runtime (ARM64)
         run: |
@@ -53,7 +51,7 @@ EOL
             -DCMAKE_TOOLCHAIN_FILE=$(pwd)/onnxruntime/arm64-toolchain.cmake
           cmake --build onnxruntime/build/Linux --parallel $(nproc)
 
-      - name: Build YOLOv8 Application
+      - name: Build YOLOv8 Application using ONNX Runtime
         run: |
           mkdir -p yolov8_app/build
           cmake -S onnxruntime/cmake -B yolov8_app/build \
