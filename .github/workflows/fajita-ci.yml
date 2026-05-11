@@ -8,6 +8,14 @@ name: Build sailfishos for fajita-new
         required: true
         default: "fajita"
 
+env:
+  VENDOR: oneplus
+  DEVICE: fajita
+  PORT_ARCH: aarch64
+  RELEASE: 5.0.0.73
+  # Docker container name
+  SDK_CONTAINER: sailfish-sdk
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -15,49 +23,66 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker container
         run: |
           sudo docker pull coderus/sailfishos-platform-sdk-base:latest
-          sudo docker run --privileged --name sailfish-sdk -d coderus/sailfishos-platform-sdk-base:latest tail -f /dev/null
+          sudo docker run --privileged --name $SDK_CONTAINER -d \
+            coderus/sailfishos-platform-sdk-base:latest tail -f /dev/null
 
       - name: Copy files into Docker container
         run: |
-          sudo docker cp . sailfish-sdk:/workspace
+          sudo docker cp . $SDK_CONTAINER:/workspace/
 
       - name: Run build inside Docker
         run: |
-          sudo docker exec sailfish-sdk sh -c "cd /workspace && source ./fajita.env && sudo bash ./run-mic1.sh"
+          sudo docker exec $SDK_CONTAINER sh -c "
+            cd /workspace &&
+            export VENDOR=$VENDOR DEVICE=$DEVICE PORT_ARCH=$PORT_ARCH RELEASE=$RELEASE &&
+            sudo bash ./run-mic1.sh
+          "
+
+      - name: Detect built artifacts
+        id: detect-artifacts
+        run: |
+          OUTDIR=$(sudo docker exec $SDK_CONTAINER sh -c "
+            cd /workspace && ls -d sfe-${DEVICE}-${RELEASE}* 2>/dev/null | head -1
+          ")
+          echo "OUTDIR=${OUTDIR}" >> $GITHUB_OUTPUT
+
+          ZIPFILE=$(sudo docker exec $SDK_CONTAINER sh -c "
+            ls /workspace/${OUTDIR}/*.zip 2>/dev/null | head -1
+          ")
+          echo "ZIPFILE=${ZIPFILE}" >> $GITHUB_OUTPUT
 
       - name: List files in Docker container
         run: |
-          sudo docker exec sailfish-sdk ls -R /workspace  # List files recursively to verify output location
+          sudo docker exec $SDK_CONTAINER ls -R /workspace
 
       - name: Archive artifacts
         run: |
-          # Check the output directory inside Docker and then copy it
-          sudo docker exec sailfish-sdk ls -ltrh /workspace/sfe-fajita-5.0.0.73/
-          # Adjust the path based on the output of the previous step
-          sudo mkdir -p /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
-          sudo docker cp sailfish-sdk:/workspace/sfe-fajita-5.0.0.73/sailfishos-5.0.0.73-20260220-fajita-SLOT_a.zip /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/
+          sudo docker exec $SDK_CONTAINER ls -ltrh /workspace/${{ steps.detect-artifacts.outputs.OUTDIR }}/
+          sudo mkdir -p ${{ github.workspace }}/artifacts/
+          sudo docker cp $SDK_CONTAINER:/workspace/${{ steps.detect-artifacts.outputs.ZIPFILE }} \
+            ${{ github.workspace }}/artifacts/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-fajita-sailfishos
-          path: /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/*.zip
+          path: ${{ github.workspace }}/artifacts/*.zip
 
       - name: Cleanup
         run: |
-          sudo docker stop sailfish-sdk
-          sudo docker rm sailfish-sdk
-          
+          sudo docker stop $SDK_CONTAINER
+          sudo docker rm $SDK_CONTAINER
+
       - name: Upload image to Release
         uses: ncipollo/release-action@main
         with:
           tag: SailfishOS_for_fajita
-          artifacts:  /home/runner/work/fajita-sfos-ci/fajita-sfos-ci/artifacts/*.zip
+          artifacts: ${{ github.workspace }}/artifacts/*.zip
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
