@@ -12,7 +12,7 @@ env:
   VENDOR: oneplus
   DEVICE: fajita
   PORT_ARCH: aarch64
-  RELEASE: 5.0.0.73
+  RELEASE: 5.1.0.5
 
 jobs:
   build:
