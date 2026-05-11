@@ -8,6 +8,12 @@ name: Build sailfishos for fajita-new
         required: true
         default: "fajita"
 
+env:
+  VENDOR: oneplus
+  DEVICE: fajita
+  PORT_ARCH: aarch64
+  RELEASE: 5.0.0.73
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -16,14 +22,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set environment variables
-        run: |
-          source ./fajita.env
-          echo "RELEASE=${RELEASE}" >> $GITHUB_ENV
-          echo "DEVICE=${DEVICE}" >> $GITHUB_ENV
-          echo "PORT_ARCH=${PORT_ARCH}" >> $GITHUB_ENV
-          echo "VENDOR=${VENDOR}" >> $GITHUB_ENV
 
       - name: Set up Docker container
         run: |
@@ -37,26 +35,18 @@ jobs:
 
       - name: Run build inside Docker
         run: |
-          sudo docker exec sailfish-sdk sh -c "
-            cd /workspace &&
-            export VENDOR=${{ env.VENDOR }} DEVICE=${{ env.DEVICE }} \
-                   PORT_ARCH=${{ env.PORT_ARCH }} RELEASE=${{ env.RELEASE }} &&
-            sudo bash ./run-mic1.sh
-          "
+          sudo docker exec -e VENDOR="${VENDOR}" -e DEVICE="${DEVICE}" -e PORT_ARCH="${PORT_ARCH}" -e RELEASE="${RELEASE}" sailfish-sdk sh -c "cd /workspace && sudo bash ./run-mic1.sh"
 
       - name: List output files
         run: |
-          sudo docker exec sailfish-sdk find /workspace/sfe-${{ env.DEVICE }}-${{ env.RELEASE }}/ \
-            -type f -name "*.zip" -o -name "*.md5sum" -o -name "*.sha1sum" -o -name "*.sha256sum" | sort
+          sudo docker exec sailfish-sdk find /workspace/sfe-${DEVICE}-${RELEASE}/ -type f -name '*.zip' -o -name '*.md5sum' -o -name '*.sha1sum' -o -name '*.sha256sum' | sort
 
       - name: Archive artifacts
         run: |
           OUTPUT_DIR="${{ github.workspace }}/artifacts"
           sudo mkdir -p "$OUTPUT_DIR"
-          sudo docker exec sailfish-sdk sh -c "
-            cd /workspace/sfe-${{ env.DEVICE }}-${{ env.RELEASE }}/ && ls *.zip 2>/dev/null
-          " | while read f; do
-            sudo docker cp "sailfish-sdk:/workspace/sfe-${{ env.DEVICE }}-${{ env.RELEASE }}/$f" "$OUTPUT_DIR/"
+          for f in $(sudo docker exec sailfish-sdk sh -c "cd /workspace/sfe-${DEVICE}-${RELEASE}/ && ls *.zip 2>/dev/null"); do
+            sudo docker cp "sailfish-sdk:/workspace/sfe-${DEVICE}-${RELEASE}/${f}" "$OUTPUT_DIR/"
           done
 
       - name: Upload artifacts
