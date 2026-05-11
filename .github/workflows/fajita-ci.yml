@@ -37,16 +37,22 @@ jobs:
 
       - name: Run build inside Docker
         run: |
-          sudo docker exec $SDK_CONTAINER sh -c "
-            cd /workspace &&
-            export VENDOR=$VENDOR DEVICE=$DEVICE PORT_ARCH=$PORT_ARCH RELEASE=$RELEASE &&
-            sudo bash ./run-mic1.sh
+          sudo docker exec \
+            -e VENDOR=${{ env.VENDOR }} \
+            -e DEVICE=${{ env.DEVICE }} \
+            -e PORT_ARCH=${{ env.PORT_ARCH }} \
+            -e RELEASE=${{ env.RELEASE }} \
+            $SDK_CONTAINER sh -c "
+            cd /workspace && sudo bash ./run-mic1.sh
           "
 
       - name: Detect built artifacts
         id: detect-artifacts
         run: |
-          OUTDIR=$(sudo docker exec $SDK_CONTAINER sh -c "
+          OUTDIR=$(sudo docker exec \
+            -e DEVICE=${{ env.DEVICE }} \
+            -e RELEASE=${{ env.RELEASE }} \
+            $SDK_CONTAINER sh -c "
             cd /workspace && ls -d sfe-${DEVICE}-${RELEASE}* 2>/dev/null | head -1
           ")
           echo "OUTDIR=${OUTDIR}" >> $GITHUB_OUTPUT
