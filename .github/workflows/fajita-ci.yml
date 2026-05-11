@@ -8,14 +8,6 @@ name: Build sailfishos for fajita-new
         required: true
         default: "fajita"
 
-env:
-  VENDOR: oneplus
-  DEVICE: fajita
-  PORT_ARCH: aarch64
-  RELEASE: 5.0.0.73
-  # Docker container name
-  SDK_CONTAINER: sailfish-sdk
-
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -25,64 +17,53 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set environment variables
+        run: |
+          source ./fajita.env
+          echo "RELEASE=${RELEASE}" >> $GITHUB_ENV
+          echo "DEVICE=${DEVICE}" >> $GITHUB_ENV
+          echo "PORT_ARCH=${PORT_ARCH}" >> $GITHUB_ENV
+          echo "VENDOR=${VENDOR}" >> $GITHUB_ENV
+
       - name: Set up Docker container
         run: |
           sudo docker pull coderus/sailfishos-platform-sdk-base:latest
-          sudo docker run --privileged --name $SDK_CONTAINER -d \
+          sudo docker run --privileged --name sailfish-sdk -d \
             coderus/sailfishos-platform-sdk-base:latest tail -f /dev/null
 
       - name: Copy files into Docker container
         run: |
-          sudo docker cp . $SDK_CONTAINER:/workspace/
+          sudo docker cp . sailfish-sdk:/workspace/
 
       - name: Run build inside Docker
         run: |
-          sudo docker exec \
-            -e VENDOR=${{ env.VENDOR }} \
-            -e DEVICE=${{ env.DEVICE }} \
-            -e PORT_ARCH=${{ env.PORT_ARCH }} \
-            -e RELEASE=${{ env.RELEASE }} \
-            $SDK_CONTAINER sh -c "
-            cd /workspace && sudo bash ./run-mic1.sh
+          sudo docker exec sailfish-sdk sh -c "
+            cd /workspace &&
+            export VENDOR=${{ env.VENDOR }} DEVICE=${{ env.DEVICE }} \
+                   PORT_ARCH=${{ env.PORT_ARCH }} RELEASE=${{ env.RELEASE }} &&
+            sudo bash ./run-mic1.sh
           "
 
-      - name: Detect built artifacts
-        id: detect-artifacts
+      - name: List output files
         run: |
-          OUTDIR=$(sudo docker exec \
-            -e DEVICE=${{ env.DEVICE }} \
-            -e RELEASE=${{ env.RELEASE }} \
-            $SDK_CONTAINER sh -c "
-            cd /workspace && ls -d sfe-${DEVICE}-${RELEASE}* 2>/dev/null | head -1
-          ")
-          echo "OUTDIR=${OUTDIR}" >> $GITHUB_OUTPUT
-
-          ZIPFILE=$(sudo docker exec $SDK_CONTAINER sh -c "
-            ls /workspace/${OUTDIR}/*.zip 2>/dev/null | head -1
-          ")
-          echo "ZIPFILE=${ZIPFILE}" >> $GITHUB_OUTPUT
-
-      - name: List files in Docker container
-        run: |
-          sudo docker exec $SDK_CONTAINER ls -R /workspace
+          sudo docker exec sailfish-sdk find /workspace/sfe-${{ env.DEVICE }}-${{ env.RELEASE }}/ \
+            -type f -name "*.zip" -o -name "*.md5sum" -o -name "*.sha1sum" -o -name "*.sha256sum" | sort
 
       - name: Archive artifacts
         run: |
-          sudo docker exec $SDK_CONTAINER ls -ltrh /workspace/${{ steps.detect-artifacts.outputs.OUTDIR }}/
-          sudo mkdir -p ${{ github.workspace }}/artifacts/
-          sudo docker cp $SDK_CONTAINER:/workspace/${{ steps.detect-artifacts.outputs.ZIPFILE }} \
-            ${{ github.workspace }}/artifacts/
+          OUTPUT_DIR="${{ github.workspace }}/artifacts"
+          sudo mkdir -p "$OUTPUT_DIR"
+          sudo docker exec sailfish-sdk sh -c "
+            cd /workspace/sfe-${{ env.DEVICE }}-${{ env.RELEASE }}/ && ls *.zip 2>/dev/null
+          " | while read f; do
+            sudo docker cp "sailfish-sdk:/workspace/sfe-${{ env.DEVICE }}-${{ env.RELEASE }}/$f" "$OUTPUT_DIR/"
+          done
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-fajita-sailfishos
           path: ${{ github.workspace }}/artifacts/*.zip
-
-      - name: Cleanup
-        run: |
-          sudo docker stop $SDK_CONTAINER
-          sudo docker rm $SDK_CONTAINER
 
       - name: Upload image to Release
         uses: ncipollo/release-action@main
@@ -93,3 +74,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             SailfishOS_for_fajita
+
+      - name: Cleanup
+        if: always()
+        run: |
+          sudo docker stop sailfish-sdk 2>/dev/null || true
+          sudo docker rm sailfish-sdk 2>/dev/null || true
