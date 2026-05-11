@@ -1,1 +1,0 @@
- droid-boot.md
