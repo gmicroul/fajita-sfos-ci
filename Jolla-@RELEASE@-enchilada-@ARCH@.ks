@@ -41,7 +41,6 @@ repo --name=jolla-@RELEASE@ --baseurl=https://releases.jolla.com/releases/@RELEA
 #jolla-rnd-device
 #droid-config-enchilada-bluez5
 #droid-config-enchilada
-libargon2-tools
 patterns-sailfish-device-configuration-enchilada
 %end
 
