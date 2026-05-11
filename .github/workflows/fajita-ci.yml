@@ -35,7 +35,7 @@ jobs:
 
       - name: Run build inside Docker
         run: |
-          sudo docker exec -e VENDOR="${VENDOR}" -e DEVICE="${DEVICE}" -e PORT_ARCH="${PORT_ARCH}" -e RELEASE="${RELEASE}" sailfish-sdk sh -c "cd /workspace && sudo bash ./run-mic1.sh"
+          sudo docker exec -e VENDOR="${VENDOR}" -e DEVICE="${DEVICE}" -e PORT_ARCH="${PORT_ARCH}" -e RELEASE="${RELEASE}" sailfish-sdk sh -c "cd /workspace && sudo -E bash ./run-mic1.sh"
 
       - name: List output files
         run: |
