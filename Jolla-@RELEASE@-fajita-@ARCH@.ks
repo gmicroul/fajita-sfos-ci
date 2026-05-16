@@ -28,7 +28,7 @@ repo --name=mister-@RELEASE@ --baseurl=https://sailfish.openrepos.net/Mister_Mag
 
 %packages
 -pulseaudio-modules-droid-jb2q*
-patunnel
+htop
 #patterns-sailfish-device-configuration-fajita
 %end
 
