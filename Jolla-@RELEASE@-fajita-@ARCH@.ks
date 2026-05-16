@@ -27,6 +27,7 @@ repo --name=mister-@RELEASE@ --baseurl=https://sailfish.openrepos.net/Mister_Mag
 repo --name=storeman-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/home:/olf:/harbour-storeman/5.1_@ARCH@/
 
 %packages
+-pulseaudio-modules-droid-jb2q*
 patterns-sailfish-device-configuration-fajita
 %end
 
