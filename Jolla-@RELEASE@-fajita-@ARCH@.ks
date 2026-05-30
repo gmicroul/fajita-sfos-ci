@@ -31,6 +31,7 @@ repo --name=storeman-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/home:/o
 #htop
 #-pulseaudio-modules-droid-jb2q-14.2.100-1.2.2.bso.aarch64
 wget
+pulseaudio
 #patterns-sailfish-device-configuration-fajita
 %end
 
