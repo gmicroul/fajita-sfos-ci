@@ -20,11 +20,11 @@ repo --name=adaptation-community-fajita-@RELEASE@ --baseurl=https://repo.sailfis
 repo --name=adaptation-community-common-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/common/sailfishos_5.0_@ARCH@/
 repo --name=apps-@RELEASE@ --baseurl=https://releases.jolla.com/jolla-apps/@RELEASE@/@ARCH@/
 #repo --name=chum-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/sailfishos:/chum/@RELEASE@_@ARCH@/
-repo --name=chum-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/sailfishos:/chum/5.0_@ARCH@/
+#repo --name=chum-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/sailfishos:/chum/5.0_@ARCH@/
 repo --name=hotfixes-@RELEASE@ --baseurl=https://releases.jolla.com/releases/@RELEASE@/hotfixes/@ARCH@/
 repo --name=jolla-@RELEASE@ --baseurl=https://releases.jolla.com/releases/@RELEASE@/jolla/@ARCH@/
-#repo --name=mister-@RELEASE@ --baseurl=https://sailfish.openrepos.net/Mister_Magister/personal/main
-#repo --name=storeman-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/home:/olf:/harbour-storeman/5.1_@ARCH@/
+repo --name=mister-@RELEASE@ --baseurl=https://sailfish.openrepos.net/Mister_Magister/personal/main
+repo --name=storeman-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/home:/olf:/harbour-storeman/5.1_@ARCH@/
 
 %packages
 #-pulseaudio-modules-droid-jb2q
