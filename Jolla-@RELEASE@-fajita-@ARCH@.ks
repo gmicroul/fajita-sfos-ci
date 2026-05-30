@@ -29,6 +29,7 @@ repo --name=storeman-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/home:/o
 %packages
 #-pulseaudio-modules-droid-jb2q
 #htop
+-gstreamer1.0-droid
 patterns-sailfish-device-configuration-fajita
 %end
 
