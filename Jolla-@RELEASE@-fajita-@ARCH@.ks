@@ -15,7 +15,7 @@ part / --size 500 --ondisk sda --fstype=ext4
 
 repo --name=adaptation-common-fajita-@RELEASE@ --baseurl=https://releases.jolla.com/releases/@RELEASE@/jolla-hw/adaptation-common/@ARCH@/
 #repo --name=adaptation-community-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/oneplus:/fajita/sailfishos_@RELEASE@/
-#repo --name=adaptation-community-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/oneplus:/fajita/sailfishos_5.0/
+repo --name=adaptation-community-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/oneplus:/fajita/sailfishos_5.1/
 #repo --name=adaptation-community-common-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/common/sailfishos_@RELEASE@_@ARCH@/
 repo --name=adaptation-community-common-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/common/sailfishos_5.1_@ARCH@/
 repo --name=apps-@RELEASE@ --baseurl=https://releases.jolla.com/jolla-apps/@RELEASE@/@ARCH@/
