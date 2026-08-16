@@ -12,7 +12,7 @@ env:
   VENDOR: oneplus
   DEVICE: enchilada
   PORT_ARCH: aarch64
-  RELEASE: 5.0.0.62
+  RELEASE: 5.1.0.11
 
 jobs:
   build:
