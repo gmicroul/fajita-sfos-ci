@@ -1,4 +1,4 @@
-# DisplayName: Jolla fajita-docker/@ARCH@ (release) 5.0.0.67+hybris.16.0 docker-kernel
+# DisplayName: Jolla fajita-docker/@ARCH@ (release) 5.1.0.11+hybris.16.0 docker-kernel
 # KickstartType: release
 # DeviceModel: fajita
 # DeviceVariant: fajita
@@ -6,10 +6,13 @@
 # SuggestedImageType: fs
 # SuggestedArchitecture: aarch64
 #
-# Docker 内核变体:
+# Docker 内核变体 (基于 5.1.0.11):
 #   - 在标准 fajita 镜像基础上，注入 docker-kernel-oneplus6t 内核模块
 #   - 把 /boot/hybris-boot.img 替换为 Docker 内核 boot 镜像(boot_a-docker-v2.img)
 #   - 刷机包刷完即为 Docker 内核，并预置 stock boot 用于 rollback-docker-kernel
+#
+# 注意: fajita 社区适配包(2026-08 重编译)要求 pulseaudio >= 15.0，
+# 5.0.0.67 基础只有 pulseaudio 14.2，故基础版本固定在 5.1.x。
 
 timezone --utc UTC
 
@@ -19,16 +22,15 @@ part / --size 500 --ondisk sda --fstype=ext4
 ## No suitable configuration found in /tmp/sandbox/usr/share/ssu/kickstart/bootloader
 
 repo --name=adaptation-common-fajita-@RELEASE@ --baseurl=https://releases.jolla.com/releases/@RELEASE@/jolla-hw/adaptation-common/@ARCH@/
-# 社区适配源直接跟随 @RELEASE@(例如 5.0.0.67 -> sailfishos_5.0.0.67)
-repo --name=adaptation-community-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/oneplus:/fajita/sailfishos_@RELEASE@/
-repo --name=adaptation-community-common-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/common/sailfishos_@RELEASE@_@ARCH@/
+# 社区适配源只有 5.1 分支(5.0.0.67 等分支也是同一份新构建)，固定用 sailfishos_5.1
+repo --name=adaptation-community-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/oneplus:/fajita/sailfishos_5.1/
+repo --name=adaptation-community-common-fajita-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/nemo:/testing:/hw:/common/sailfishos_5.1_@ARCH@/
 repo --name=apps-@RELEASE@ --baseurl=https://releases.jolla.com/jolla-apps/@RELEASE@/@ARCH@/
-repo --name=chum-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/sailfishos:/chum/@RELEASE@_@ARCH@/
+repo --name=chum-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/sailfishos:/chum/5.1_@ARCH@/
 repo --name=hotfixes-@RELEASE@ --baseurl=https://releases.jolla.com/releases/@RELEASE@/hotfixes/@ARCH@/
 repo --name=jolla-@RELEASE@ --baseurl=https://releases.jolla.com/releases/@RELEASE@/jolla/@ARCH@/
 repo --name=mister-@RELEASE@ --baseurl=https://sailfish.openrepos.net/Mister_Magister/personal/main
-# storeman 没有 5.0.0.67 分支，固定用 5.0
-repo --name=storeman-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/home:/olf:/harbour-storeman/5.0_@ARCH@/
+repo --name=storeman-@RELEASE@ --baseurl=https://repo.sailfishos.org/obs/home:/olf:/harbour-storeman/5.1_@ARCH@/
 
 %packages
 #-pulseaudio-modules-droid-jb2q
@@ -147,7 +149,7 @@ export SSU_RELEASE_TYPE=release
 INJECT_SCRIPT="${DOCKER_INJECT_SCRIPT:-/workspace/scripts/inject-docker-kernel.sh}"
 if [ -n "${DOCKER_ARTIFACTS_DIR:-}" ] && [ -d "$DOCKER_ARTIFACTS_DIR" ]; then
     echo "[docker-kernel] 检测到 DOCKER_ARTIFACTS_DIR=$DOCKER_ARTIFACTS_DIR，开始注入 Docker 内核..."
-    bash "$INJECT_SCRIPT" "$INSTALL_ROOT" "$DOCKER_ARTIFACTS_DIR"
+    bash "$INJECT_SCRIPT" "$INSTALL_ROOT" "$DOCKER_ARTIFACTS_DIR" "@RELEASE@"
 else
     echo "[docker-kernel] 未设置 DOCKER_ARTIFACTS_DIR，跳过 Docker 内核注入"
 fi

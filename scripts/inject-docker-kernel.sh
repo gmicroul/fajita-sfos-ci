@@ -6,7 +6,7 @@
 # 就是 Docker 内核镜像、/lib/modules 含配套内核模块。
 #
 # 用法:
-#   inject-docker-kernel.sh <INSTALL_ROOT> <artifacts-dir>
+#   inject-docker-kernel.sh <INSTALL_ROOT> <artifacts-dir> [RELEASE]
 #
 # artifacts-dir 需包含(由 workflow 从 gmicroul/fajita-sfos-docker-ci release 下载):
 #   boot_a-docker-v2.img                       # Docker 内核 boot 镜像
@@ -16,10 +16,11 @@
 
 set -euo pipefail
 
-ROOT="${1:?用法: inject-docker-kernel.sh <INSTALL_ROOT> <artifacts-dir>}"
+ROOT="${1:?用法: inject-docker-kernel.sh <INSTALL_ROOT> <artifacts-dir> [RELEASE]}"
 ART="${2:?缺少 artifacts 目录}"
+RELEASE="${3:-5.1.0.11}"   # 仅用于回滚备份文件名标注
 
-# 固定版本常量(与 sailfishos-docker-5.0.0.67-fajita release 产物一一对应)
+# 固定版本常量(与 gmicroul/fajita-sfos-docker-ci release 产物一一对应)
 BOOT_SHA="b17c9fbd28529bcb4fe1e8514a74e9dfd991bb28470a3d6b662089f9b202783d"
 RPM_SHA="b926aefdf2c60bce02a021b945caa55a9b82b4c6f5adb5a0a305b6590cda93c5"
 BACKUP_BOOT_SHA="3cf5250c2831ce268b095c4c6489a483b258f8c1b0fe7609b4599137092a817a"
@@ -73,9 +74,9 @@ if [ -f "$BACKUP_IMG" ]; then
     sha256sum "$BACKUP_IMG" | grep -q "^$BACKUP_BOOT_SHA " || die "backup boot img sha256 不匹配"
     BACKUP_DIR="$ROOT/root/kernel-backups/oneplus6t-docker"
     mkdir -p "$BACKUP_DIR"
-    cp -f "$BACKUP_IMG" "$BACKUP_DIR/boot_a-before-docker-5.0.0.67.img"
-    echo "$BACKUP_BOOT_SHA  boot_a-before-docker-5.0.0.67.img" \
-        > "$BACKUP_DIR/boot_a-before-docker-5.0.0.67.img.sha256"
+    cp -f "$BACKUP_IMG" "$BACKUP_DIR/boot_a-before-docker-$RELEASE.img"
+    echo "$BACKUP_BOOT_SHA  boot_a-before-docker-$RELEASE.img" \
+        > "$BACKUP_DIR/boot_a-before-docker-$RELEASE.img.sha256"
     info "已预置回滚备份: root/kernel-backups/oneplus6t-docker/"
 fi
 

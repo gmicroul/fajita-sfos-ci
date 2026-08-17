@@ -1,21 +1,25 @@
-name: Build sailfishos-docker for fajita (5.0.0.67)
+name: Build sailfishos-docker for fajita (5.1.0.11)
 'on':
   repository_dispatch:
   workflow_dispatch:
     inputs:
       release:
-        description: "SailfishOS release to build (e.g. 5.0.0.67)"
+        description: "SailfishOS release to build (需与 ks 内社区源兼容，见 README)"
         required: false
-        default: "5.0.0.67"
+        default: "5.1.0.11"
 
 env:
   VENDOR: oneplus
   DEVICE: fajita
   PORT_ARCH: aarch64
-  RELEASE: 5.0.0.67
-  RELEASE_TAG: sailfishos-docker-5.0.0.67-fajita
+  # 注意: fajita 社区适配要求 pulseaudio >= 15.0，5.0.0.67 只有 14.2，
+  # 基础版本固定在 5.1.x（ks 内社区/chum/storeman 源按 5.1 写死）。
+  RELEASE: ${{ inputs.release || '5.1.0.11' }}
+  RELEASE_TAG: sailfishos-docker-5.1.0.11-fajita
   DOCKER_ARTIFACTS_DIR: /workspace/docker-artifacts
-  # Docker 内核产物来源(gmicroul/fajita-sfos-docker-ci release,与注入脚本内 sha256 常量配套)
+  # Docker 内核产物来源: 沿用 gmicroul/fajita-sfos-docker-ci 的
+  # sailfishos-docker-5.0.0.67-fajita release（内核为 hybris 16.0，与 5.1 基础兼容，
+  # 与注入脚本内 sha256 常量配套）
   BOOT_IMG_URL: https://github.com/gmicroul/fajita-sfos-docker-ci/releases/download/sailfishos-docker-5.0.0.67-fajita/boot_a-docker-v2.img
   KERNEL_RPM_URL: https://github.com/gmicroul/fajita-sfos-docker-ci/releases/download/sailfishos-docker-5.0.0.67-fajita/docker-kernel-oneplus6t-4.9.209_docker-1.g5eb4c03127.aarch64.rpm
   BACKUP_BOOT_URL: https://github.com/gmicroul/fajita-sfos-docker-ci/releases/download/sailfishos-docker-5.0.0.67-fajita/boot_a-backup-before-docker.img
