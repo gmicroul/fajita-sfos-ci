@@ -101,6 +101,19 @@ else
     ssu mode 4
 fi
 ### end 60_ssu
+### begin 70_fix-android-paranoid-network
+# Docker 内核(基于 LineageOS defconfig)默认开启 CONFIG_ANDROID_PARANOID_NETWORK，
+# 非 root 用户(如 defaultuser, uid 100000)不在 Android 的 AID_INET(3003) 组，
+# 会被内核拒绝创建网络套接字 -> 浏览器/curl 全部打不开。
+# 治本是重编内核时把该选项设 n(见 scripts/fix-paranoid-network.sh)；
+# 这里在镜像里把 defaultuser 加入 gid 3003 作为兜底，让新刷机用户出厂即可上网。
+if id defaultuser >/dev/null 2>&1 && ! groups defaultuser | grep -qw 3003; then
+    usermod -a -G 3003 defaultuser
+    echo "[paranoid-network] defaultuser 已加入 gid 3003 (AID_INET) 兜底"
+else
+    echo "[paranoid-network] defaultuser 已包含 gid 3003 或用户不存在，跳过"
+fi
+### end 70_fix-android-paranoid-network
 %end
 
 %post --nochroot --erroronfail

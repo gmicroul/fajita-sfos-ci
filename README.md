@@ -56,6 +56,34 @@ GitHub Actions 项目，基于 Jolla HADK 流程：`mic create fs` + Kickstart +
 3. 刷完即 Docker 内核；若需切回原内核，设备端执行
    `rollback-docker-kernel`（回滚备份已预置），或 `install-docker-kernel` 重新刷 Docker 内核。
 
+## 已知问题：CONFIG_ANDROID_PARANOID_NETWORK（重要）
+
+**症状**：刷 docker 包后，非 root 用户（defaultuser）无法访问外网（浏览器/curl
+一律 `Permission denied`/`Could not connect`），root 正常。
+
+**根因**：docker 内核基于 LineageOS 的 `fajita_defconfig` 编译，带上了
+`CONFIG_ANDROID_PARANOID_NETWORK=y`。该选项只允许 root（或 Android `AID_INET`
+gid 3003 / `AID_NET_RAW` gid 3004 组成员）创建网络套接字，而 SFOS 的
+defaultuser（uid 100000）不在这些组 → 内核层面拒绝建 socket。原版 SFOS 内核该
+选项为 `n`，所以原版镜像没有此问题。
+
+**验证**（设备上）：
+```bash
+zcat /proc/config.gz | grep PARANOID          # =y 即中招
+timeout 3 bash -c 'echo > /dev/tcp/52.30.226.232/80'   # Permission denied 即中招
+```
+
+**缓解（已内置到刷机包 ks %post，新刷机用户出厂即通）**：把 defaultuser 加入
+gid 3003。已刷机的设备手动执行一次即可：
+```bash
+devel-su
+usermod -a -G 3003 defaultuser
+reboot
+```
+
+**治本（推荐）**：重编内核时把该选项设 `n`，见 `scripts/fix-paranoid-network.sh`，
+然后用新内核重新出 boot.img/rpm/刷机包。
+
 ## 本地构建（可选）
 
 `*.env` 提供环境变量参考（PLATFORM_SDK_ROOT / ANDROID_ROOT / VENDOR / DEVICE /
