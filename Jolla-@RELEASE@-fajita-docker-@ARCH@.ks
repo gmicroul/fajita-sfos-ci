@@ -142,16 +142,22 @@ fi
 export SSU_RELEASE_TYPE=release
 ### begin docker-kernel-inject
 # 把 Docker 内核(模块 + boot.img)注入已组装的 rootfs。
-# 依赖 workflow 传入的环境变量:
-#   DOCKER_ARTIFACTS_DIR  -> 产物目录(默认 /workspace/docker-artifacts)
-#   DOCKER_INJECT_SCRIPT  -> 注入脚本路径(默认 /workspace/scripts/inject-docker-kernel.sh)
-# 未设置时静默跳过，保证该 ks 也可用于普通镜像构建。
-INJECT_SCRIPT="${DOCKER_INJECT_SCRIPT:-/workspace/scripts/inject-docker-kernel.sh}"
-if [ -n "${DOCKER_ARTIFACTS_DIR:-}" ] && [ -d "$DOCKER_ARTIFACTS_DIR" ]; then
-    echo "[docker-kernel] 检测到 DOCKER_ARTIFACTS_DIR=$DOCKER_ARTIFACTS_DIR，开始注入 Docker 内核..."
+#
+# 注意: mic 的 %post 钩子不继承外部环境变量(只传 tokenmap + INSTALL_ROOT/
+# IMG_OUT_DIR)，所以产物目录不能靠 workflow 的 env 传入。这里：
+#   1) 优先用 tokenmap 传入的 @DOCKER_ARTIFACTS_DIR@（run-mic-docker.sh 负责）
+#   2) 否则回退到固定路径 /workspace/docker-artifacts
+# 产物缺失时明确警告并继续（最终由 workflow 的 zip 校验兜底拦截）。
+INJECT_SCRIPT="/workspace/scripts/inject-docker-kernel.sh"
+DOCKER_ARTIFACTS_DIR="@DOCKER_ARTIFACTS_DIR@"
+case "$DOCKER_ARTIFACTS_DIR" in
+    @*@|"") DOCKER_ARTIFACTS_DIR="/workspace/docker-artifacts" ;;
+esac
+if [ -d "$DOCKER_ARTIFACTS_DIR" ]; then
+    echo "[docker-kernel] 检测到产物目录 $DOCKER_ARTIFACTS_DIR，开始注入 Docker 内核..."
     bash "$INJECT_SCRIPT" "$INSTALL_ROOT" "$DOCKER_ARTIFACTS_DIR" "@RELEASE@"
 else
-    echo "[docker-kernel] 未设置 DOCKER_ARTIFACTS_DIR，跳过 Docker 内核注入"
+    echo "[docker-kernel] 警告: 未找到产物目录 $DOCKER_ARTIFACTS_DIR，跳过注入（刷机包将不带 Docker 内核！）"
 fi
 ### end docker-kernel-inject
 %end

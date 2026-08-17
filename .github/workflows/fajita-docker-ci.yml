@@ -67,7 +67,17 @@ jobs:
       - name: Copy files into Docker container
         run: |
           sudo docker cp . sailfish-sdk:/workspace/
-          sudo docker cp docker-artifacts sailfish-sdk:/workspace/docker-artifacts
+          # 尾部加 / 明确"拷贝目录内容"，避免 docker cp 目录语义歧义
+          sudo docker exec sailfish-sdk mkdir -p /workspace/docker-artifacts
+          sudo docker cp docker-artifacts/. sailfish-sdk:/workspace/docker-artifacts/
+
+      - name: Verify artifacts layout in container
+        run: |
+          sudo docker exec sailfish-sdk sh -c \
+            "ls -la /workspace/docker-artifacts/ && \
+             test -f /workspace/docker-artifacts/boot_a-docker-v2.img && \
+             test -f /workspace/docker-artifacts/payload/lib/modules/4.9.209-hybris-g5eb4c03127-dirty/wlan.ko && \
+             echo 'container artifacts OK'"
 
       - name: Run build inside Docker
         run: |
