@@ -1,0 +1,9 @@
+# 本地构建/调试产物 — 勿提交到仓库
+*.img
+*.rpm
+*.tar.bz2
+*.zip
+artifacts/
+docker-artifacts/
+sfe-*/
+__pycache__/

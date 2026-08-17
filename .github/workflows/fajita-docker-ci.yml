@@ -1,0 +1,130 @@
+name: Build sailfishos-docker for fajita (5.0.0.67)
+'on':
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "SailfishOS release to build (e.g. 5.0.0.67)"
+        required: false
+        default: "5.0.0.67"
+
+env:
+  VENDOR: oneplus
+  DEVICE: fajita
+  PORT_ARCH: aarch64
+  RELEASE: 5.0.0.67
+  RELEASE_TAG: sailfishos-docker-5.0.0.67-fajita
+  DOCKER_ARTIFACTS_DIR: /workspace/docker-artifacts
+  # Docker 内核产物来源(gmicroul/fajita-sfos-docker-ci release,与注入脚本内 sha256 常量配套)
+  BOOT_IMG_URL: https://github.com/gmicroul/fajita-sfos-docker-ci/releases/download/sailfishos-docker-5.0.0.67-fajita/boot_a-docker-v2.img
+  KERNEL_RPM_URL: https://github.com/gmicroul/fajita-sfos-docker-ci/releases/download/sailfishos-docker-5.0.0.67-fajita/docker-kernel-oneplus6t-4.9.209_docker-1.g5eb4c03127.aarch64.rpm
+  BACKUP_BOOT_URL: https://github.com/gmicroul/fajita-sfos-docker-ci/releases/download/sailfishos-docker-5.0.0.67-fajita/boot_a-backup-before-docker.img
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    if: github.event.repository.owner.id == github.event.sender.id
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker container
+        run: |
+          sudo docker pull coderus/sailfishos-platform-sdk-base:latest
+          sudo docker run --privileged --name sailfish-sdk -d \
+            coderus/sailfishos-platform-sdk-base:latest tail -f /dev/null
+
+      - name: Download Docker kernel artifacts (runner side)
+        run: |
+          mkdir -p docker-artifacts
+          curl -fsSL -o docker-artifacts/boot_a-docker-v2.img "$BOOT_IMG_URL"
+          curl -fsSL -o docker-artifacts/docker-kernel-oneplus6t-4.9.209_docker-1.g5eb4c03127.aarch64.rpm "$KERNEL_RPM_URL"
+          curl -fsSL -o docker-artifacts/boot_a-backup-before-docker.img "$BACKUP_BOOT_URL"
+          ls -la docker-artifacts/
+
+      - name: Verify artifact checksums
+        run: |
+          echo "b17c9fbd28529bcb4fe1e8514a74e9dfd991bb28470a3d6b662089f9b202783d  docker-artifacts/boot_a-docker-v2.img" | sha256sum -c -
+          echo "b926aefdf2c60bce02a021b945caa55a9b82b4c6f5adb5a0a305b6590cda93c5  docker-artifacts/docker-kernel-oneplus6t-4.9.209_docker-1.g5eb4c03127.aarch64.rpm" | sha256sum -c -
+          echo "3cf5250c2831ce268b095c4c6489a483b258f8c1b0fe7609b4599137092a817a  docker-artifacts/boot_a-backup-before-docker.img" | sha256sum -c -
+
+      - name: Extract rpm payload (pure python, no rpm/cpio needed)
+        run: |
+          python3 scripts/extract-rpm.py \
+            docker-artifacts/docker-kernel-oneplus6t-4.9.209_docker-1.g5eb4c03127.aarch64.rpm \
+            docker-artifacts/payload
+          test -f docker-artifacts/payload/lib/modules/4.9.209-hybris-g5eb4c03127-dirty/wlan.ko
+          test -f docker-artifacts/payload/usr/share/docker-kernel-oneplus6t/boot.img
+          test -f docker-artifacts/payload/usr/sbin/install-docker-kernel
+
+      - name: Copy files into Docker container
+        run: |
+          sudo docker cp . sailfish-sdk:/workspace/
+          sudo docker cp docker-artifacts sailfish-sdk:/workspace/docker-artifacts
+
+      - name: Run build inside Docker
+        run: |
+          sudo docker exec -e VENDOR="${VENDOR}" -e DEVICE="${DEVICE}" -e PORT_ARCH="${PORT_ARCH}" \
+            -e RELEASE="${RELEASE}" -e DOCKER_ARTIFACTS_DIR="${DOCKER_ARTIFACTS_DIR}" \
+            sailfish-sdk sh -c "cd /workspace && sudo -E bash ./run-mic-docker.sh"
+
+      - name: List output files
+        run: |
+          sudo docker exec sailfish-sdk find /workspace/sfe-${DEVICE}-${RELEASE}/ -type f \( -name '*.zip' -o -name '*.md5sum' -o -name '*.sha1sum' -o -name '*.sha256sum' \) | sort
+
+      - name: Archive artifacts
+        run: |
+          OUTPUT_DIR="${{ github.workspace }}/artifacts"
+          sudo mkdir -p "$OUTPUT_DIR"
+          for f in $(sudo docker exec sailfish-sdk sh -c "cd /workspace/sfe-${DEVICE}-${RELEASE}/ && ls *.zip *.md5sum *.sha1sum *.sha256sum 2>/dev/null"); do
+            sudo docker cp "sailfish-sdk:/workspace/sfe-${DEVICE}-${RELEASE}/${f}" "$OUTPUT_DIR/"
+          done
+
+      - name: Verify flashable zip contains Docker kernel
+        run: |
+          ZIP=$(ls "${{ github.workspace }}"/artifacts/*.zip | head -1)
+          echo "== 定位包内 sfos-rootfs.tar.bz2 的 hybris-boot.img 成员 =="
+          MEMBER=$(unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -tjf - | grep -E '(^|/)boot/hybris-boot\.img$' | head -1)
+          echo "tarball 成员: $MEMBER"
+          [ -n "$MEMBER" ] || { echo "错误: 包内未找到 hybris-boot.img"; exit 1; }
+          echo "== 校验其 sha256 (应为 b17c9fbd...) =="
+          BOOT_SHA=$(unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -xjOf - "$MEMBER" | sha256sum | cut -d' ' -f1)
+          echo "boot/hybris-boot.img sha256 = $BOOT_SHA"
+          [ "$BOOT_SHA" = "b17c9fbd28529bcb4fe1e8514a74e9dfd991bb28470a3d6b662089f9b202783d" ] \
+            || { echo "错误: 刷机包内 boot 镜像不是 Docker 内核!"; exit 1; }
+          echo "== 校验 Docker 内核模块已入包 =="
+          unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -tjf - 2>/dev/null | grep -c 'lib/modules/4.9.209-hybris-g5eb4c03127-dirty/'
+          echo "== 上传产物列表 =="
+          ls -la "${{ github.workspace }}"/artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-fajita-docker-sailfishos
+          path: ${{ github.workspace }}/artifacts/*
+
+      - name: Upload image to Release
+        uses: ncipollo/release-action@main
+        with:
+          tag: ${{ env.RELEASE_TAG }}
+          artifacts: ${{ github.workspace }}/artifacts/*.zip
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            SailfishOS ${{ env.RELEASE }} fajita (OnePlus 6T) — Docker 内核刷机包
+
+            内含:
+            * Docker 内核 boot 镜像 (sha256 b17c9fbd28529bcb4fe1e8514a74e9dfd991bb28470a3d6b662089f9b202783d)
+            * 配套内核模块 4.9.209-hybris-g5eb4c03127-dirty
+            * 设备端 install-docker-kernel / rollback-docker-kernel 脚本与 stock boot 回滚备份
+
+            刷机: TWRP 直接刷入 (需 LineageOS 16.0 底包)，zip 文件名含 SLOT_a 表示刷入 slot a。
+
+      - name: Cleanup
+        if: always()
+        run: |
+          sudo docker stop sailfish-sdk 2>/dev/null || true
+          sudo docker rm sailfish-sdk 2>/dev/null || true
