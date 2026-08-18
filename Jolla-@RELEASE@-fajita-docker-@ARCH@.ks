@@ -107,11 +107,23 @@ fi
 # 会被内核拒绝创建网络套接字 -> 浏览器/curl 全部打不开。
 # 治本是重编内核时把该选项设 n(见 scripts/fix-paranoid-network.sh)；
 # 这里在镜像里把 defaultuser 加入 gid 3003 作为兜底，让新刷机用户出厂即可上网。
-if id defaultuser >/dev/null 2>&1 && ! groups defaultuser | grep -qw 3003; then
-    usermod -a -G 3003 defaultuser
-    echo "[paranoid-network] defaultuser 已加入 gid 3003 (AID_INET) 兜底"
+# 注意: usermod -G 只认已存在的组名，而 SFOS 的 /etc/group 默认没有 gid 3003 条目，
+# 直接 usermod -a -G 3003 会报 "group '3003' does not exist"，
+# 因此必须先确保 gid 3003 在 /etc/group 有名字（缺则建 inet 组），再按名字添加。
+if id defaultuser >/dev/null 2>&1; then
+    # 幂等检查: 用数字 gid 判断(defaultuser 已含 3003 则跳过)
+    if ! id -G defaultuser | tr ' ' '\n' | grep -qx 3003; then
+        if ! getent group 3003 >/dev/null 2>&1; then
+            groupadd -g 3003 inet
+        fi
+        GRP=$(getent group 3003 | cut -d: -f1)
+        usermod -a -G "$GRP" defaultuser
+        echo "[paranoid-network] defaultuser 已加入 gid 3003 (组名 $GRP) 兜底"
+    else
+        echo "[paranoid-network] defaultuser 已包含 gid 3003，跳过"
+    fi
 else
-    echo "[paranoid-network] defaultuser 已包含 gid 3003 或用户不存在，跳过"
+    echo "[paranoid-network] defaultuser 不存在，跳过"
 fi
 ### end 70_fix-android-paranoid-network
 %end

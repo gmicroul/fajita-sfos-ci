@@ -74,11 +74,22 @@ timeout 3 bash -c 'echo > /dev/tcp/52.30.226.232/80'   # Permission denied 即�
 ```
 
 **缓解（已内置到刷机包 ks %post，新刷机用户出厂即通）**：把 defaultuser 加入
-gid 3003。已刷机的设备手动执行一次即可：
+gid 3003。ks 里的实现会在 `usermod` 前先确保 gid 3003 在 `/etc/group` 有名字
+（缺则 `groupadd -g 3003 inet`），避免直接 `usermod -a -G 3003` 因组不存在而
+报错；workflow 还会解包刷机包校验 `defaultuser ∈ gid 3003`，确认缓解真的进了包。
+
+已刷机的设备（或想手动确认）执行一次即可：
 ```bash
 devel-su
-usermod -a -G 3003 defaultuser
+getent group 3003 >/dev/null 2>&1 || groupadd -g 3003 inet
+GRP=$(getent group 3003 | cut -d: -f1)
+usermod -a -G "$GRP" defaultuser
 reboot
+```
+校验（需重新登录/重启后，补充组才会生效）：
+```bash
+id -G defaultuser | tr ' ' '\n' | grep -qx 3003 && echo OK
+timeout 3 bash -c 'echo > /dev/tcp/52.30.226.232/80' && echo OK
 ```
 
 **治本（推荐）**：重编内核时把该选项设 `n`，见 `scripts/fix-paranoid-network.sh`，

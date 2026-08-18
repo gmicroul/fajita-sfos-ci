@@ -111,6 +111,18 @@ jobs:
             || { echo "错误: 刷机包内 boot 镜像不是 Docker 内核!"; exit 1; }
           echo "== 校验 Docker 内核模块已入包 =="
           unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -tjf - 2>/dev/null | grep -c 'lib/modules/4.9.209-hybris-g5eb4c03127-dirty/'
+          echo "== 校验 paranoid-network 缓解已入包 (defaultuser ∈ gid 3003) =="
+          readonly PASSWD_MEMBER=$(unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -tjf - | grep -E '(^|/)etc/passwd$' | head -1)
+          readonly GROUP_MEMBER=$(unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -tjf - | grep -E '(^|/)etc/group$' | head -1)
+          [ -n "$PASSWD_MEMBER" ] && [ -n "$GROUP_MEMBER" ] || { echo "错误: 包内找不到 etc/passwd 或 etc/group"; exit 1; }
+          PASSWD_GID=$(unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -xjOf - "$PASSWD_MEMBER" | awk -F: '$1=="defaultuser"{print $4}' | head -1)
+          echo "defaultuser 主组 gid: ${PASSWD_GID:-未找到}"
+          [ -n "$PASSWD_GID" ] || { echo "错误: 包内没有 defaultuser"; exit 1; }
+          GROUP_LINE=$(unzip -p "$ZIP" sfos-rootfs.tar.bz2 | tar -xjOf - "$GROUP_MEMBER" | awk -F: '$3==3003' | head -1)
+          echo "/etc/group gid3003 行: ${GROUP_LINE:-未找到}"
+          echo "$GROUP_LINE" | grep -qw defaultuser \
+            || { echo "错误: 刷机包未包含 paranoid-network 缓解 (defaultuser 不在 gid 3003)!"; exit 1; }
+          echo "paranoid-network 缓解确认在包内 (浏览器问题出厂即免疫)"
           echo "== 上传产物列表 =="
           ls -la "${{ github.workspace }}"/artifacts/
 
