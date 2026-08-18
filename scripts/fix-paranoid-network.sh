@@ -12,7 +12,7 @@
 #   fix-paranoid-network.sh        # 使用 $ANDROID_ROOT (默认 /srv/hadk)
 #
 # 修复后需重新编译内核 -> 重新打包 boot.img / 内核 rpm，再重新构建刷机包。
-# 同时可保留 ks 里的 gid 3003 兜底(usermod)，两者不冲突。
+# 同时可保留 ks 里的 gid 3003 首次开机加组钩子(oneshot group.d)，两者不冲突。
 
 set -euo pipefail
 

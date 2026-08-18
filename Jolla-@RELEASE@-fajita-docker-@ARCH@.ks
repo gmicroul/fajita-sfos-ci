@@ -105,25 +105,25 @@ fi
 # Docker 内核(基于 LineageOS defconfig)默认开启 CONFIG_ANDROID_PARANOID_NETWORK，
 # 非 root 用户(如 defaultuser, uid 100000)不在 Android 的 AID_INET(3003) 组，
 # 会被内核拒绝创建网络套接字 -> 浏览器/curl 全部打不开。
-# 治本是重编内核时把该选项设 n(见 scripts/fix-paranoid-network.sh)；
-# 这里在镜像里把 defaultuser 加入 gid 3003 作为兜底，让新刷机用户出厂即可上网。
-# 注意: usermod -G 只认已存在的组名，而 SFOS 的 /etc/group 默认没有 gid 3003 条目，
-# 直接 usermod -a -G 3003 会报 "group '3003' does not exist"，
-# 因此必须先确保 gid 3003 在 /etc/group 有名字（缺则建 inet 组），再按名字添加。
-if id defaultuser >/dev/null 2>&1; then
-    # 幂等检查: 用数字 gid 判断(defaultuser 已含 3003 则跳过)
-    if ! id -G defaultuser | tr ' ' '\n' | grep -qx 3003; then
-        if ! getent group 3003 >/dev/null 2>&1; then
-            groupadd -g 3003 inet
-        fi
-        GRP=$(getent group 3003 | cut -d: -f1)
-        usermod -a -G "$GRP" defaultuser
-        echo "[paranoid-network] defaultuser 已加入 gid 3003 (组名 $GRP) 兜底"
-    else
-        echo "[paranoid-network] defaultuser 已包含 gid 3003，跳过"
-    fi
+# 治本是重编内核时把该选项设 n(见 scripts/fix-paranoid-network.sh)。
+#
+# 兜底: 利用 SFOS 原生的 oneshot 机制在**首次开机**时把默认用户加入 gid 3003。
+# 为什么不能用构建期 usermod: defaultuser 由 user-managerd 在设备首次开机时
+# 才创建(mic 构建期 /etc/passwd 里没有该用户)，构建期 usermod 必然落空。
+# SFOS 的 /usr/lib/oneshot.d/groupadd-user.later 会在首次开机扫描
+# /etc/oneshot.d/group.d/ 下的组名文件，把主用户(defaultuser)加入对应组
+# (镜像内已有先例: group.d/mtp)。这里只需确认 gid 3003 组存在并预置组名文件。
+GRP=$(getent group 3003 | cut -d: -f1)
+if [ -z "$GRP" ]; then
+    echo "[paranoid-network] 警告: gid 3003 不存在，尝试创建 inet 组"
+    groupadd -g 3003 inet && GRP=inet
+fi
+if [ -n "$GRP" ]; then
+    mkdir -p /etc/oneshot.d/group.d
+    touch "/etc/oneshot.d/group.d/$GRP"
+    echo "[paranoid-network] 已预置首次开机加组钩子: /etc/oneshot.d/group.d/$GRP (gid 3003)"
 else
-    echo "[paranoid-network] defaultuser 不存在，跳过"
+    echo "[paranoid-network] 错误: 无法创建 gid 3003 组，缓解未预置"
 fi
 ### end 70_fix-android-paranoid-network
 %end

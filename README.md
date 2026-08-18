@@ -73,10 +73,11 @@ zcat /proc/config.gz | grep PARANOID          # =y 即中招
 timeout 3 bash -c 'echo > /dev/tcp/52.30.226.232/80'   # Permission denied 即中招
 ```
 
-**缓解（已内置到刷机包 ks %post，新刷机用户出厂即通）**：把 defaultuser 加入
-gid 3003。ks 里的实现会在 `usermod` 前先确保 gid 3003 在 `/etc/group` 有名字
-（缺则 `groupadd -g 3003 inet`），避免直接 `usermod -a -G 3003` 因组不存在而
-报错；workflow 还会解包刷机包校验 `defaultuser ∈ gid 3003`，确认缓解真的进了包。
+**缓解（已内置到刷机包，新刷机用户首次开机后即通）**：利用 SFOS 原生的
+oneshot 机制，在镜像里预置 `etc/oneshot.d/group.d/inet`（gid 3003 = AID_INET
+组）；设备**首次开机**时 `user-managerd` 创建好 defaultuser 后，
+`groupadd-user.later` 会把 defaultuser 自动加入 gid 3003。workflow 会解包刷机包
+校验 gid 3003 组与加组钩子确实进了包，确认缓解真的随包发布。
 
 已刷机的设备（或想手动确认）执行一次即可：
 ```bash
@@ -93,7 +94,7 @@ timeout 3 bash -c 'echo > /dev/tcp/52.30.226.232/80' && echo OK
 ```
 
 **治本（推荐）**：重编内核时把该选项设 `n`，见 `scripts/fix-paranoid-network.sh`，
-然后用新内核重新出 boot.img/rpm/刷机包。
+然后用新内核重新出 boot.img/rpm/刷机包——内核层面彻底放开，无需再依赖加组兜底。
 
 ## 本地构建（可选）
 
